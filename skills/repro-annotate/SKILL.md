@@ -31,11 +31,21 @@ repro annotate \
 
 ## Bug-Class Feature Defaults
 
-| Bug class          | Default features                      |
-| ------------------ | ------------------------------------- |
-| CLS / layout shift | `layoutShiftViz`, `vitalsHud`, `zoom` |
-| Freeze / hang      | `freezeDetect`, `pauses`, `vitalsHud` |
-| Console error      | `consoleOverlay`, `steps`, `clickViz` |
+| Bug class | Default features |
+| --- | --- |
+| Functional failure | `steps`, `clickViz`, `consoleOverlay`, `specCard` |
+| Race / timing | `freezeDetect`, `vitalsHud`, `pauses`, `steps` + `timingSensitive` |
+| Console error | `consoleOverlay`, `steps`, `clickViz` |
+| CLS / layout shift | `layoutShiftViz`, `vitalsHud`, `zoom`, `slowmo` |
+| Freeze / hang | `freezeDetect`, `pauses`, `vitalsHud` |
+| Visual / CSS compare | mode `compare` + `controlled`; `steps`, `zoom` |
+| Hit-target / mis-click | `hitTargets`, `clickViz`, `cursor`, `zoom` |
+| Keyboard / a11y | `keystrokes`, `a11yOverlay`, `hiddenElements` |
+| PII / auth | `redaction` + `redaction.strict` |
+| Demo / walkthrough | mode `demo`; `voiceover`, `steps`, `cursor`, `specCard` |
+
+Full matrix, conflict rules, and example configs:
+[`docs/ai-usage.md`](../../docs/ai-usage.md).
 
 ## Discipline
 

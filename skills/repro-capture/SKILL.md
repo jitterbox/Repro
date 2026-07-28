@@ -23,6 +23,17 @@ repro capture --config repro.config.json --url "$URL" --out-dir .repro/run
 - Voiceover conflicts with preserved real timing.
 - Strict redaction requires the redaction feature gate.
 
+## Bug class → capture profile
+
+| Class | Profile | Notes |
+| --- | --- | --- |
+| Race / flake / prod-like | `faithful` | Set `timingSensitive` when needed |
+| Visual compare / demo | `controlled` | Required for mode `compare` |
+| PII / auth | either | Always enable `redaction` (+ `strict` to file) |
+
+See [`docs/ai-usage.md`](../../docs/ai-usage.md) for the full matrix and example
+`repro.config.json` files.
+
 ## Discipline
 
 Discovery may use an LLM once to understand the scenario. Commit the resulting

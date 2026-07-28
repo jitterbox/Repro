@@ -22,6 +22,20 @@ repro compare .repro/baseline.json .repro/current.json
 - Voiceover conflicts with preserved real timing.
 - Strict redaction requires the redaction feature gate.
 
+## When to use which layout
+
+| Question | Prefer |
+| --- | --- |
+| Side-by-side review | `side-by-side` |
+| Subtle pixel drift | `difference` / edge overlay |
+| Overlay alignment | `onion` / `wipe` / `blink` |
+| Sub-5px geometry | DOM geometry deltas (primary); pixels confirm |
+
+Manifests must include `steps`, `geometry`, and `environment`. Material env
+drift fails the compare unless `--override-env-drift`.
+
+Playbook: [`docs/ai-usage.md`](../../docs/ai-usage.md) §5–§7.
+
 ## Discipline
 
 Discovery may use an LLM once to decide which behavior to compare. Commit the

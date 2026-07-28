@@ -2,6 +2,15 @@
 
 Monorepo for the **Repro AI** bug reproduction video pipeline.
 
+## Documentation
+
+| Doc | Audience |
+| --- | --- |
+| [`AGENTS.md`](AGENTS.md) | Agent entrypoint (constraints + routing) |
+| [`docs/ai-usage.md`](docs/ai-usage.md) | Full AI playbook: modes, features, **bug-class → config matrix**, CLI playbooks |
+| [`docs/spikes.md`](docs/spikes.md) | Phase 0 spike results / design locks |
+| `skills/repro-*/SKILL.md` | Thin CLI wrappers for capture / annotate / compare / file |
+
 ## Packages
 
 | Package             | Description                          |
