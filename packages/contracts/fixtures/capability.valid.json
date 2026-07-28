@@ -1,0 +1,49 @@
+{
+  "id": "capture/playwright",
+  "version": "1.0.0",
+  "protocol": {
+    "name": "repro-probe",
+    "minVersion": "1.0.0",
+    "maxVersion": "2.0.0"
+  },
+  "browsers": [
+    {
+      "engine": "chromium",
+      "minVersion": "128.0.0",
+      "platforms": ["linux", "macos", "windows"]
+    }
+  ],
+  "permissions": [
+    "filesystem-read",
+    "filesystem-write",
+    "browser-launch",
+    "cdp-access"
+  ],
+  "inputs": [
+    {
+      "artifactType": "config",
+      "required": true,
+      "schemaRef": "https://repro.dev/schemas/config.schema.json"
+    }
+  ],
+  "outputs": [
+    {
+      "artifactType": "events",
+      "schemaRef": "https://repro.dev/schemas/event.schema.json"
+    },
+    {
+      "artifactType": "manifest",
+      "schemaRef": "https://repro.dev/schemas/manifest.schema.json"
+    }
+  ],
+  "determinism": {
+    "level": "best-effort",
+    "requiresControlledProfile": false,
+    "notes": "Faithful profile preserves real timing."
+  },
+  "redactionGuarantees": {
+    "layers": ["source", "stream", "pixel"],
+    "blocksUploadOnLeak": false
+  },
+  "description": "Playwright screencast and probe capture backend."
+}

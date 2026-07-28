@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "550e8400-e29b-41d4-a716-446655440000",
+  "createdAt": "2026-07-27T23:15:00.000Z",
+  "environment": {
+    "imageDigest": "sha256:abc123",
+    "playwrightVersion": "1.62.0",
+    "browserVersion": "128.0.6613.84",
+    "ffmpegVersion": "7.0.2",
+    "locale": "en-US",
+    "timezone": "America/New_York",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "fonts": [
+      {
+        "family": "Inter",
+        "style": "Regular",
+        "source": "/usr/share/fonts/inter/Inter-Regular.ttf",
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "events.jsonl",
+      "role": "events",
+      "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "bytes": 2048,
+      "contentType": "application/x-ndjson"
+    },
+    {
+      "path": "output.mp4",
+      "role": "video",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "bytes": 1048576,
+      "contentType": "video/mp4"
+    }
+  ],
+  "stages": [
+    {
+      "name": "capture",
+      "status": "complete",
+      "startedAt": "2026-07-27T23:10:00.000Z",
+      "completedAt": "2026-07-27T23:12:00.000Z",
+      "artifactRefs": ["events.jsonl"]
+    },
+    {
+      "name": "encode",
+      "status": "complete",
+      "startedAt": "2026-07-27T23:12:00.000Z",
+      "completedAt": "2026-07-27T23:15:00.000Z",
+      "artifactRefs": ["output.mp4"]
+    }
+  ],
+  "signature": {
+    "algorithm": "sha256",
+    "value": "1111111111111111111111111111111111111111111111111111111111111111",
+    "keyId": "local-dev"
+  }
+}

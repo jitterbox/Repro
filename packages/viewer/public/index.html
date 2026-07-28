@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Repro Evidence Viewer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell" data-repro-viewer>
+      <section class="toolbar" aria-label="Viewer controls">
+        <label>
+          Theme
+          <select data-viewer-theme>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="high-contrast">High contrast</option>
+          </select>
+        </label>
+        <label>
+          Reviewer preset
+          <select data-viewer-preset>
+            <option value="developer">Developer</option>
+            <option value="tester">Tester</option>
+            <option value="product">Product</option>
+            <option value="alm">ALM</option>
+          </select>
+        </label>
+        <span data-viewer-state aria-live="polite">Loading report...</span>
+      </section>
+
+      <section class="media" aria-labelledby="media-title">
+        <h1 id="media-title">Evidence replay</h1>
+        <div data-vidstack-player data-repro-video-shell>
+          <video
+            controls
+            data-repro-video
+            data-vidstack-video
+            preload="metadata"
+          >
+            <track kind="captions" srclang="en" label="Transcript" />
+          </video>
+        </div>
+        <div class="timeline" data-viewer-timeline aria-label="Timeline"></div>
+      </section>
+
+      <aside class="panel" aria-labelledby="review-title">
+        <h2 id="review-title">Review notes</h2>
+        <section data-viewer-chapters aria-labelledby="chapters-title">
+          <h3 id="chapters-title">Chapters</h3>
+        </section>
+        <section data-viewer-annotations aria-labelledby="annotations-title">
+          <h3 id="annotations-title">Annotations</h3>
+        </section>
+        <section data-viewer-transcript aria-labelledby="transcript-title">
+          <h3 id="transcript-title">Transcript</h3>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="../viewer.js"></script>
+  </body>
+</html>

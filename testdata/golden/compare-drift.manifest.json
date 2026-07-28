@@ -1,0 +1,12 @@
+{
+  "id": "compare-drift",
+  "assets": [
+    { "kind": "mp4", "href": "assets/compare-drift.mp4" },
+    { "kind": "json", "href": "assets/compare-drift.report.json" }
+  ],
+  "expected": {
+    "alignmentErrorMs": 120,
+    "determinism": 0.98,
+    "regionIou": 0.82
+  }
+}

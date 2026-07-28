@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/event.schema.json",
+  "title": "ReproEvent",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "runId",
+    "pageId",
+    "seq",
+    "tMono",
+    "type",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "pageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tMono": {
+      "type": "number",
+      "minimum": 0
+    },
+    "tSource": {
+      "type": "number"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "navigation",
+        "pointer",
+        "keyboard",
+        "console",
+        "exception",
+        "vitals",
+        "geometry",
+        "frame",
+        "cut",
+        "lifecycle",
+        "action",
+        "redaction",
+        "stage"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "prevHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

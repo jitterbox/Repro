@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "repro",
+  "executionProfile": "faithful",
+  "timingSensitive": true,
+  "surfaceCapture": "page",
+  "features": {
+    "cursor": true,
+    "keystrokes": true,
+    "consoleOverlay": true,
+    "redaction": true
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "redaction": {
+    "strict": false
+  }
+}

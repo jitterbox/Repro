@@ -1,0 +1,32 @@
+{
+  "name": "@repro/probe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./iife": {
+      "types": "./dist/iife.d.ts",
+      "import": "./dist/iife.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ./scripts/build-iife.mjs && tsc -p tsconfig.build.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  },
+  "dependencies": {
+    "@rrweb/record": "^2",
+    "web-vitals": "^6.0.1"
+  }
+}

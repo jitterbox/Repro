@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/capability.schema.json",
+  "title": "ReproCapability",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "protocol",
+    "browsers",
+    "permissions",
+    "inputs",
+    "outputs",
+    "determinism",
+    "redactionGuarantees"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(/[a-z][a-z0-9-]*)?$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "protocol": {
+      "type": "object",
+      "required": ["name", "minVersion", "maxVersion"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "minVersion": { "type": "string" },
+        "maxVersion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "browsers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["engine", "minVersion"],
+        "properties": {
+          "engine": {
+            "type": "string",
+            "enum": ["chromium", "firefox", "webkit"]
+          },
+          "minVersion": { "type": "string" },
+          "maxVersion": { "type": "string" },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["linux", "macos", "windows"]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "filesystem-read",
+          "filesystem-write",
+          "network-egress",
+          "browser-launch",
+          "cdp-access",
+          "secrets-read",
+          "alm-write",
+          "ocr",
+          "model-inference"
+        ]
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifactType"],
+        "properties": {
+          "artifactType": { "type": "string", "minLength": 1 },
+          "required": { "type": "boolean", "default": true },
+          "schemaRef": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifactType"],
+        "properties": {
+          "artifactType": { "type": "string", "minLength": 1 },
+          "schemaRef": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "determinism": {
+      "type": "object",
+      "required": ["level"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["none", "best-effort", "strict"]
+        },
+        "requiresControlledProfile": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "redactionGuarantees": {
+      "type": "object",
+      "required": ["layers"],
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["source", "stream", "pixel", "audit"]
+          },
+          "uniqueItems": true
+        },
+        "blocksUploadOnLeak": { "type": "boolean", "default": false },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

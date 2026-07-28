@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "550e8400-e29b-41d4-a716-446655440000",
+  "generatedAt": "2026-07-27T23:20:00.000Z",
+  "corpusVersion": "golden-v1",
+  "metrics": {
+    "detection": {
+      "precision": 0.91,
+      "recall": 0.84,
+      "hallucinationRate": 0.03,
+      "regionIoU": 0.78
+    },
+    "alignment": {
+      "meanErrorMs": 12.5,
+      "maxErrorMs": 48,
+      "uncertainMatchCount": 1
+    },
+    "redaction": {
+      "leakageRate": 0,
+      "canaryPassRate": 1
+    },
+    "determinism": {
+      "replayPassRate": 0.95,
+      "hashMatchRate": 0.98
+    },
+    "humanUsefulness": {
+      "score": 4.2,
+      "sampleSize": 12
+    }
+  },
+  "benchmarks": [
+    {
+      "name": "DiffSpot",
+      "score": 0.407,
+      "notes": "Recall on hard cases below target."
+    }
+  ],
+  "passed": true,
+  "failures": []
+}

@@ -1,0 +1,28 @@
+{
+  "id": "ann-001",
+  "kind": "callout",
+  "severity": "warn",
+  "timeRange": {
+    "startMono": 1000,
+    "endMono": 3500
+  },
+  "target": {
+    "selector": "button[data-testid='save']",
+    "pageId": "page-main",
+    "bbox": {
+      "x": 420,
+      "y": 180,
+      "width": 96,
+      "height": 32
+    },
+    "evidenceRef": "event:42"
+  },
+  "label": "Save button moved 3px left",
+  "shape": "rect",
+  "lineStyle": "dashed",
+  "placement": "leader",
+  "priority": 10,
+  "collisionPolicy": "avoid",
+  "confidence": 0.92,
+  "reviewState": "open"
+}

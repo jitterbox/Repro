@@ -1,0 +1,6 @@
+maskedmerge_gblur 1.378s
+chained_n1 0.888s
+chained_n5 1.017s
+chained_n20 1.638s
+maskedmerge_pixelize 0.901s
+Artifacts in /home/cory/repos/Repro/docs/spike-artifacts/redaction

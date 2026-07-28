@@ -1,0 +1,12 @@
+{
+  "id": "redaction-block",
+  "assets": [
+    { "kind": "json", "href": "assets/redaction-block.report.json" }
+  ],
+  "expected": {
+    "completed": true,
+    "pass": false,
+    "redactionBlocked": true,
+    "redactionLeakage": 0.1
+  }
+}

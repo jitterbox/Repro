@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/probe" },
+    { "path": "./packages/capture" },
+    { "path": "./packages/plan" },
+    { "path": "./packages/render" },
+    { "path": "./packages/compare" },
+    { "path": "./packages/alm" },
+    { "path": "./packages/cli" },
+    { "path": "./packages/viewer" },
+    { "path": "./packages/evaluation" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/vault" }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "550e8400-e29b-41d4-a716-446655440000",
+  "mode": "repro",
+  "annotations": [
+    {
+      "id": "ann-001",
+      "kind": "step",
+      "severity": "info",
+      "timeRange": {
+        "startMono": 0,
+        "endMono": 2000
+      },
+      "label": "Step 1: Open cart",
+      "shape": "badge",
+      "placement": "top",
+      "priority": 1,
+      "collisionPolicy": "avoid"
+    }
+  ],
+  "chapters": [
+    {
+      "title": "Reproduction",
+      "description": "Cart total becomes NaN",
+      "startMono": 0
+    }
+  ],
+  "redactionRects": [
+    {
+      "pageId": "page-main",
+      "bbox": {
+        "x": 0,
+        "y": 600,
+        "width": 1280,
+        "height": 80
+      },
+      "startMono": 0,
+      "endMono": 10000,
+      "ruleId": "mask-email-field"
+    }
+  ],
+  "metadata": {
+    "plannerVersion": "0.1.0",
+    "modelId": "claude-sonnet",
+    "promptDigest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  }
+}

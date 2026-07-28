@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/manifest.schema.json",
+  "title": "ReproManifest",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "artifacts", "stages"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "imageDigest": { "type": "string" },
+        "playwrightVersion": { "type": "string" },
+        "browserVersion": { "type": "string" },
+        "ffmpegVersion": { "type": "string" },
+        "locale": { "type": "string" },
+        "timezone": { "type": "string" },
+        "viewport": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 },
+            "deviceScaleFactor": { "type": "number", "minimum": 0.1 }
+          },
+          "additionalProperties": false
+        },
+        "fonts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["family", "sha256"],
+            "properties": {
+              "family": { "type": "string" },
+              "style": { "type": "string" },
+              "source": { "type": "string" },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "sha256", "bytes"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "role": {
+            "type": "string",
+            "enum": [
+              "events",
+              "plan",
+              "video",
+              "vtt",
+              "thumbnail",
+              "trace",
+              "har",
+              "evidence",
+              "report"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "contentType": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "capture",
+              "normalize",
+              "analyze",
+              "redact",
+              "compose",
+              "encode",
+              "package"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "running", "complete", "failed", "invalidated"]
+          },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "artifactRefs": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": { "type": "string" },
+        "value": { "type": "string" },
+        "keyId": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "vfrTimingMap": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["frameSeq", "tMono", "tSource"],
+        "properties": {
+          "frameSeq": { "type": "integer", "minimum": 0 },
+          "tMono": { "type": "number", "minimum": 0 },
+          "tSource": { "type": "number" },
+          "dropped": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

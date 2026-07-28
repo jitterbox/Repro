@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/config.schema.json",
+  "title": "ReproConfig",
+  "type": "object",
+  "required": ["schemaVersion", "mode"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["repro", "compare", "demo"]
+    },
+    "executionProfile": {
+      "type": "string",
+      "enum": ["faithful", "controlled"],
+      "default": "faithful"
+    },
+    "timingSensitive": {
+      "type": "boolean",
+      "default": false
+    },
+    "surfaceCapture": {
+      "type": "string",
+      "enum": ["page", "os"],
+      "default": "page"
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "cursor": { "type": "boolean" },
+        "keystrokes": { "type": "boolean" },
+        "clickViz": { "type": "boolean" },
+        "consoleOverlay": { "type": "boolean" },
+        "specCard": { "type": "boolean" },
+        "steps": { "type": "boolean" },
+        "pauses": { "type": "boolean" },
+        "slowmo": { "type": "boolean" },
+        "zoom": { "type": "boolean" },
+        "redaction": { "type": "boolean" },
+        "vitalsHud": { "type": "boolean" },
+        "voiceover": { "type": "boolean" },
+        "freezeDetect": { "type": "boolean" },
+        "a11yOverlay": { "type": "boolean" },
+        "hiddenElements": { "type": "boolean" },
+        "hitTargets": { "type": "boolean" },
+        "stackingContexts": { "type": "boolean" },
+        "layoutShiftViz": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "viewport": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "deviceScaleFactor": { "type": "number", "minimum": 0.1 }
+      },
+      "additionalProperties": false
+    },
+    "redaction": {
+      "type": "object",
+      "properties": {
+        "strict": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "compare": {
+      "type": "object",
+      "properties": {
+        "layout": {
+          "type": "string",
+          "enum": [
+            "side-by-side",
+            "onion",
+            "wipe",
+            "blink",
+            "difference"
+          ]
+        },
+        "baselineRunId": { "type": "string", "format": "uuid" },
+        "candidateRunId": { "type": "string", "format": "uuid" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

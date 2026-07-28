@@ -1,0 +1,14 @@
+{
+  "id": "login-flow",
+  "assets": [
+    { "kind": "mp4", "href": "assets/login-flow.mp4" },
+    { "kind": "vtt", "href": "assets/login-flow.vtt" },
+    { "kind": "json", "href": "assets/login-flow.report.json" }
+  ],
+  "expected": {
+    "detectionPrecision": 0.95,
+    "detectionRecall": 0.9,
+    "humanUsefulness": 0.85,
+    "redactionLeakage": 0
+  }
+}

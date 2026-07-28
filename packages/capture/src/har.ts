@@ -1,0 +1,222 @@
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+
+export interface HarSanitizerOptions {
+  readonly allowedHeaders?: readonly string[];
+  readonly allowedQueryParams?: readonly string[];
+  readonly allowRequestBodyForUrls?: readonly string[];
+  readonly allowResponseBodyForUrls?: readonly string[];
+  readonly redactedValue?: string;
+}
+
+type MutableRecord = Record<string, unknown>;
+
+const AUTH_HEADER_NAMES = new Set([
+  'authorization',
+  'cookie',
+  'proxy-authorization',
+  'set-cookie',
+]);
+
+const OAUTH_QUERY_NAMES = new Set([
+  'access_token',
+  'code',
+  'id_token',
+  'oauth_token',
+  'refresh_token',
+]);
+
+export function sanitizeHar<T>(
+  har: T,
+  options: HarSanitizerOptions = {},
+): T {
+  const clone = jsonClone(har);
+  const entries = harEntries(clone);
+
+  for (const entry of entries) {
+    sanitizeEntry(entry, options);
+  }
+
+  return clone;
+}
+
+export async function sanitizeHarFile(
+  inputPath: string,
+  outputPath: string,
+  options: HarSanitizerOptions = {},
+): Promise<void> {
+  const rawHar = JSON.parse(await readFile(inputPath, 'utf8')) as unknown;
+  const sanitized = sanitizeHar(rawHar, options);
+
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(sanitized, null, 2)}\n`);
+
+  if (inputPath !== outputPath) {
+    await unlink(inputPath).catch(() => undefined);
+  }
+}
+
+function sanitizeEntry(
+  entry: MutableRecord,
+  options: HarSanitizerOptions,
+): void {
+  const request = recordFrom(entry.request);
+  const response = recordFrom(entry.response);
+  const url = stringFrom(request.url);
+
+  sanitizeHeaders(request, options);
+  sanitizeHeaders(response, options);
+  sanitizeQuery(request, options);
+  sanitizeRequestBody(request, url, options);
+  sanitizeResponseBody(response, url, options);
+}
+
+function sanitizeHeaders(
+  owner: MutableRecord,
+  options: HarSanitizerOptions,
+): void {
+  const headers = arrayFrom(owner.headers)
+    .filter((header) => !isStrippedHeader(header))
+    .map((header) => sanitizeHeader(header, options));
+
+  owner.headers = headers;
+}
+
+function sanitizeHeader(
+  header: MutableRecord,
+  options: HarSanitizerOptions,
+): MutableRecord {
+  const name = stringFrom(header.name);
+
+  if (!allowedName(name, options.allowedHeaders)) {
+    return { ...header, value: redactedValue(options) };
+  }
+
+  return header;
+}
+
+function sanitizeQuery(
+  request: MutableRecord,
+  options: HarSanitizerOptions,
+): void {
+  const query = arrayFrom(request.queryString)
+    .filter((param) => !isOauthParam(param))
+    .map((param) => sanitizeQueryParam(param, options));
+
+  request.queryString = query;
+}
+
+function sanitizeQueryParam(
+  param: MutableRecord,
+  options: HarSanitizerOptions,
+): MutableRecord {
+  const name = stringFrom(param.name);
+
+  if (!allowedName(name, options.allowedQueryParams)) {
+    return { ...param, value: redactedValue(options) };
+  }
+
+  return param;
+}
+
+function sanitizeRequestBody(
+  request: MutableRecord,
+  url: string,
+  options: HarSanitizerOptions,
+): void {
+  const postData = recordFrom(request.postData);
+
+  if (Object.keys(postData).length === 0) {
+    return;
+  }
+
+  if (urlAllowed(url, options.allowRequestBodyForUrls)) {
+    return;
+  }
+
+  delete postData.text;
+  postData.params = arrayFrom(postData.params).map(stripParamValue);
+  request.postData = postData;
+}
+
+function sanitizeResponseBody(
+  response: MutableRecord,
+  url: string,
+  options: HarSanitizerOptions,
+): void {
+  const content = recordFrom(response.content);
+
+  if (Object.keys(content).length === 0) {
+    return;
+  }
+
+  if (urlAllowed(url, options.allowResponseBodyForUrls)) {
+    return;
+  }
+
+  delete content.text;
+  delete content.encoding;
+  response.content = content;
+}
+
+function stripParamValue(param: MutableRecord): MutableRecord {
+  return { ...param, value: '[redacted]' };
+}
+
+function isStrippedHeader(header: MutableRecord): boolean {
+  return AUTH_HEADER_NAMES.has(stringFrom(header.name).toLowerCase());
+}
+
+function isOauthParam(param: MutableRecord): boolean {
+  return OAUTH_QUERY_NAMES.has(stringFrom(param.name).toLowerCase());
+}
+
+function allowedName(
+  name: string,
+  allowedNames: readonly string[] | undefined,
+): boolean {
+  const normalized = name.toLowerCase();
+  return allowedNames?.some((allowed) => allowed.toLowerCase() === normalized)
+    ?? false;
+}
+
+function urlAllowed(
+  url: string,
+  allowedUrls: readonly string[] | undefined,
+): boolean {
+  return allowedUrls?.some((allowed) => url.startsWith(allowed)) ?? false;
+}
+
+function redactedValue(options: HarSanitizerOptions): string {
+  return options.redactedValue ?? '[redacted]';
+}
+
+function harEntries(value: unknown): MutableRecord[] {
+  const root = recordFrom(value);
+  const log = recordFrom(root.log);
+  return arrayFrom(log.entries);
+}
+
+function arrayFrom(value: unknown): MutableRecord[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter(isRecord);
+}
+
+function recordFrom(value: unknown): MutableRecord {
+  return isRecord(value) ? value : {};
+}
+
+function isRecord(value: unknown): value is MutableRecord {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function stringFrom(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function jsonClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}

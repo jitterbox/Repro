@@ -1,0 +1,58 @@
+{
+  "overlayCompositing": {
+    "playwrightScreencastFrames": [
+      {
+        "timestamp": 1785196270923.042,
+        "bufferBytes": 0
+      }
+    ],
+    "frameDimensionStable": false,
+    "playwrightScreencastApi": true,
+    "domFrameCount": 1,
+    "cdpFrameCount": 1,
+    "finding": "DOM overlays appear in page.screenshot and CDP screencast. CDP Overlay.highlightRect is compositor-level and may not appear in screencast/screenshot the same way; prefer DOM/shadow overlays for guaranteed capture compositing.",
+    "artifacts": [
+      "overlay-dom.png",
+      "overlay-cdp.png"
+    ]
+  },
+  "screencastTracing": {
+    "bothWorked": true,
+    "conflictError": null,
+    "frameCount": 12,
+    "uniqueDimensions": [
+      "undefinedxundefined"
+    ],
+    "dimensionStable": true,
+    "recommendation": "Concurrent tracing + screencast succeeded in this environment; still isolate clients in production to avoid CDP session races."
+  },
+  "rrweb": {
+    "wallMs": 1000,
+    "mutations": 124,
+    "overlayMutationsSeen": 62,
+    "exclusionStrategy": "Mark overlay host with data-repro-overlay and exclude via rrweb record options (slimDOM / mask / sampling) plus blockClass / ignoreSelector.",
+    "overhead": {
+      "baseline": 6.899999998509884,
+      "withObs": 1,
+      "delta": -5.899999998509884,
+      "mutationCallbacks": 0
+    },
+    "finding": "Overlay mutations are visible to a naive MutationObserver; production must exclude [data-repro-overlay] from rrweb record options."
+  },
+  "colorAndCsp": {
+    "initScriptRan": true,
+    "color": {
+      "colorGamut": "srgb",
+      "dpr": 1
+    },
+    "cspFinding": "addInitScript runs as an extension-like world in Playwright and is generally CSP-tolerant compared to injected <script> tags; still avoid innerHTML and eval in the probe IIFE."
+  },
+  "multiPage": {
+    "pageCount": 2,
+    "urls": [
+      "https://example.local/csp.html",
+      "about:blank"
+    ],
+    "finding": "Each Page needs its own screencast session; stitch with hard cuts and chapter markers at page-focus transitions."
+  }
+}

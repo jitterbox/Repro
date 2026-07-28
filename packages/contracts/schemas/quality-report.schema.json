@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/quality-report.schema.json",
+  "title": "ReproQualityReport",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "generatedAt", "metrics"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "corpusVersion": {
+      "type": "string"
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["detection", "alignment", "redaction", "determinism"],
+      "properties": {
+        "detection": {
+          "type": "object",
+          "properties": {
+            "precision": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "recall": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "hallucinationRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "regionIoU": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "alignment": {
+          "type": "object",
+          "properties": {
+            "meanErrorMs": { "type": "number", "minimum": 0 },
+            "maxErrorMs": { "type": "number", "minimum": 0 },
+            "uncertainMatchCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "redaction": {
+          "type": "object",
+          "properties": {
+            "leakageRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "canaryPassRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "determinism": {
+          "type": "object",
+          "properties": {
+            "replayPassRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "hashMatchRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "humanUsefulness": {
+          "type": "object",
+          "properties": {
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "sampleSize": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "benchmarks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "score"],
+        "properties": {
+          "name": { "type": "string" },
+          "score": { "type": "number" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "failures": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
