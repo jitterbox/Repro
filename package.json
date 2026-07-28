@@ -10,8 +10,11 @@
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r run typecheck"
+    "typecheck": "pnpm -r run typecheck",
+    "test:e2e-fixture": "pnpm --filter @repro/e2e-fixture test:e2e",
+    "shoplite:dev": "pnpm --filter @repro/shoplite dev"
   },
+
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/better-sqlite3": "^7.6.13",

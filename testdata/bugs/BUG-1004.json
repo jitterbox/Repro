@@ -1,0 +1,62 @@
+{
+  "id": "BUG-1004",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Export CSV submenu paints under Actions menu",
+  "System.Description": "<p>Export CSV submenu paints under Actions menu</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Check I accept terms</li><li>Click Actions</li><li>Click Export</li><li>Observe CSV/JSON submenu appears behind parent menu</li><li>Attempt to click CSV</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "critical",
+  "Custom.Tags": [
+    "functional",
+    "stacking",
+    "multi-step"
+  ],
+  "Custom.Selectors": {
+    "terms": "chk-terms",
+    "actions": "btn-actions",
+    "export": "btn-export",
+    "csv": "btn-export-csv",
+    "menu1": "menu-actions",
+    "menu2": "menu-export"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "menu-actions",
+      "shape": "rect",
+      "label": "Parent z-index 50"
+    },
+    {
+      "target": "menu-export",
+      "shape": "rect",
+      "label": "Child z-index 20 (behind)"
+    },
+    {
+      "target": "btn-export-csv",
+      "shape": "ellipse",
+      "label": "Unreachable CSV"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "showActions": true,
+    "features": {
+      "steps": true,
+      "clickViz": true,
+      "stackingContexts": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1004",
+      "bugId": "BUG-1004"
+    }
+  }
+}

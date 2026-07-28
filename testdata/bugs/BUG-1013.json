@@ -1,0 +1,54 @@
+{
+  "id": "BUG-1013",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Help modal Tab cycle skips Close",
+  "System.Description": "<p>Help modal Tab cycle skips Close</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Click Help</li><li>Press Tab repeatedly from Option B</li><li>Focus never reaches Close</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "a11y",
+    "keyboard"
+  ],
+  "Custom.Selectors": {
+    "help": "btn-help",
+    "modal": "help-modal",
+    "a": "modal-a",
+    "b": "modal-b",
+    "close": "modal-close"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "modal-b",
+      "shape": "rect",
+      "label": "Tab trapped"
+    },
+    {
+      "target": "modal-close",
+      "shape": "underline",
+      "label": "Unreachable"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "keystrokes": true,
+      "a11yOverlay": true,
+      "steps": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1013",
+      "bugId": "BUG-1013"
+    }
+  }
+}

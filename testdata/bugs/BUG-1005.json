@@ -1,0 +1,52 @@
+{
+  "id": "BUG-1005",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Advanced pricing panel hover-only with wrong currency",
+  "System.Description": "<p>Advanced pricing panel hover-only with wrong currency</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Note Advanced pricing region appears empty</li><li>Hover the advanced wrap to reveal panel</li><li>Observe currency glyph is € instead of $</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "hidden",
+    "hover"
+  ],
+  "Custom.Selectors": {
+    "wrap": "advanced-wrap",
+    "panel": "advanced-panel",
+    "currency": "advanced-currency"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "advanced-panel",
+      "shape": "rect",
+      "label": "Hidden until hover"
+    },
+    {
+      "target": "advanced-currency",
+      "shape": "underline",
+      "label": "Expected $"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "hiddenElements": true,
+      "cursor": true,
+      "steps": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1005",
+      "bugId": "BUG-1005"
+    }
+  }
+}

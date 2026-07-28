@@ -1,0 +1,345 @@
+:root {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --text: #1a1a1a;
+  --muted: #5f6673;
+  --border: #d8dde8;
+  --accent: #2457d6;
+  --danger: #c42020;
+  --gutter: 16px;
+  --price-color: #1a1a1a;
+  --price-bg: #ffffff;
+  --save-offset: 0px;
+  --menu-z1: 40;
+  --menu-z2: 50;
+  --badge-duration: 200ms;
+  --badge-iteration: 1;
+  --drag-offset: 0px;
+  --hit-size: 28px;
+  --promo-reserve: 48px;
+  --currency-glyph: '$';
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+html[data-repro-fixture='broken'] {
+  --price-color: #888888;
+  --price-bg: #f0f0f0;
+  --save-offset: -12px;
+  --menu-z1: 50;
+  --menu-z2: 20;
+  --badge-duration: 120ms;
+  --badge-iteration: 7;
+  --drag-offset: 8px;
+  --hit-size: 8px;
+  --promo-reserve: 0px;
+  --currency-glyph: '€';
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.promo-slot {
+  min-height: var(--promo-reserve);
+}
+
+.promo-banner {
+  background: #ffe8a3;
+  color: #5a4200;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.catalog,
+.settings {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sku-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sku {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--price-bg);
+  transform: translateY(var(--drag-offset-current, 0px));
+}
+
+.sku.dragging {
+  opacity: 0.6;
+}
+
+.sku-price {
+  color: var(--price-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.handle {
+  cursor: grab;
+  user-select: none;
+}
+
+.tiny-menu {
+  width: var(--hit-size);
+  height: var(--hit-size);
+  padding: 0;
+  line-height: 1;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.badge-wrap {
+  margin-top: 16px;
+  min-height: 28px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e7f0ff;
+  color: var(--accent);
+  animation: badge-fade var(--badge-duration) ease-in-out
+    var(--badge-iteration);
+}
+
+@keyframes badge-fade {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+html[data-repro-fixture='fixed'] .status-badge {
+  animation: badge-once 200ms ease-out 1;
+}
+
+@keyframes badge-once {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.advanced-wrap {
+  margin-top: 20px;
+  position: relative;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  min-height: 64px;
+}
+
+.advanced-panel {
+  margin-top: 8px;
+  padding: 10px;
+  background: #f3f6ff;
+  border-radius: 6px;
+}
+
+html[data-repro-fixture='broken'] .advanced-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-repro-fixture='broken'] .advanced-wrap:hover .advanced-panel,
+html[data-repro-fixture='broken'] .advanced-wrap:focus-within .advanced-panel {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html[data-repro-fixture='fixed'] .advanced-panel {
+  display: block !important;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--gutter);
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.field-label {
+  font-weight: 600;
+}
+
+.terms {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.actions-menu {
+  position: relative;
+  margin: 16px 0;
+}
+
+.menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.menu.level-1 {
+  z-index: var(--menu-z1);
+}
+
+.menu.level-2 {
+  left: 100%;
+  top: 0;
+  z-index: var(--menu-z2);
+}
+
+.menu li {
+  position: relative;
+}
+
+.menu button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+}
+
+.menu button:hover {
+  background: #eef3ff;
+}
+
+.save-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--gutter);
+  align-items: center;
+  margin-top: 20px;
+}
+
+.save {
+  justify-self: start;
+  margin-left: var(--save-offset);
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  padding: 4px;
+}
+
+.context-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 12px;
+  text-align: left;
+  color: var(--danger);
+}
+
+.help-modal {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  width: min(360px, 90vw);
+}
+
+.help-modal::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #111;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+
+.export-status {
+  color: #176b35;
+  font-weight: 600;
+}
+
+button {
+  cursor: pointer;
+}

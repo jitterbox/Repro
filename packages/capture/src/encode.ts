@@ -76,15 +76,19 @@ async function ffmpegHasZscale(command: string): Promise<boolean> {
   return result.includes(' zscale ');
 }
 
-function videoFilter(useZscale: boolean): string {
+/**
+ * Screencast JPEGs are full-range yuvj420p (often tagged bt470bg). Bare
+ * zscale without matrixin fails with "no path between colorspaces".
+ */
+export function videoFilter(useZscale: boolean): string {
   if (!useZscale) {
-    return 'format=yuv420p';
+    return 'scale=in_range=full:out_range=tv,format=yuv420p';
   }
 
-  return [
-    'zscale=primaries=bt709:transfer=bt709:matrix=bt709',
-    'format=yuv420p',
-  ].join(',');
+  return (
+    'zscale=matrixin=170m:transferin=709:primariesin=709:rangein=full:' +
+    'matrix=709:transfer=709:primaries=709:range=limited,format=yuv420p'
+  );
 }
 
 function run(

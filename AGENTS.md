@@ -10,6 +10,8 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
    configs, and hard constraints.
 2. Skills (thin CLI wrappers): `skills/repro-{capture,annotate,compare,file}/`
 3. Spike decisions: [`docs/spikes.md`](docs/spikes.md)
+4. Fixture corpus: [`apps/shoplite/`](apps/shoplite/) + [`testdata/bugs/`](testdata/bugs/)
+   (ADO-shaped work items). Run videos via `pnpm test:e2e-fixture`.
 
 ## Non-negotiables
 
@@ -30,3 +32,4 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
 | Capture / annotate / file | matching `skills/repro-*` |
 | Before/after | mode `compare` + `repro compare` |
 | Validate setup | `pnpm build && node scripts/e2e/smoke.mjs` |
+| Fixture bugs / feature videos | `apps/shoplite`, `testdata/bugs`, `pnpm test:e2e-fixture` |

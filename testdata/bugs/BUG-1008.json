@@ -1,0 +1,51 @@
+{
+  "id": "BUG-1008",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Save emits TypeError and secondary console.error",
+  "System.Description": "<p>Save emits TypeError and secondary console.error</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Click Save</li><li>Observe console TypeError and validation console.error</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "critical",
+  "Custom.Tags": [
+    "console",
+    "functional"
+  ],
+  "Custom.Selectors": {
+    "save": "btn-save",
+    "email": "input-email"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "btn-save",
+      "shape": "rect",
+      "label": "Triggers TypeError"
+    },
+    {
+      "target": "input-email",
+      "shape": "underline",
+      "label": "Secondary console.error"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "consoleOverlay": true,
+      "steps": true,
+      "clickViz": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1008",
+      "bugId": "BUG-1008"
+    }
+  }
+}

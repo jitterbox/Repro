@@ -1,0 +1,46 @@
+{
+  "id": "BUG-1003",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Status badge opacity flickers on load",
+  "System.Description": "<p>Status badge opacity flickers on load</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Hard reload ShopLite ?fixture=broken</li><li>Watch status badge flicker for ~800ms</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "timing",
+    "animation"
+  ],
+  "Custom.Selectors": {
+    "badge": "status-badge"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "status-badge",
+      "shape": "rect",
+      "label": "Flicker loop"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "pauses": true,
+      "slowmo": true,
+      "steps": true,
+      "specCard": true
+    },
+    "timingSensitive": true,
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1003",
+      "bugId": "BUG-1003"
+    }
+  }
+}

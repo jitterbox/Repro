@@ -1,0 +1,59 @@
+{
+  "id": "BUG-1001",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Save button misaligned 12px left of settings column",
+  "System.Description": "<p>Save button misaligned 12px left of settings column</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite with ?fixture=broken</li><li>Open Checkout settings panel</li><li>Observe Persist label vs Save button horizontal alignment</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "high",
+  "Custom.Tags": [
+    "visual",
+    "compare",
+    "geometry"
+  ],
+  "Custom.Selectors": {
+    "save": "btn-save",
+    "label": "save-label",
+    "row": "save-row"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "btn-save",
+      "shape": "rect",
+      "label": "Δx = -12px vs label column"
+    },
+    {
+      "target": "save-label",
+      "shape": "underline",
+      "label": "Label column"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "compare",
+    "profile": "controlled",
+    "features": {
+      "steps": true,
+      "zoom": true,
+      "specCard": true
+    },
+    "compare": {
+      "strategy": "difference",
+      "streams": [
+        "dom",
+        "video"
+      ]
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1001",
+      "bugId": "BUG-1001"
+    }
+  }
+}

@@ -9,6 +9,8 @@ Monorepo for the **Repro AI** bug reproduction video pipeline.
 | [`AGENTS.md`](AGENTS.md) | Agent entrypoint (constraints + routing) |
 | [`docs/ai-usage.md`](docs/ai-usage.md) | Full AI playbook: modes, features, **bug-class → config matrix**, CLI playbooks |
 | [`docs/spikes.md`](docs/spikes.md) | Phase 0 spike results / design locks |
+| [`apps/shoplite/`](apps/shoplite/) | Broken/fixed fixture SPA for demos & E2E videos |
+| [`testdata/bugs/`](testdata/bugs/) | ADO-shaped bug work items for ShopLite |
 | `skills/repro-*/SKILL.md` | Thin CLI wrappers for capture / annotate / compare / file |
 
 ## Packages
@@ -44,6 +46,8 @@ pnpm build
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm test:e2e-fixture   # ShopLite feature-coverage videos
+pnpm shoplite:dev       # http://localhost:5177/?fixture=broken
 ```
 
 ## CLI Usage

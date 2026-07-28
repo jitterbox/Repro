@@ -1,0 +1,56 @@
+{
+  "id": "BUG-1002",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Price text fails contrast on muted surface",
+  "System.Description": "<p>Price text fails contrast on muted surface</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Inspect Alpha/Beta/Gamma price colors on sku cards</li><li>Compare to mockup.tokens.json textPrimary on priceBackground</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "visual",
+    "a11y",
+    "compare"
+  ],
+  "Custom.Selectors": {
+    "price": "price-alpha"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "price-alpha",
+      "shape": "underline",
+      "label": "#888 on #f0f0f0"
+    },
+    {
+      "target": "price-alpha",
+      "shape": "rect",
+      "label": "Expected #1a1a1a"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "compare",
+    "profile": "controlled",
+    "features": {
+      "a11yOverlay": true,
+      "steps": true,
+      "specCard": true
+    },
+    "compare": {
+      "strategy": "onion",
+      "streams": [
+        "video"
+      ]
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1002",
+      "bugId": "BUG-1002"
+    }
+  }
+}

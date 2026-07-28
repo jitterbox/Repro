@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" data-repro-fixture="broken">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShopLite Admin</title>
+    <meta name="repro-spec-title" content="ShopLite catalog admin" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="topbar" data-testid="topbar">
+      <h1 data-testid="app-title">ShopLite</h1>
+      <div class="topbar-actions">
+        <button type="button" data-testid="btn-recalculate">Recalculate</button>
+        <button type="button" data-testid="btn-invoice">Invoice preview</button>
+        <button type="button" data-testid="btn-help">Help</button>
+      </div>
+    </header>
+
+    <div data-testid="promo-slot" class="promo-slot" aria-live="polite"></div>
+
+    <main class="layout">
+      <section class="catalog" data-testid="catalog">
+        <div class="section-head">
+          <h2>Products</h2>
+          <button
+            type="button"
+            class="tiny-menu"
+            data-testid="btn-row-menu"
+            aria-label="Row menu"
+          >
+            ⋯
+          </button>
+        </div>
+
+        <ul class="sku-list" data-testid="sku-list">
+          <li class="sku" data-testid="sku-alpha" data-sku="alpha" draggable="true">
+            <span class="handle" data-testid="drag-handle-alpha">⠿</span>
+            <span class="sku-name">Alpha Widget</span>
+            <span class="sku-price" data-testid="price-alpha">€24.00</span>
+            <button type="button" class="sku-row" data-testid="row-alpha">
+              Select
+            </button>
+          </li>
+          <li class="sku" data-testid="sku-beta" data-sku="beta" draggable="true">
+            <span class="handle" data-testid="drag-handle-beta">⠿</span>
+            <span class="sku-name">Beta Gadget</span>
+            <span class="sku-price" data-testid="price-beta">€18.50</span>
+            <button type="button" class="sku-row" data-testid="row-beta">
+              Select
+            </button>
+          </li>
+          <li class="sku" data-testid="sku-gamma" data-sku="gamma" draggable="true">
+            <span class="handle" data-testid="drag-handle-gamma">⠿</span>
+            <span class="sku-name">Gamma Kit</span>
+            <span class="sku-price" data-testid="price-gamma">€42.00</span>
+            <button type="button" class="sku-row" data-testid="row-gamma">
+              Select
+            </button>
+          </li>
+        </ul>
+
+        <div class="badge-wrap">
+          <span class="status-badge" data-testid="status-badge">Updated</span>
+        </div>
+
+        <div
+          class="advanced-wrap"
+          data-testid="advanced-wrap"
+          tabindex="0"
+        >
+          <span class="advanced-label">Hover for advanced pricing</span>
+          <div class="advanced-panel" data-testid="advanced-panel" hidden>
+            <p>
+              Currency:
+              <strong data-testid="advanced-currency">€</strong>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="settings" data-testid="settings">
+        <h2>Checkout settings</h2>
+
+        <label class="field" data-testid="field-email">
+          <span class="field-label">Notify email</span>
+          <input
+            data-testid="input-email"
+            type="email"
+            name="email"
+            autocomplete="off"
+            value="canary@example.test"
+          />
+        </label>
+
+        <label class="terms" data-testid="terms-label">
+          <input type="checkbox" data-testid="chk-terms" />
+          I accept terms
+        </label>
+
+        <div class="actions-menu" data-testid="actions-menu">
+          <button type="button" data-testid="btn-actions">Actions</button>
+          <ul class="menu level-1" data-testid="menu-actions" hidden>
+            <li>
+              <button type="button" data-testid="btn-export">Export ▸</button>
+              <ul class="menu level-2" data-testid="menu-export" hidden>
+                <li>
+                  <button type="button" data-testid="btn-export-csv">CSV</button>
+                </li>
+                <li>
+                  <button type="button" data-testid="btn-export-json">
+                    JSON
+                  </button>
+                </li>
+              </ul>
+            </li>
+            <li>
+              <button type="button" data-testid="btn-archive">Archive</button>
+            </li>
+          </ul>
+        </div>
+
+        <div class="save-row" data-testid="save-row">
+          <span class="field-label" data-testid="save-label">Persist</span>
+          <button type="button" class="save" data-testid="btn-save">
+            Save
+          </button>
+        </div>
+
+        <p class="export-status" data-testid="export-status" hidden>
+          Exported
+        </p>
+      </aside>
+    </main>
+
+    <div
+      class="context-menu"
+      data-testid="context-menu"
+      hidden
+      role="menu"
+    >
+      <button type="button" data-testid="ctx-delete">Delete</button>
+    </div>
+
+    <dialog data-testid="help-modal" class="help-modal">
+      <h3>Help</h3>
+      <p>Press Tab to move between controls.</p>
+      <button type="button" data-testid="modal-a">Option A</button>
+      <button type="button" data-testid="modal-b">Option B</button>
+      <button type="button" data-testid="modal-close">Close</button>
+    </dialog>
+
+    <div class="toast" data-testid="toast" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

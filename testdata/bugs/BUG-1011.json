@@ -1,0 +1,45 @@
+{
+  "id": "BUG-1011",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Row overflow menu hit target is 8×8",
+  "System.Description": "<p>Row overflow menu hit target is 8×8</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Attempt to click the ⋯ control near Products heading</li><li>Misses are frequent due to 8px hit box</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "a11y",
+    "hit-target"
+  ],
+  "Custom.Selectors": {
+    "menu": "btn-row-menu"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "btn-row-menu",
+      "shape": "ellipse",
+      "label": "8×8 hit target"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "hitTargets": true,
+      "zoom": true,
+      "a11yOverlay": true,
+      "steps": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1011",
+      "bugId": "BUG-1011"
+    }
+  }
+}

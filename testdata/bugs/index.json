@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "bugs": [
+    {
+      "id": "BUG-1001",
+      "title": "Save button misaligned 12px left of settings column",
+      "severity": "high",
+      "tags": [
+        "visual",
+        "compare",
+        "geometry"
+      ],
+      "path": "testdata/bugs/BUG-1001.json"
+    },
+    {
+      "id": "BUG-1002",
+      "title": "Price text fails contrast on muted surface",
+      "severity": "medium",
+      "tags": [
+        "visual",
+        "a11y",
+        "compare"
+      ],
+      "path": "testdata/bugs/BUG-1002.json"
+    },
+    {
+      "id": "BUG-1003",
+      "title": "Status badge opacity flickers on load",
+      "severity": "medium",
+      "tags": [
+        "timing",
+        "animation"
+      ],
+      "path": "testdata/bugs/BUG-1003.json"
+    },
+    {
+      "id": "BUG-1004",
+      "title": "Export CSV submenu paints under Actions menu",
+      "severity": "critical",
+      "tags": [
+        "functional",
+        "stacking",
+        "multi-step"
+      ],
+      "path": "testdata/bugs/BUG-1004.json"
+    },
+    {
+      "id": "BUG-1005",
+      "title": "Advanced pricing panel hover-only with wrong currency",
+      "severity": "medium",
+      "tags": [
+        "hidden",
+        "hover"
+      ],
+      "path": "testdata/bugs/BUG-1005.json"
+    },
+    {
+      "id": "BUG-1006",
+      "title": "Context menu Delete always targets Alpha row",
+      "severity": "high",
+      "tags": [
+        "pointer",
+        "hit-target"
+      ],
+      "path": "testdata/bugs/BUG-1006.json"
+    },
+    {
+      "id": "BUG-1007",
+      "title": "Drag reorder leaves 8px residual offset",
+      "severity": "medium",
+      "tags": [
+        "pointer",
+        "drag"
+      ],
+      "path": "testdata/bugs/BUG-1007.json"
+    },
+    {
+      "id": "BUG-1008",
+      "title": "Save emits TypeError and secondary console.error",
+      "severity": "critical",
+      "tags": [
+        "console",
+        "functional"
+      ],
+      "path": "testdata/bugs/BUG-1008.json"
+    },
+    {
+      "id": "BUG-1009",
+      "title": "Promo banner inject causes layout shift",
+      "severity": "high",
+      "tags": [
+        "cls",
+        "timing"
+      ],
+      "path": "testdata/bugs/BUG-1009.json"
+    },
+    {
+      "id": "BUG-1010",
+      "title": "Recalculate freezes main thread ~1.2s",
+      "severity": "high",
+      "tags": [
+        "freeze",
+        "timing"
+      ],
+      "path": "testdata/bugs/BUG-1010.json"
+    },
+    {
+      "id": "BUG-1011",
+      "title": "Row overflow menu hit target is 8×8",
+      "severity": "medium",
+      "tags": [
+        "a11y",
+        "hit-target"
+      ],
+      "path": "testdata/bugs/BUG-1011.json"
+    },
+    {
+      "id": "BUG-1012",
+      "title": "Notify email exposes canary PII in evidence path",
+      "severity": "critical",
+      "tags": [
+        "redaction",
+        "pii"
+      ],
+      "path": "testdata/bugs/BUG-1012.json"
+    },
+    {
+      "id": "BUG-1013",
+      "title": "Help modal Tab cycle skips Close",
+      "severity": "medium",
+      "tags": [
+        "a11y",
+        "keyboard"
+      ],
+      "path": "testdata/bugs/BUG-1013.json"
+    },
+    {
+      "id": "BUG-1014",
+      "title": "Invoice preview popup shows wrong cart total",
+      "severity": "high",
+      "tags": [
+        "multipage",
+        "functional"
+      ],
+      "path": "testdata/bugs/BUG-1014.json"
+    }
+  ]
+}

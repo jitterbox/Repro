@@ -278,6 +278,12 @@ export class CaptureSession {
       return;
     }
 
+    this.#sink.emitEvent({
+      kind: 'step.chapter',
+      pageId: this.#primaryPageId(),
+      payload: { title },
+    });
+
     try {
       await showScreencastChapter(this.page, title);
     } catch (error) {
@@ -398,6 +404,12 @@ export class CaptureSession {
       registration.page,
       profileOptions(this.#options, this.#config),
     );
+    await registration.page
+      .setViewportSize({
+        height: this.#config.viewport.height,
+        width: this.#config.viewport.width,
+      })
+      .catch(() => undefined);
     this.#telemetry.push(
       await startCdpTelemetry({
         page: registration.page,

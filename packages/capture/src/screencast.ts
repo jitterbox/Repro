@@ -5,7 +5,7 @@ import type { MonotonicClockBridge, ReproStore, Viewport } from '@repro/core';
 import type { CDPSession, Page } from 'playwright';
 
 import { FrameQueue } from './frame-queue.js';
-import { assertJpegDimensions } from './jpeg-dims.js';
+import { JpegDimensionsError, assertJpegDimensions } from './jpeg-dims.js';
 
 export interface ScreencastOptions {
   readonly clock: MonotonicClockBridge;
@@ -35,17 +35,6 @@ export interface PageScreencast {
 interface RawScreencastFrame {
   readonly data: Buffer;
   readonly sourceTs: number;
-}
-
-interface ExperimentalScreencastHandle {
-  readonly stop?: () => Promise<void>;
-}
-
-interface ExperimentalScreencast {
-  start(options: {
-    readonly onFrame: (frame: unknown) => void;
-  }): Promise<ExperimentalScreencastHandle | undefined>;
-  stop?: () => Promise<void>;
 }
 
 interface CdpScreencastFrame {
@@ -98,8 +87,9 @@ class PageScreencastSession implements PageScreencast {
   async start(): Promise<void> {
     await mkdir(this.#options.directory, { recursive: true });
 
-    this.#stopCapture =
-      (await this.#startNativeScreencast()) ?? (await this.#startCdp());
+    // CDP respects maxWidth/maxHeight; native page.screencast does not
+    // reliably match the configured viewport when showActions runs.
+    this.#stopCapture = await this.#startCdp();
   }
 
   async stop(): Promise<void> {
@@ -107,25 +97,6 @@ class PageScreencastSession implements PageScreencast {
     await this.#stopCapture?.();
     await this.#drainPromise;
     await this.#writeTimestampTable();
-  }
-
-  async #startNativeScreencast(): Promise<(() => Promise<void>) | undefined> {
-    const screencast = nativeScreencastFrom(this.#options.page);
-
-    if (screencast?.start === undefined) {
-      return undefined;
-    }
-
-    const handle = await screencast.start({
-      onFrame: (frame) => {
-        this.#enqueueFrame(nativeFrameFrom(frame, this.#options.clock));
-      },
-    });
-
-    return async () => {
-      await handle?.stop?.();
-      await screencast.stop?.();
-    };
   }
 
   async #startCdp(): Promise<() => Promise<void>> {
@@ -199,7 +170,16 @@ class PageScreencastSession implements PageScreencast {
     const seq = this.#seq + 1;
     const path = join(this.#options.directory, frameName(seq));
 
-    assertJpegDimensions(frame.data, this.#options.viewport);
+    try {
+      assertJpegDimensions(frame.data, this.#options.viewport);
+    } catch (error) {
+      if (error instanceof JpegDimensionsError) {
+        // Popups/resizes can emit a few wrong-size frames; drop them.
+        return;
+      }
+      throw error;
+    }
+
     await writeFile(path, frame.data);
     this.#appendFrame(path, seq, frame.sourceTs);
     this.#seq = seq;
@@ -235,17 +215,6 @@ function cdpStartOptions(options: ScreencastOptions): Record<string, unknown> {
     maxHeight: options.viewport.height,
     maxWidth: options.viewport.width,
     quality: 90,
-  };
-}
-
-function nativeFrameFrom(
-  frame: unknown,
-  clock: MonotonicClockBridge,
-): RawScreencastFrame {
-  const record = recordFrom(frame);
-  return {
-    data: bufferFrom(record.data ?? record.buffer),
-    sourceTs: numberFrom(record.timestamp) ?? clock.nowMono(),
   };
 }
 
@@ -289,22 +258,6 @@ function metadataProperty(
   return { metadata: timestamp === undefined ? {} : { timestamp } };
 }
 
-function bufferFrom(value: unknown): Buffer {
-  if (Buffer.isBuffer(value)) {
-    return value;
-  }
-
-  if (value instanceof Uint8Array) {
-    return Buffer.from(value);
-  }
-
-  if (typeof value === 'string') {
-    return Buffer.from(value, 'base64');
-  }
-
-  throw new Error('Invalid screencast frame data');
-}
-
 function numberFrom(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
     ? value
@@ -321,18 +274,4 @@ function recordFrom(value: unknown): Record<string, unknown> {
 
 function frameName(seq: number): string {
   return `frame-${String(seq).padStart(6, '0')}.jpg`;
-}
-
-function nativeScreencastFrom(page: Page): ExperimentalScreencast | undefined {
-  const record = page as unknown as Record<string, unknown>;
-  const screencast = record.screencast;
-
-  if (!screencast || typeof screencast !== 'object') {
-    return undefined;
-  }
-
-  const candidate = screencast as Partial<ExperimentalScreencast>;
-  return typeof candidate.start === 'function'
-    ? (candidate as ExperimentalScreencast)
-    : undefined;
 }

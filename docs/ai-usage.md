@@ -397,3 +397,39 @@ Is this before/after or visual regression?
 | Attach to ADO/Jira | `repro-file` |
 
 Skills are wrappers: they must call the CLI, not reimplement capture/render.
+
+---
+
+## 14. Fixture corpus (ShopLite)
+
+Evaluation app and bug work items live in-repo (not in ALM):
+
+| Path | Role |
+| --- | --- |
+| [`apps/shoplite/`](../apps/shoplite/) | Broken/fixed demo SPA (`?fixture=broken\|fixed`) |
+| [`testdata/bugs/`](../testdata/bugs/) | ADO-shaped `BUG-10xx.json` work items |
+| [`testdata/specs/`](../testdata/specs/) | Fake ACs + mockup tokens |
+| [`packages/e2e-fixture/`](../packages/e2e-fixture/) | Vitest harness + feature-coverage scenarios |
+
+### Toggle broken ↔ fixed
+
+```bash
+pnpm shoplite:dev
+# http://localhost:5177/?fixture=broken
+# http://localhost:5177/?fixture=fixed
+```
+
+The document element gets `data-repro-fixture="broken|fixed"`. Switching is
+global for the whole app (not per bug) and does not require a rebuild.
+
+### Generate coverage videos
+
+```bash
+pnpm build
+pnpm test:e2e-fixture
+```
+
+Artifacts write to `.repro/fixture-videos/<scenario>/` (gitignored). Each
+scenario exercises a slice of modes/features/layouts so the suite covers the
+feature checklist without a full Cartesian matrix. Each bug JSON includes
+`Custom.ReproConfig` — use that as the source of truth for recommended flags.

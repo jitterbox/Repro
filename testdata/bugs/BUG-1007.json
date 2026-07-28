@@ -1,0 +1,46 @@
+{
+  "id": "BUG-1007",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Drag reorder leaves 8px residual offset",
+  "System.Description": "<p>Drag reorder leaves 8px residual offset</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Drag Gamma Kit above Alpha Widget</li><li>Release and observe 8px vertical offset on dropped item</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "medium",
+  "Custom.Tags": [
+    "pointer",
+    "drag"
+  ],
+  "Custom.Selectors": {
+    "handle": "drag-handle-gamma",
+    "list": "sku-list"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "sku-gamma",
+      "shape": "rect",
+      "label": "Δy = +8px after drop"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "cursor": true,
+      "steps": true,
+      "zoom": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1007",
+      "bugId": "BUG-1007"
+    }
+  }
+}

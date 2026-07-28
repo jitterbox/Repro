@@ -12,6 +12,7 @@
     { "path": "./packages/viewer" },
     { "path": "./packages/evaluation" },
     { "path": "./packages/contracts" },
-    { "path": "./packages/vault" }
+    { "path": "./packages/vault" },
+    { "path": "./packages/e2e-fixture" }
   ]
 }

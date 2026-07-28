@@ -1,0 +1,26 @@
+{
+  "name": "ShopLite mockup tokens",
+  "version": "1.0.0",
+  "color": {
+    "textPrimary": "#1a1a1a",
+    "textOnMutedSurface": "#1a1a1a",
+    "surfaceMuted": "#ffffff",
+    "priceBackground": "#ffffff"
+  },
+  "spacing": {
+    "labelControlGutterPx": 16,
+    "minHitTargetPx": 24
+  },
+  "motion": {
+    "badgeFadeMs": 200,
+    "badgeIterations": 1
+  },
+  "layout": {
+    "promoSlotReservePx": 48,
+    "menuSubmenuZIndexAboveParent": true
+  },
+  "commerce": {
+    "currencyGlyph": "$",
+    "cartTotalExample": "84.50"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "BUG-1010",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Recalculate freezes main thread ~1.2s",
+  "System.Description": "<p>Recalculate freezes main thread ~1.2s</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Click Recalculate</li><li>UI is unresponsive for ~1.2 seconds</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "high",
+  "Custom.Tags": [
+    "freeze",
+    "timing"
+  ],
+  "Custom.Selectors": {
+    "btn": "btn-recalculate"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "btn-recalculate",
+      "shape": "rect",
+      "label": "Busy-wait freeze"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "timingSensitive": true,
+    "features": {
+      "freezeDetect": true,
+      "vitalsHud": true,
+      "pauses": true,
+      "steps": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "specTitle": "BUG-1010",
+      "bugId": "BUG-1010"
+    }
+  }
+}
