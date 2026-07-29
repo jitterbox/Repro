@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="shell" data-repro-viewer>
+    <main class="shell" data-repro-viewer data-design="broadsheet">
       <section class="toolbar" aria-label="Viewer controls">
         <label>
           Theme
-          <select data-viewer-theme>
+          <select data-viewer-theme aria-label="Color theme">
             <option value="light">Light</option>
             <option value="dark">Dark</option>
             <option value="high-contrast">High contrast</option>
@@ -19,41 +19,115 @@
         </label>
         <label>
           Reviewer preset
-          <select data-viewer-preset>
+          <select data-viewer-preset aria-label="Reviewer preset">
             <option value="developer">Developer</option>
             <option value="tester">Tester</option>
             <option value="product">Product</option>
             <option value="alm">ALM</option>
           </select>
         </label>
+        <div
+          class="compare-toggle"
+          data-viewer-compare-toggle
+          hidden
+          role="group"
+          aria-label="Compare side"
+        >
+          <button
+            type="button"
+            data-compare-side="a"
+            aria-pressed="true"
+            aria-label="Show before side"
+          >
+            A
+          </button>
+          <button
+            type="button"
+            data-compare-side="b"
+            aria-pressed="false"
+            aria-label="Show after side"
+          >
+            B
+          </button>
+        </div>
         <span data-viewer-state aria-live="polite">Loading report...</span>
       </section>
 
       <section class="media" aria-labelledby="media-title">
         <h1 id="media-title">Evidence replay</h1>
-        <div data-vidstack-player data-repro-video-shell>
+        <div class="video-shell" data-repro-video-shell>
           <video
             controls
             data-repro-video
-            data-vidstack-video
             preload="metadata"
+            tabindex="0"
+            aria-label="Evidence video"
           >
             <track kind="captions" srclang="en" label="Transcript" />
           </video>
+          <video
+            data-repro-video-b
+            preload="metadata"
+            hidden
+            aria-hidden="true"
+          ></video>
         </div>
-        <div class="timeline" data-viewer-timeline aria-label="Timeline"></div>
+        <div
+          class="scrubber"
+          data-viewer-scrubber
+          hidden
+          aria-label="Timeline scrubber"
+        >
+          <input
+            type="range"
+            data-viewer-seek
+            min="0"
+            max="1000"
+            value="0"
+            step="1"
+            aria-label="Seek video"
+          />
+          <div class="scrubber-markers" data-viewer-markers></div>
+        </div>
+        <div
+          class="timeline"
+          data-viewer-timeline
+          data-viewer-section="timeline"
+          aria-label="Timeline chapters"
+        ></div>
       </section>
 
       <aside class="panel" aria-labelledby="review-title">
         <h2 id="review-title">Review notes</h2>
-        <section data-viewer-chapters aria-labelledby="chapters-title">
+        <section
+          data-viewer-chapters
+          data-viewer-section="chapters summary evidence"
+          aria-labelledby="chapters-title"
+        >
           <h3 id="chapters-title">Chapters</h3>
         </section>
-        <section data-viewer-annotations aria-labelledby="annotations-title">
+        <section
+          data-viewer-annotations
+          data-viewer-section="annotations steps assertions"
+          aria-labelledby="annotations-title"
+        >
           <h3 id="annotations-title">Annotations</h3>
         </section>
-        <section data-viewer-transcript aria-labelledby="transcript-title">
+        <section
+          data-viewer-transcript
+          data-viewer-section="transcript console network environment"
+          aria-labelledby="transcript-title"
+        >
           <h3 id="transcript-title">Transcript</h3>
+        </section>
+        <section
+          data-viewer-redaction
+          data-viewer-section="redaction links impact open-questions"
+          aria-labelledby="redaction-title"
+          hidden
+        >
+          <h3 id="redaction-title">Redaction &amp; links</h3>
+          <p class="empty">No redaction notes.</p>
         </section>
       </aside>
     </main>

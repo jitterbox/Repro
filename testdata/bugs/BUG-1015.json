@@ -1,0 +1,48 @@
+{
+  "id": "BUG-1015",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Toast stack push causes CLS and sticky tip under submenu",
+  "System.Description": "<p>Inventory toast injects without reserved height; sticky tip loses stacking to Actions submenu.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken&amp;bug=BUG-1015</li><li>Wait for inventory toast</li><li>Open Actions → Export and observe tip under submenu</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "high",
+  "Custom.Tags": ["cls", "stacking", "hidden"],
+  "Custom.Selectors": {
+    "toast": "stack-toast",
+    "tip": "sticky-tip",
+    "ghost": "aria-ghost"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "toast-stack",
+      "shape": "rect",
+      "label": "Toast CLS host"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "layoutShiftViz": true,
+      "stackingContexts": true,
+      "hiddenElements": true,
+      "steps": true,
+      "specCard": true,
+      "clickViz": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "title": "Toast stack CLS and stacking tip",
+      "bugId": "BUG-1015",
+      "expected": "Reserved toast height; tip above menus",
+      "actual": "Layout shift and tip under submenu"
+    }
+  }
+}

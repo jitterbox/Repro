@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/rendered-layer.schema.json",
+  "title": "ReproRenderedLayerManifest",
+  "description": "Timed RGBA/ASS layer produced by annotate for the encoder.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "layers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "cueId",
+          "source",
+          "kind",
+          "startMs",
+          "endMs",
+          "zIndex"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "cueId": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "enum": ["png", "ass"] },
+          "startMs": { "type": "number", "minimum": 0 },
+          "endMs": { "type": "number", "minimum": 0 },
+          "zIndex": { "type": "integer", "minimum": 0 },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "enable": { "type": "string" },
+          "expectedAlphaMin": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

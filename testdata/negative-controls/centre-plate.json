@@ -1,0 +1,18 @@
+{
+  "description": "Callout plate centred in frame should fail placement",
+  "expectedFailures": ["placement"],
+  "mode": "repro",
+  "plan": {
+    "schemaVersion": "1.0.0",
+    "annotations": [
+      {
+        "id": "ann-centre",
+        "component": "callout",
+        "bounds": { "x": 600, "y": 340, "width": 80, "height": 40 },
+        "outTimeRange": { "start": 1000, "end": 3000 }
+      }
+    ]
+  },
+  "frameWidth": 1280,
+  "frameHeight": 720
+}

@@ -147,12 +147,23 @@ export const ViewportSchema = z
 export const CompareConfigSchema = z
   .object({
     strategy: z
-      .enum(['side-by-side', 'onion', 'difference', 'pixel-diff'])
+      .enum([
+        'side-by-side',
+        'onion',
+        'wipe',
+        'blink',
+        'difference',
+        'edge',
+        'cropped-roi',
+        'pixel-diff',
+      ])
       .optional(),
     streams: z.array(z.enum(['video', 'dom', 'pixel-diff'])).default([]),
     viewports: z.array(ViewportSchema).optional(),
+    blinkOptIn: z.boolean().optional(),
   })
   .strict();
+
 
 export const ReproConfigSchema = z
   .object({
@@ -163,6 +174,12 @@ export const ReproConfigSchema = z
     timingSensitive: z.boolean().optional(),
     preserveRealTiming: z.boolean().optional(),
     showActions: z.boolean().optional(),
+    /**
+     * When true, Playwright/probe presentation UI may burn into capture
+     * frames. Delivery captures leave this unset/false and render overlays
+     * only during annotate.
+     */
+    capturePreviewUi: z.boolean().optional(),
     redaction: z
       .object({
         strict: z.boolean().optional(),

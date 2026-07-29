@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { collectEnvironmentManifest } from './environment.js';
+import {
+  collectEnvironmentManifest,
+  prettyBrowser,
+  prettyOs,
+} from './environment.js';
 
 import type { EnvironmentPage } from './environment.js';
 
@@ -9,7 +13,8 @@ describe('collectEnvironmentManifest', () => {
     const commands: string[] = [];
     const manifest = await collectEnvironmentManifest({
       arch: 'x64',
-      browser: { version: () => 'chromium 1.2.3' },
+      browser: { version: () => '131.0.0' },
+      build: 'main @ abcdef1',
       gpuMode: 'cpu',
       nodeVersion: 'v22.0.0',
       page: localePage('en-GB', 'Europe/London'),
@@ -28,12 +33,15 @@ describe('collectEnvironmentManifest', () => {
 
     expect(manifest).toMatchObject({
       arch: 'x64',
-      browserVersion: 'chromium 1.2.3',
+      browserLabel: 'Chromium 131.0.0',
+      browserVersion: '131.0.0',
+      build: 'main @ abcdef1',
       ffmpegVersion: 'ffmpeg version 6.1',
       ffprobeVersion: 'ffprobe version 6.1',
       gpuMode: 'cpu',
       locale: 'en-GB',
       nodeVersion: 'v22.0.0',
+      osLabel: 'Linux',
       platform: 'linux',
       playwrightVersion: '1.62.0',
       schemaVersion: 1,
@@ -45,9 +53,13 @@ describe('collectEnvironmentManifest', () => {
       },
     });
     expect(commands.sort()).toEqual(['ffmpeg', 'ffprobe']);
-    expect(manifest.fontManifest).toEqual([
-      { family: 'unknown', sha256: null, source: 'stub' },
-    ]);
+    expect(manifest.fontManifest.length).toBeGreaterThan(0);
+    expect(manifest.fontManifest[0]?.family).not.toBe('unknown');
+  });
+
+  it('formats browser and OS labels', () => {
+    expect(prettyBrowser('131.0.0')).toBe('Chromium 131.0.0');
+    expect(prettyOs('linux')).toBe('Linux');
   });
 });
 

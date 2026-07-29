@@ -21,7 +21,7 @@
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
-html[data-repro-fixture='broken'] {
+html[data-repro-fixture='broken']:not([data-repro-defect]) {
   --price-color: #888888;
   --price-bg: #f0f0f0;
   --save-offset: -12px;
@@ -33,6 +33,37 @@ html[data-repro-fixture='broken'] {
   --hit-size: 8px;
   --promo-reserve: 0px;
   --currency-glyph: '€';
+}
+
+html[data-repro-defect='BUG-1001'] {
+  --save-offset: -12px;
+}
+
+html[data-repro-defect='BUG-1002'] {
+  --price-color: #888888;
+  --price-bg: #f0f0f0;
+}
+
+html[data-repro-defect='BUG-1003'] {
+  --badge-duration: 120ms;
+  --badge-iteration: 7;
+}
+
+html[data-repro-defect='BUG-1004'] {
+  --menu-z1: 50;
+  --menu-z2: 20;
+}
+
+html[data-repro-defect='BUG-1007'] {
+  --drag-offset: 8px;
+}
+
+html[data-repro-defect='BUG-1009'] {
+  --promo-reserve: 0px;
+}
+
+html[data-repro-defect='BUG-1013'] {
+  --hit-size: 8px;
 }
 
 * {
@@ -166,7 +197,8 @@ body {
   }
 }
 
-html[data-repro-fixture='fixed'] .status-badge {
+html[data-repro-fixture='fixed'] .status-badge,
+html[data-repro-defect]:not([data-repro-defect='BUG-1003']) .status-badge {
   animation: badge-once 200ms ease-out 1;
 }
 
@@ -194,20 +226,24 @@ html[data-repro-fixture='fixed'] .status-badge {
   border-radius: 6px;
 }
 
-html[data-repro-fixture='broken'] .advanced-panel {
+html[data-repro-fixture='broken']:not([data-repro-defect]) .advanced-panel,
+html[data-repro-defect='BUG-1005'] .advanced-panel {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
 }
 
-html[data-repro-fixture='broken'] .advanced-wrap:hover .advanced-panel,
-html[data-repro-fixture='broken'] .advanced-wrap:focus-within .advanced-panel {
+html[data-repro-fixture='broken']:not([data-repro-defect]) .advanced-wrap:hover .advanced-panel,
+html[data-repro-fixture='broken']:not([data-repro-defect]) .advanced-wrap:focus-within .advanced-panel,
+html[data-repro-defect='BUG-1005'] .advanced-wrap:hover .advanced-panel,
+html[data-repro-defect='BUG-1005'] .advanced-wrap:focus-within .advanced-panel {
   opacity: 1;
   pointer-events: auto;
 }
 
-html[data-repro-fixture='fixed'] .advanced-panel {
+html[data-repro-fixture='fixed'] .advanced-panel,
+html[data-repro-defect]:not([data-repro-defect='BUG-1005']) .advanced-panel {
   display: block !important;
 }
 
@@ -333,6 +369,57 @@ html[data-repro-fixture='fixed'] .advanced-panel {
   color: #fff;
   padding: 10px 14px;
   border-radius: 6px;
+}
+
+.toast-stack {
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.stack-toast {
+  background: #fff7e6;
+  border: 1px solid #e0c080;
+  padding: 10px 12px;
+  border-radius: 4px;
+}
+
+.sticky-tip {
+  position: absolute;
+  right: 120px;
+  top: 48px;
+  z-index: 15;
+  background: #101319;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.topbar {
+  position: relative;
+}
+
+.tiny-menu-b {
+  margin-left: 8px;
+}
+
+.ghost-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  border: 1px dashed var(--border);
+  padding: 8px;
+}
+
+html[data-repro-defect='BUG-1015'] .sticky-tip,
+html[data-repro-fixture='broken']:not([data-repro-defect]) .sticky-tip {
+  z-index: 15;
+}
+
+html[data-repro-defect='BUG-1015'] .menu.level-2,
+html[data-repro-fixture='broken']:not([data-repro-defect]) .menu.level-2 {
+  z-index: 10;
 }
 
 .export-status {

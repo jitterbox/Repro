@@ -1,0 +1,10 @@
+{
+  "description": "Plan with zero annotations should fail overlay-presence",
+  "expectedFailures": ["overlay-presence"],
+  "mode": "repro",
+  "plan": {
+    "schemaVersion": "1.0.0",
+    "mode": "repro",
+    "annotations": []
+  }
+}

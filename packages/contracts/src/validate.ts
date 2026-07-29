@@ -33,7 +33,9 @@ function loadSchemas(): Ajv2020 {
 
   const ajv = new Ajv2020({
     allErrors: true,
+    // if/then required fields (slate mode variants) trip strictRequired
     strict: true,
+    strictRequired: false,
     validateSchema: true,
   });
   const registerFormats = addFormats as unknown as (

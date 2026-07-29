@@ -1,0 +1,18 @@
+{
+  "description": "Filename bug ID mismatch with plan metadata",
+  "expectedFailures": ["slate"],
+  "mode": "repro",
+  "filename": "BUG-1001_repro.mp4",
+  "bugId": "BUG-1001",
+  "plan": {
+    "schemaVersion": "1.0.0",
+    "metadata": { "bugId": "BUG-9999" },
+    "annotations": [
+      {
+        "id": "ann-1",
+        "component": "step-badge",
+        "outTimeRange": { "start": 0, "end": 2000 }
+      }
+    ]
+  }
+}

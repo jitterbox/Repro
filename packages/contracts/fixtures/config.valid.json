@@ -1,7 +1,6 @@
 {
-  "schemaVersion": "1.0.0",
   "mode": "repro",
-  "executionProfile": "faithful",
+  "profile": "faithful",
   "timingSensitive": true,
   "surfaceCapture": "page",
   "features": {
@@ -16,6 +15,8 @@
     "deviceScaleFactor": 1
   },
   "redaction": {
-    "strict": false
-  }
+    "strict": false,
+    "masks": []
+  },
+  "metadata": {}
 }

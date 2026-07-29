@@ -1,4 +1,6 @@
-import { uploadEvidence } from '@repro/alm';
+import { basename } from 'node:path';
+
+import { evidenceFilename, uploadEvidence } from '@repro/alm';
 import { enforceOcrAudit } from '@repro/render';
 
 import { loadConfig } from './io.js';
@@ -25,6 +27,34 @@ export async function fileCommand(
     path: options.evidence,
     ...(config?.redaction === undefined ? {} : { redaction: config.redaction }),
   });
+
+  const evidenceName = basename(options.evidence);
+  const bugId =
+    typeof config?.metadata.bugId === 'string'
+      ? config.metadata.bugId
+      : undefined;
+  if (bugId !== undefined && !evidenceName.startsWith(bugId)) {
+    const expected = evidenceFilename({
+      env:
+        typeof config?.metadata.env === 'string'
+          ? config.metadata.env
+          : config?.profile ?? 'repro',
+      issueId: bugId,
+      recordedAt: new Date(),
+      sha:
+        typeof config?.metadata.sha === 'string' &&
+        config.metadata.sha.length >= 7
+          ? config.metadata.sha
+          : '0000000',
+      slug:
+        typeof config?.metadata.slug === 'string'
+          ? config.metadata.slug
+          : options.title,
+    });
+    throw new Error(
+      `evidence filename bugId mismatch: file=${evidenceName} expected prefix ${bugId} (e.g. ${expected})`,
+    );
+  }
 
   return uploadEvidence({
     evidencePath: options.evidence,

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bugId": "BUG-1001",
+  "layout": "side-by-side",
+  "layoutReason": "content/flow change",
+  "output": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "filename": "BUG-1001_compare_sbs.mp4"
+  },
+  "panes": {
+    "a": {
+      "runId": "run-a",
+      "role": "before",
+      "label": "BEFORE",
+      "build": "main @ aaa1111",
+      "color": "before"
+    },
+    "b": {
+      "runId": "run-b",
+      "role": "after",
+      "label": "AFTER",
+      "build": "main @ bbb2222",
+      "color": "after"
+    }
+  },
+  "sync": {
+    "strategy": "anchored-dtw",
+    "anchors": [
+      { "stepId": "step-1", "aMs": 0, "bMs": 0, "outMs": 2200 }
+    ],
+    "band": { "kind": "sakoe-chiba", "radiusMs": 250 },
+    "signature": "luma-32x18",
+    "maxStretch": 2.5,
+    "knots": [[0, 0, 2200, 1]],
+    "lowConfidenceSpans": []
+  },
+  "deltas": [
+    {
+      "selector": "[data-testid='btn-save']",
+      "class": "geometry",
+      "dx": -12,
+      "dy": 0,
+      "dw": 0,
+      "dh": 0,
+      "caption": "Δx -12.0px · Δy 0 · Δw 0 · Δh 0",
+      "ringA": "remove",
+      "ringB": "add"
+    }
+  ],
+  "chrome": {
+    "sharedRail": true,
+    "driftTicks": true,
+    "stepCounter": true
+  },
+  "a11y": {
+    "blinkUsed": false,
+    "maxFlashHz": 2
+  }
+}

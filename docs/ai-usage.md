@@ -8,14 +8,18 @@ before/after runs, and file artifacts into Azure DevOps or Jira.
 
 1. Prefer CLI verbs (`repro …`) over inventing Playwright/ffmpeg scripts.
 2. Never put ALM tokens, cookies, or vault keys in prompts or chat.
-3. Discovery (LLM) runs **once**; commit a deterministic `*.spec.ts` + config;
-   CI must rerun with **no LLM**.
+3. Follow the **product pipeline** (`validate-config` → `capture` → `annotate` →
+   `package` / `file` / `compare` / `render-compare` → `quality`). CI reruns
+   committed configs and specs with **no LLM** (see `.github/workflows/ci.yml`).
 4. Always `repro validate-config` before capture when features/mode change.
 5. Pipeline completion ≠ success — run `repro quality` / OCR gates as required.
 6. Do not silently fall back from `surfaceCapture: "page"` to OS capture.
 
 Related skills (thin CLI wrappers): `repro-capture`, `repro-annotate`,
 `repro-compare`, `repro-file` under `skills/`.
+
+Visual language, overlay theming, viewer UI, and Claude Design prompts:
+[`design-brief.md`](design-brief.md).
 
 ---
 
@@ -27,9 +31,10 @@ Related skills (thin CLI wrappers): `repro-capture`, `repro-annotate`,
 | `compare` | Before/after or baseline vs candidate | **Must** be `controlled` | Synced A/B layouts + geometry deltas |
 | `demo` | Fix verification / walkthrough (no failure expected) | Often `controlled` | Narration-forward polished video |
 
-Layouts (`side-by-side`, `onion`, `wipe`, `blink`, `difference`, edge overlay)
-are **render/compare parameters**, not modes. One compare capture pair can emit
-multiple layouts.
+Layouts (`side-by-side`, `onion`, `wipe`, `blink`, `difference`, `cropped-roi`,
+edge overlay) are **render/compare parameters**, not modes. One compare capture
+pair can emit multiple layouts. Prefer `cropped-roi` for sub-8px geometry deltas;
+use `blink` only when explicitly opted in (never default — vestibular risk).
 
 ---
 
@@ -98,6 +103,11 @@ Additional knobs on config (not feature flags):
 
 Use this matrix when classifying a ticket. Start from the row, then add
 `specCard` + `steps` for anything you will file.
+
+**Beat / duration guidance:** Filed `repro` videos target **15–30s** total output
+time; compare beats run **3–4s** per aligned step. Use timeline beats (hold,
+slowmo, outcome) rather than stretching capture tail — pauses hold at the beat,
+not after the action fades.
 
 | Bug / task class | Mode | Profile | Features (on) | Also set | Avoid |
 | --- | --- | --- | --- | --- | --- |

@@ -19,6 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@repro/compare": "workspace:*",
+    "@repro/contracts": "workspace:*",
     "@repro/core": "workspace:*",
     "@repro/plan": "workspace:*"
   }

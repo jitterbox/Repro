@@ -7,6 +7,7 @@ import { compareCommand } from './commands/compare.js';
 import { fileCommand } from './commands/file.js';
 import { packageCommand } from './commands/package.js';
 import { qualityCommand } from './commands/quality.js';
+import { renderCompareCommand } from './commands/render-compare.js';
 import { validateConfigCommand } from './commands/validate-config.js';
 
 export * from './commands/annotate.js';
@@ -15,6 +16,7 @@ export * from './commands/compare.js';
 export * from './commands/file.js';
 export * from './commands/package.js';
 export * from './commands/quality.js';
+export * from './commands/render-compare.js';
 export * from './commands/validate-config.js';
 
 export const REPRO_CLI_VERSION = '0.0.0' as const;
@@ -34,6 +36,7 @@ export function createReproProgram(writer: Writer = console.log): Command {
   addCapture(program, writer);
   addAnnotate(program, writer);
   addCompare(program, writer);
+  addRenderCompare(program, writer);
   addFile(program, writer);
   addPackage(program, writer);
   addQuality(program, writer);
@@ -99,6 +102,31 @@ function addCompare(program: Command, writer: Writer): void {
 
       writer(JSON.stringify(result, null, 2));
       process.exitCode = result.ok ? 0 : 1;
+    });
+}
+
+function addRenderCompare(program: Command, writer: Writer): void {
+  program
+    .command('render-compare')
+    .description('Render a compare composition MP4 from two videos')
+    .requiredOption('--composition <path>', 'Compare composition JSON')
+    .requiredOption('--video-a <path>', 'Before / left MP4 path')
+    .requiredOption('--video-b <path>', 'After / right MP4 path')
+    .requiredOption('-o, --out-dir <path>', 'Render output directory')
+    .option('--ffmpeg <path>', 'ffmpeg binary path')
+    .action(async (options: RenderCompareCliOptions) => {
+      await printResult(
+        writer,
+        renderCompareCommand({
+          composition: options.composition,
+          outDir: options.outDir,
+          videoA: options.videoA,
+          videoB: options.videoB,
+          ...(options.ffmpeg === undefined
+            ? {}
+            : { ffmpegPath: options.ffmpeg }),
+        }),
+      );
     });
 }
 
@@ -198,4 +226,8 @@ interface PackageOptions {
   readonly viewerDir?: string;
 }
 type QualityOptions = Parameters<typeof qualityCommand>[0];
+type RenderCompareOptions = Parameters<typeof renderCompareCommand>[0];
+type RenderCompareCliOptions = RenderCompareOptions & {
+  readonly ffmpeg?: string;
+};
 type ValidateOptions = Parameters<typeof validateConfigCommand>[0];

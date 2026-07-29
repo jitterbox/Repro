@@ -2,30 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/config.schema.json",
   "title": "ReproConfig",
+  "description": "Aligned with @repro/core ReproConfigSchema (profile, not executionProfile).",
   "type": "object",
-  "required": ["schemaVersion", "mode"],
+  "required": ["mode", "profile", "surfaceCapture", "viewport"],
   "properties": {
-    "schemaVersion": {
-      "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
-    },
     "mode": {
       "type": "string",
       "enum": ["repro", "compare", "demo"]
-    },
-    "executionProfile": {
-      "type": "string",
-      "enum": ["faithful", "controlled"],
-      "default": "faithful"
-    },
-    "timingSensitive": {
-      "type": "boolean",
-      "default": false
-    },
-    "surfaceCapture": {
-      "type": "string",
-      "enum": ["page", "os"],
-      "default": "page"
     },
     "features": {
       "type": "object",
@@ -51,6 +34,32 @@
       },
       "additionalProperties": false
     },
+    "profile": {
+      "type": "string",
+      "enum": ["faithful", "controlled"]
+    },
+    "surfaceCapture": {
+      "type": "string",
+      "enum": ["page", "os"]
+    },
+    "timingSensitive": { "type": "boolean" },
+    "preserveRealTiming": { "type": "boolean" },
+    "showActions": { "type": "boolean" },
+    "capturePreviewUi": {
+      "type": "boolean",
+      "description": "When true, Playwright/probe presentation UI may burn into capture frames. Leave false for delivery captures."
+    },
+    "redaction": {
+      "type": "object",
+      "properties": {
+        "strict": { "type": "boolean" },
+        "masks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
     "viewport": {
       "type": "object",
       "required": ["width", "height"],
@@ -61,30 +70,39 @@
       },
       "additionalProperties": false
     },
-    "redaction": {
-      "type": "object",
-      "properties": {
-        "strict": { "type": "boolean", "default": false }
-      },
-      "additionalProperties": false
-    },
     "compare": {
       "type": "object",
       "properties": {
-        "layout": {
+        "strategy": {
           "type": "string",
           "enum": [
             "side-by-side",
             "onion",
             "wipe",
             "blink",
-            "difference"
+            "difference",
+            "edge",
+            "cropped-roi",
+            "pixel-diff"
           ]
         },
-        "baselineRunId": { "type": "string", "format": "uuid" },
-        "candidateRunId": { "type": "string", "format": "uuid" }
+        "streams": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["video", "dom", "pixel-diff"]
+          }
+        },
+        "viewports": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
       },
       "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

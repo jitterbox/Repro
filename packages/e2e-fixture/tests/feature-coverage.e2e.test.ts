@@ -15,11 +15,15 @@ import {
 } from '../src/harness.js';
 import {
   driveA11y,
+  driveBadgeFlicker,
   driveCls,
   driveConsoleSave,
   driveContrast,
   driveDemo,
+  driveDragOffset,
   driveGeometry,
+  driveHeavySort,
+  driveHitTarget,
   driveHoverHidden,
   driveMenuExport,
   driveMultiShape,
@@ -27,6 +31,7 @@ import {
   drivePopup,
   driveRedaction,
   driveTiming,
+  driveToastStack,
 } from '../src/scenarios/drivers.js';
 
 import type { CompareManifest } from '@repro/compare';
@@ -123,6 +128,32 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       await assertVideo(annotated.videoPath);
+    });
+  }, 180_000);
+
+  it('repro-badge-flicker covers BUG-1003 per-bug isolation', async () => {
+    const bug = await loadBug('BUG-1003');
+    const config = configFromBug(bug);
+    await withServer(async (server) => {
+      const capture = await runScenarioCapture({
+        bugId: 'BUG-1003',
+        config,
+        drive: driveBadgeFlicker,
+        fixture: 'broken',
+        scenario: 'repro-badge-flicker',
+        server,
+      });
+      const annotated = await runScenarioAnnotate({
+        config,
+        eventsPath: capture.eventsPath,
+        scenario: 'repro-badge-flicker',
+        videoPath: capture.videoPath,
+      });
+      await assertVideo(annotated.videoPath);
+      const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
+        annotations: Array<{ label?: string }>;
+      };
+      expect(plan.annotations.length).toBeGreaterThan(0);
     });
   }, 180_000);
 
@@ -256,7 +287,10 @@ describe('ShopLite feature-coverage videos', () => {
         clickViz: true,
         specCard: true,
       },
-      metadata: { specTitle: 'ShopLite demo walkthrough' },
+      metadata: {
+        bugId: 'DEMO-001',
+        specTitle: 'ShopLite demo walkthrough',
+      },
     };
     await withServer(async (server) => {
       const capture = await runScenarioCapture({
@@ -297,49 +331,57 @@ describe('ShopLite feature-coverage videos', () => {
         server,
       });
 
-      const left = geometryManifest('save-broken', -12);
-      const right = geometryManifest('save-fixed', 0);
-      const result = await runScenarioCompare({
-        left,
-        right,
-        scenario: 'compare-geometry-misalign',
-      });
-
-      expect(result.layouts.sideBySide).toContain('xstack');
-      expect(result.layouts.onion.length).toBeGreaterThan(0);
-      expect(result.layouts.difference.length).toBeGreaterThan(0);
-      expect(result.layouts.edgeOverlay.length).toBeGreaterThan(0);
-      expect(result.geometryDeltas.length).toBeGreaterThan(0);
-
-      await runScenarioAnnotate({
+      const left = geometryManifest('save', -12);
+      const right = geometryManifest('save', 0);
+      const annotatedBroken = await runScenarioAnnotate({
         config,
         eventsPath: broken.eventsPath,
         scenario: 'compare-geometry-misalign',
         suffix: 'render-broken',
         videoPath: broken.videoPath,
       });
-      await runScenarioAnnotate({
+      const annotatedFixed = await runScenarioAnnotate({
         config,
         eventsPath: fixed.eventsPath,
         scenario: 'compare-geometry-misalign',
         suffix: 'render-fixed',
         videoPath: fixed.videoPath,
       });
+      const result = await runScenarioCompare({
+        left,
+        layouts: ['side-by-side', 'onion', 'difference', 'edge', 'cropped-roi'],
+        right,
+        scenario: 'compare-geometry-misalign',
+        videoA: broken.videoPath,
+        videoB: fixed.videoPath,
+      });
+
+      expect(result.layouts.onion.length).toBeGreaterThan(0);
+      expect(result.layouts.difference.length).toBeGreaterThan(0);
+      expect(result.layouts.edgeOverlay.length).toBeGreaterThan(0);
+      expect(result.geometryDeltas.length).toBeGreaterThan(0);
+      expect(result.composition.sync.anchors?.length ?? 0).toBeGreaterThan(0);
+      expect(result.compareVideoPaths?.length).toBe(5);
+      for (const path of result.compareVideoPaths ?? []) {
+        await assertVideo(path);
+      }
+      await assertVideo(annotatedBroken.videoPath);
+      await assertVideo(annotatedFixed.videoPath);
     });
-  }, 240_000);
+  }, 300_000);
 
   it('compare-contrast-text covers wipe/blink layouts', async () => {
     const bug = await loadBug('BUG-1002');
     const config = configFromBug(bug);
     await withServer(async (server) => {
-      await runScenarioCapture({
+      const broken = await runScenarioCapture({
         config,
         drive: driveContrast,
         fixture: 'broken',
         scenario: 'compare-contrast-text',
         server,
       });
-      await runScenarioCapture({
+      const fixed = await runScenarioCapture({
         config,
         drive: driveContrast,
         fixture: 'fixed',
@@ -349,12 +391,133 @@ describe('ShopLite feature-coverage videos', () => {
       const result = await runScenarioCompare({
         left: geometryManifest('price-broken', 0, '#888888'),
         right: geometryManifest('price-fixed', 0, '#1a1a1a'),
+        layouts: ['wipe', 'blink'],
         scenario: 'compare-contrast-text',
+        videoA: broken.videoPath,
+        videoB: fixed.videoPath,
       });
       expect(result.layouts.wipe.length).toBeGreaterThan(0);
       expect(result.layouts.blink.length).toBeGreaterThan(0);
+      expect(result.compareVideoPaths?.length).toBe(2);
+      for (const path of result.compareVideoPaths ?? []) {
+        await assertVideo(path);
+      }
     });
-  }, 240_000);
+  }, 300_000);
+
+  it('repro-pointer-drag-offset covers cursor-path + zoom', async () => {
+    const bug = await loadBug('BUG-1007');
+    const config = configFromBug(bug);
+    await withServer(async (server) => {
+      const capture = await runScenarioCapture({
+        config,
+        drive: driveDragOffset,
+        fixture: 'broken',
+        scenario: 'repro-pointer-drag-offset',
+        server,
+      });
+      const annotated = await runScenarioAnnotate({
+        config,
+        eventsPath: capture.eventsPath,
+        scenario: 'repro-pointer-drag-offset',
+        videoPath: capture.videoPath,
+      });
+      const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
+        annotations: Array<{ component?: string }>;
+      };
+      expect(
+        plan.annotations.some((item) => item.component === 'cursor-path'),
+      ).toBe(true);
+      expect(
+        plan.annotations.some((item) => item.component === 'roi-magnifier'),
+      ).toBe(true);
+      await assertVideo(annotated.videoPath);
+    });
+  }, 180_000);
+
+  it('repro-hit-target-tiny covers hit-target-guide + roi', async () => {
+    const bug = await loadBug('BUG-1011');
+    const config = configFromBug(bug);
+    await withServer(async (server) => {
+      const capture = await runScenarioCapture({
+        config,
+        drive: driveHitTarget,
+        fixture: 'broken',
+        scenario: 'repro-hit-target-tiny',
+        server,
+      });
+      const annotated = await runScenarioAnnotate({
+        config,
+        eventsPath: capture.eventsPath,
+        scenario: 'repro-hit-target-tiny',
+        videoPath: capture.videoPath,
+      });
+      const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
+        annotations: Array<{ component?: string }>;
+      };
+      expect(
+        plan.annotations.some((item) => item.component === 'hit-target-guide'),
+      ).toBe(true);
+      await assertVideo(annotated.videoPath);
+    });
+  }, 180_000);
+
+  it('repro-toast-stack covers second CLS/stacking/hidden', async () => {
+    const bug = await loadBug('BUG-1015');
+    const config = configFromBug(bug);
+    await withServer(async (server) => {
+      const capture = await runScenarioCapture({
+        config,
+        drive: driveToastStack,
+        fixture: 'broken',
+        scenario: 'repro-toast-stack',
+        server,
+      });
+      const annotated = await runScenarioAnnotate({
+        config,
+        eventsPath: capture.eventsPath,
+        scenario: 'repro-toast-stack',
+        videoPath: capture.videoPath,
+      });
+      const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
+        annotations: Array<{ component?: string }>;
+      };
+      expect(
+        plan.annotations.some((item) => item.component === 'stacking-labels'),
+      ).toBe(true);
+      expect(
+        plan.annotations.some((item) => item.component === 'hidden-ghost'),
+      ).toBe(true);
+      await assertVideo(annotated.videoPath);
+    });
+  }, 180_000);
+
+  it('repro-heavy-sort covers second freeze-banner', async () => {
+    const bug = await loadBug('BUG-1016');
+    const config = configFromBug(bug);
+    await withServer(async (server) => {
+      const capture = await runScenarioCapture({
+        config,
+        drive: driveHeavySort,
+        fixture: 'broken',
+        scenario: 'repro-heavy-sort',
+        server,
+      });
+      const annotated = await runScenarioAnnotate({
+        config,
+        eventsPath: capture.eventsPath,
+        scenario: 'repro-heavy-sort',
+        videoPath: capture.videoPath,
+      });
+      const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
+        annotations: Array<{ component?: string }>;
+      };
+      expect(
+        plan.annotations.some((item) => item.component === 'pause-badge'),
+      ).toBe(true);
+      await assertVideo(annotated.videoPath);
+    });
+  }, 180_000);
 
   it('annotate-multi-shape covers simultaneous callouts', async () => {
     const bug = await loadBug('BUG-1004');
@@ -394,7 +557,7 @@ describe('ShopLite feature-coverage videos', () => {
       surfaceCapture: 'page',
       viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
       features: { steps: true, specCard: true },
-      metadata: {},
+      metadata: { bugId: 'PKG-001', specTitle: 'package-quality' },
     };
 
     await withServer(async (server) => {

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "fps": 30,
+  "targetDurationMs": 22000,
+  "beats": [
+    {
+      "id": "slate",
+      "kind": "insert",
+      "source": "composited",
+      "assetRef": "slate.png",
+      "outStartMs": 0,
+      "outDurationMs": 2200,
+      "minOutDurationMs": 2000,
+      "transitionOut": { "kind": "dissolve", "ms": 320 }
+    },
+    {
+      "id": "body-0",
+      "kind": "play",
+      "source": "capture",
+      "captureStartMs": 0,
+      "captureEndMs": 5000,
+      "rate": 1,
+      "outStartMs": 2200,
+      "outDurationMs": 5000
+    },
+    {
+      "id": "hold-0",
+      "kind": "hold",
+      "source": "capture",
+      "captureAtMs": 5000,
+      "outStartMs": 7200,
+      "outDurationMs": 1400,
+      "minOutDurationMs": 1000,
+      "badge": "PAUSED"
+    }
+  ],
+  "timeMap": {
+    "kind": "piecewise-linear",
+    "knots": [
+      [0, 2200],
+      [5000, 7200],
+      [5000, 8600]
+    ]
+  },
+  "warnings": []
+}

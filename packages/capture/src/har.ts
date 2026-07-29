@@ -1,6 +1,10 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
+import { denyByDefaultHarPolicy } from '@repro/render';
+
+import type { HarRedactionPolicy } from '@repro/render';
+
 export interface HarSanitizerOptions {
   readonly allowedHeaders?: readonly string[];
   readonly allowedQueryParams?: readonly string[];
@@ -28,7 +32,7 @@ const OAUTH_QUERY_NAMES = new Set([
 
 export function sanitizeHar<T>(
   har: T,
-  options: HarSanitizerOptions = {},
+  options: HarSanitizerOptions = defaultHarSanitizerOptions(),
 ): T {
   const clone = jsonClone(har);
   const entries = harEntries(clone);
@@ -43,7 +47,7 @@ export function sanitizeHar<T>(
 export async function sanitizeHarFile(
   inputPath: string,
   outputPath: string,
-  options: HarSanitizerOptions = {},
+  options: HarSanitizerOptions = defaultHarSanitizerOptions(),
 ): Promise<void> {
   const rawHar = JSON.parse(await readFile(inputPath, 'utf8')) as unknown;
   const sanitized = sanitizeHar(rawHar, options);
@@ -189,6 +193,17 @@ function urlAllowed(
 
 function redactedValue(options: HarSanitizerOptions): string {
   return options.redactedValue ?? '[redacted]';
+}
+
+function defaultHarSanitizerOptions(): HarSanitizerOptions {
+  const policy: HarRedactionPolicy = denyByDefaultHarPolicy();
+  return {
+    allowRequestBodyForUrls: [...policy.allowRequestBodyForUrls],
+    allowResponseBodyForUrls: [...policy.allowResponseBodyForUrls],
+    allowedHeaders: [...policy.allowedHeaders],
+    allowedQueryParams: [...policy.allowedQueryParams],
+    redactedValue: policy.redactedValue,
+  };
 }
 
 function harEntries(value: unknown): MutableRecord[] {

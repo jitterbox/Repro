@@ -1,6 +1,7 @@
 export {
   REPRO_CONTRACTS_VERSION,
   SCHEMA_NAMES,
+  type AnnotationComponent,
   type AnnotationTarget,
   type ArtifactRef,
   type BoundingBox,
@@ -28,8 +29,21 @@ export {
 export {
   capabilityDescriptorSchema,
   parseCapabilityDescriptor,
+  parseRenderedLayerManifest,
   parseReproAnnotation,
   parseReproConfig,
+  parseVisualCue,
+  renderedLayerManifestSchema,
   reproAnnotationSchema,
   reproConfigSchema,
+  visualCueSchema,
 } from './zod.js';
+
+export {
+  hexToAss,
+  overlayTheme,
+  severityAss,
+  severityColor,
+  type OverlayColorName,
+  type OverlayTheme,
+} from './generated/overlay-theme.js';

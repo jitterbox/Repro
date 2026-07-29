@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/timeline.schema.json",
+  "title": "ReproTimeline",
+  "description": "Compiled BEFORE annotation planning. Owns output time: trimming, holds, slow-motion and inserted cards. Publishes a monotone timeMap; mapTime() is the only permitted capture->output conversion.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "fps",
+    "beats",
+    "timeMap"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "fps": {
+      "type": "integer",
+      "const": 30,
+      "description": "Source is normalised to CFR immediately after redaction; concat on VFR input drifts."
+    },
+    "targetDurationMs": {
+      "type": "integer"
+    },
+    "beats": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "play",
+              "hold",
+              "insert",
+              "trim"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "capture",
+              "composited"
+            ],
+            "default": "capture"
+          },
+          "assetRef": {
+            "type": "string",
+            "description": "RGBA PNG from the compositor, for kind=insert."
+          },
+          "captureStartMs": {
+            "type": "number"
+          },
+          "captureEndMs": {
+            "type": "number"
+          },
+          "captureAtMs": {
+            "type": "number",
+            "description": "For kind=hold: the single frame to clone."
+          },
+          "rate": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "default": 1,
+            "description": "0.25 = quarter speed. Applied via setpts BEFORE the ass burn-in."
+          },
+          "outStartMs": {
+            "type": "number"
+          },
+          "outDurationMs": {
+            "type": "number"
+          },
+          "minOutDurationMs": {
+            "type": "number",
+            "description": "From overlay-theme.holdsMs; the compiler stretches rate until satisfied."
+          },
+          "chapterId": {
+            "type": "string"
+          },
+          "badge": {
+            "type": "string",
+            "enum": [
+              "PAUSED",
+              "FREEZE",
+              "SLOWMO"
+            ]
+          },
+          "transitionIn": {
+            "$ref": "#/$defs/transition"
+          },
+          "transitionOut": {
+            "$ref": "#/$defs/transition"
+          }
+        }
+      }
+    },
+    "timeMap": {
+      "type": "object",
+      "required": [
+        "kind",
+        "knots"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "piecewise-linear"
+        },
+        "knots": {
+          "type": "array",
+          "description": "[captureMs, outMs] pairs, monotone non-decreasing in both axes. A hold is the one case where two knots share a capture value.",
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "transition": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "cut",
+            "fade",
+            "dissolve"
+          ]
+        },
+        "ms": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

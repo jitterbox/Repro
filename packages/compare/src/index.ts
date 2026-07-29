@@ -8,9 +8,11 @@ import type { ElementSnapshot } from './geometry-diff.js';
 
 export * from './align.js';
 export * from './compare.js';
+export * from './composition.js';
 export * from './dtw.js';
 export * from './geometry-diff.js';
 export * from './layouts.js';
+export * from './sync.js';
 
 export const REPRO_COMPARE_VERSION = '0.0.0' as const;
 

@@ -22,7 +22,29 @@ describe('collision placement', () => {
 
     expect(placed).toBeDefined();
     expect(intersects(placed?.bounds ?? roi, roi)).toBe(false);
-    expect(placed?.leaderLine).toBeDefined();
+    // Leader only when the plate cannot seat within 24px of the anchor.
+    expect(placed?.bounds.y).not.toBe(roi.y);
+  });
+
+  it('ignores spatial collisions that do not overlap in time', () => {
+    const target = { height: 16, width: 16, x: 40, y: 40 };
+    const early = {
+      ...box('early', target, 10, 'avoid'),
+      timeRange: { end: 500, start: 0 },
+    };
+    const late = {
+      ...box('late', target, 10, 'avoid'),
+      timeRange: { end: 2_000, start: 1_000 },
+    };
+
+    const placed = placeAnnotations({
+      annotations: [early, late],
+      padding: 0,
+      viewport,
+    });
+
+    expect(placed).toHaveLength(2);
+    expect(placed[0]?.bounds).toEqual(placed[1]?.bounds);
   });
 
   it('honors priority before hiding lower-priority collisions', () => {

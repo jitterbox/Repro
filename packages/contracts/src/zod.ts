@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  AnnotationSchema,
+  ReproConfigSchema,
+} from '@repro/core';
+
 import type { CapabilityDescriptor } from './types.js';
 
 const semverPattern = /^\d+\.\d+\.\d+$/;
@@ -51,122 +56,11 @@ export const capabilityDescriptorSchema = z.object({
   description: z.string().optional(),
 });
 
-export const reproConfigSchema = z.object({
-  schemaVersion: z.string().regex(semverPattern),
-  mode: z.enum(['repro', 'compare', 'demo']),
-  executionProfile: z.enum(['faithful', 'controlled']).optional(),
-  timingSensitive: z.boolean().optional(),
-  surfaceCapture: z.enum(['page', 'os']).optional(),
-  features: z
-    .object({
-      cursor: z.boolean().optional(),
-      keystrokes: z.boolean().optional(),
-      clickViz: z.boolean().optional(),
-      consoleOverlay: z.boolean().optional(),
-      specCard: z.boolean().optional(),
-      steps: z.boolean().optional(),
-      pauses: z.boolean().optional(),
-      slowmo: z.boolean().optional(),
-      zoom: z.boolean().optional(),
-      redaction: z.boolean().optional(),
-      vitalsHud: z.boolean().optional(),
-      voiceover: z.boolean().optional(),
-      freezeDetect: z.boolean().optional(),
-      a11yOverlay: z.boolean().optional(),
-      hiddenElements: z.boolean().optional(),
-      hitTargets: z.boolean().optional(),
-      stackingContexts: z.boolean().optional(),
-      layoutShiftViz: z.boolean().optional(),
-    })
-    .optional(),
-  viewport: z
-    .object({
-      width: z.number().int().positive(),
-      height: z.number().int().positive(),
-      deviceScaleFactor: z.number().positive().optional(),
-    })
-    .optional(),
-  redaction: z
-    .object({
-      strict: z.boolean().optional(),
-    })
-    .optional(),
-  compare: z
-    .object({
-      layout: z
-        .enum([
-          'side-by-side',
-          'onion',
-          'wipe',
-          'blink',
-          'difference',
-        ])
-        .optional(),
-      baselineRunId: z.uuid().optional(),
-      candidateRunId: z.uuid().optional(),
-    })
-    .optional(),
-});
+/** Re-export runtime config schema from @repro/core. */
+export const reproConfigSchema = ReproConfigSchema;
 
-export const reproAnnotationSchema = z.object({
-  id: z.string().min(1),
-  kind: z.enum([
-    'callout',
-    'highlight',
-    'cursor',
-    'keystroke',
-    'console',
-    'step',
-    'chapter',
-    'redaction',
-    'diff',
-    'freeze',
-    'spec',
-  ]),
-  severity: z.enum(['info', 'warn', 'critical']),
-  timeRange: z.object({
-    startMono: z.number().min(0),
-    endMono: z.number().min(0),
-  }),
-  target: z
-    .object({
-      selector: z.string().optional(),
-      pageId: z.string().optional(),
-      bbox: z
-        .object({
-          x: z.number(),
-          y: z.number(),
-          width: z.number().min(0),
-          height: z.number().min(0),
-        })
-        .optional(),
-      evidenceRef: z.string().optional(),
-    })
-    .optional(),
-  label: z.string().min(1),
-  shape: z
-    .enum(['rect', 'ellipse', 'arrow', 'line', 'badge', 'none'])
-    .optional(),
-  icon: z.string().optional(),
-  lineStyle: z.enum(['solid', 'dashed', 'dotted']).optional(),
-  placement: z
-    .enum([
-      'auto',
-      'top',
-      'bottom',
-      'left',
-      'right',
-      'center',
-      'leader',
-    ])
-    .optional(),
-  priority: z.number().int().min(0).optional(),
-  collisionPolicy: z.enum(['avoid', 'overlap', 'truncate']).optional(),
-  confidence: z.number().min(0).max(1).optional(),
-  reviewState: z
-    .enum(['open', 'resolved', 'dismissed', 'verified'])
-    .optional(),
-});
+/** Re-export runtime annotation schema from @repro/core. */
+export const reproAnnotationSchema = AnnotationSchema;
 
 export function parseCapabilityDescriptor(
   data: unknown,
@@ -180,4 +74,213 @@ export function parseReproConfig(data: unknown) {
 
 export function parseReproAnnotation(data: unknown) {
   return reproAnnotationSchema.parse(data);
+}
+
+const timeRangeSchema = z
+  .object({
+    start: z.number().min(0),
+    end: z.number().min(0),
+  })
+  .refine((range) => range.end >= range.start, {
+    message: 'end must be >= start',
+  });
+
+const rectSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number().min(0),
+  height: z.number().min(0),
+});
+
+const bboxSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  w: z.number().min(0),
+  h: z.number().min(0),
+});
+
+const visualCueBaseSchema = z.object({
+  schemaVersion: z.literal('1.0.0'),
+  id: z.string().min(1),
+  severity: z.enum(['info', 'low', 'medium', 'warn', 'high', 'critical']),
+  outTimeRange: timeRangeSchema,
+  renderer: z.enum(['ass', 'compositor']),
+  layer: z.number().int().min(0).max(20),
+  accessibilityText: z.string().optional(),
+  evidenceRef: z.string().optional(),
+  step: z
+    .object({
+      index: z.number().int().min(1),
+      total: z.number().int().min(1),
+      title: z.string().min(1),
+    })
+    .optional(),
+  console: z
+    .object({
+      level: z.enum(['error', 'warn', 'info', 'log']),
+      message: z.string().min(1),
+      timestamp: z.string().optional(),
+    })
+    .optional(),
+  layoutShift: z
+    .object({
+      before: rectSchema,
+      after: rectSchema,
+      dx: z.number().optional(),
+      dy: z.number().optional(),
+      dw: z.number().optional(),
+      dh: z.number().optional(),
+    })
+    .optional(),
+  outcome: z
+    .object({
+      expected: z.string().min(1),
+      actual: z.string().min(1),
+    })
+    .optional(),
+  roi: z
+    .object({
+      source: rectSchema,
+      magnification: z.number().min(1),
+      destination: rectSchema.optional(),
+    })
+    .optional(),
+  delta: z
+    .object({
+      class: z.enum([
+        'geometry',
+        'color',
+        'typography',
+        'content',
+        'visibility',
+        'flow',
+      ]),
+      caption: z.string().min(1),
+      before: z.string().optional(),
+      after: z.string().optional(),
+    })
+    .optional(),
+  plate: z
+    .object({
+      kicker: z.string().optional(),
+      label: z.string().optional(),
+      measurement: z.string().optional(),
+    })
+    .optional(),
+  anchor: z
+    .object({
+      bbox: bboxSchema.optional(),
+      selector: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const visualCueSchema = z.discriminatedUnion('component', [
+  visualCueBaseSchema.extend({
+    component: z.literal('step-badge'),
+    step: z.object({
+      index: z.number().int().min(1),
+      total: z.number().int().min(1),
+      title: z.string().min(1),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.literal('console-toast'),
+    console: z.object({
+      level: z.enum(['error', 'warn', 'info', 'log']),
+      message: z.string().min(1),
+      timestamp: z.string().optional(),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.literal('layout-shift-pair'),
+    layoutShift: z.object({
+      before: rectSchema,
+      after: rectSchema,
+      dx: z.number().optional(),
+      dy: z.number().optional(),
+      dw: z.number().optional(),
+      dh: z.number().optional(),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.literal('outcome-pair'),
+    outcome: z.object({
+      expected: z.string().min(1),
+      actual: z.string().min(1),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.literal('roi-magnifier'),
+    roi: z.object({
+      source: rectSchema,
+      magnification: z.number().min(1),
+      destination: rectSchema.optional(),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.literal('delta-caption'),
+    delta: z.object({
+      class: z.enum([
+        'geometry',
+        'color',
+        'typography',
+        'content',
+        'visibility',
+        'flow',
+      ]),
+      caption: z.string().min(1),
+      before: z.string().optional(),
+      after: z.string().optional(),
+    }),
+  }),
+  visualCueBaseSchema.extend({
+    component: z.enum([
+      'target-ring',
+      'leader',
+      'plate',
+      'callout',
+      'progress-rail',
+      'chapter',
+      'pause-badge',
+      'speed-chip',
+      'click-ripple',
+      'cursor-path',
+      'keystroke-pill',
+      'hit-target-guide',
+      'hidden-ghost',
+      'stacking-labels',
+      'freeze-banner',
+      'vitals-hud',
+      'redaction',
+      'slate',
+    ]),
+  }),
+]);
+
+export const renderedLayerManifestSchema = z.object({
+  schemaVersion: z.literal('1.0.0'),
+  layers: z.array(
+    z.object({
+      cueId: z.string().min(1),
+      source: z.string().min(1),
+      kind: z.enum(['png', 'ass']),
+      startMs: z.number().min(0),
+      endMs: z.number().min(0),
+      zIndex: z.number().int().min(0),
+      x: z.number().optional(),
+      y: z.number().optional(),
+      opacity: z.number().min(0).max(1).optional(),
+      enable: z.string().optional(),
+      expectedAlphaMin: z.number().min(0).max(1).optional(),
+    }),
+  ),
+});
+
+export function parseVisualCue(data: unknown) {
+  return visualCueSchema.parse(data);
+}
+
+export function parseRenderedLayerManifest(data: unknown) {
+  return renderedLayerManifestSchema.parse(data);
 }

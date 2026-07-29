@@ -19,6 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@repro/contracts": "workspace:*",
     "@repro/core": "workspace:*",
     "opentype.js": "^1.3.4"
   },

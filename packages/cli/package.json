@@ -25,6 +25,7 @@
     "@repro/alm": "workspace:*",
     "@repro/capture": "workspace:*",
     "@repro/compare": "workspace:*",
+    "@repro/compositor": "workspace:*",
     "@repro/contracts": "workspace:*",
     "@repro/core": "workspace:*",
     "@repro/evaluation": "workspace:*",

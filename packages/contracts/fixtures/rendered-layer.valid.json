@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "layers": [
+    {
+      "cueId": "slate",
+      "source": "compositor/slate.png",
+      "kind": "png",
+      "startMs": 0,
+      "endMs": 2200,
+      "zIndex": 10,
+      "expectedAlphaMin": 0.9
+    },
+    {
+      "cueId": "toast-1",
+      "source": "compositor/toast-1.png",
+      "kind": "png",
+      "startMs": 4000,
+      "endMs": 6600,
+      "zIndex": 7,
+      "enable": "between(t,4.000,6.600)",
+      "expectedAlphaMin": 0.2
+    }
+  ]
+}

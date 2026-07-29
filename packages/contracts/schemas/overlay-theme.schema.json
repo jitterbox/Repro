@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/overlay-theme.schema.json",
+  "title": "ReproOverlayTheme",
+  "description": "Single token source. Compiles to the ASS [V4+ Styles] table, the viewer CSS custom-property block, and the frame compositor theme.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "colors",
+    "burnInFont"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "id": {
+      "type": "string"
+    },
+    "burnInFont": {
+      "type": "object",
+      "required": [
+        "family"
+      ],
+      "properties": {
+        "family": {
+          "type": "string"
+        },
+        "mono": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "deviceScaleFactor": {
+          "type": "number"
+        }
+      }
+    },
+    "safeZones": {
+      "type": "object",
+      "properties": {
+        "inset": {
+          "type": "integer"
+        },
+        "bottomBand": {
+          "type": "integer"
+        },
+        "maxBottomBandOccupants": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "minProperties": 13,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "hex"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "hex": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+          },
+          "ass": {
+            "type": "string",
+            "pattern": "^&H[0-9A-Fa-f]{8}$",
+            "description": "ASS &HAABBGGRR — byte-reversed from CSS with INVERTED alpha. Generate, never hand-write."
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "severityMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "type": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "motion": {
+      "type": "object"
+    },
+    "holdsMs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "typical": {
+            "type": "integer"
+          },
+          "perWord": {
+            "type": "integer"
+          },
+          "perChar": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "duration": {
+      "type": "object",
+      "properties": {
+        "filedReproMinMs": {
+          "type": "integer"
+        },
+        "filedReproMaxMs": {
+          "type": "integer"
+        },
+        "hardMinMs": {
+          "type": "integer"
+        },
+        "hardMaxMs": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

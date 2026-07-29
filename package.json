@@ -12,6 +12,7 @@
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
     "test:e2e-fixture": "pnpm --filter @repro/e2e-fixture test:e2e",
+    "test:agent-e2e": "pnpm --filter @repro/agent-e2e test",
     "shoplite:dev": "pnpm --filter @repro/shoplite dev"
   },
 

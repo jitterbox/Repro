@@ -18,15 +18,6 @@ export interface RectMaskOptions {
   readonly width: number;
 }
 
-export function buildBlurRedactionFilter(input: RedactionFilterInput): string {
-  const work = input.workLabel ?? 'redact_blur';
-  return [
-    `${input.sourceLabel}gblur=sigma=20[${work}]`,
-    `${input.sourceLabel}[${work}]${input.maskLabel}` +
-      `maskedmerge${input.outputLabel}`,
-  ].join(';');
-}
-
 export function buildPixelizeRedactionFilter(
   input: RedactionFilterInput,
 ): string {

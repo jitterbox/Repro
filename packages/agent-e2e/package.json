@@ -1,0 +1,29 @@
+{
+  "name": "@repro/agent-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run --config vitest.config.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@repro/capture": "workspace:*",
+    "@repro/cli": "workspace:*",
+    "@repro/compare": "workspace:*",
+    "@repro/core": "workspace:*",
+    "@repro/e2e-fixture": "workspace:*",
+    "@repro/evaluation": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.2"
+  }
+}

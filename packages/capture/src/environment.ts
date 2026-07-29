@@ -1,9 +1,14 @@
+import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { arch, platform } from 'node:process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { Viewport } from '@repro/core';
 import type { Browser } from 'playwright';
+
+const execFileAsync = promisify(execFile);
 
 export interface EnvironmentViewport {
   readonly width: number;
@@ -22,8 +27,11 @@ export interface EnvironmentManifest {
   readonly nodeVersion: string;
   readonly platform: string;
   readonly arch: string;
+  readonly osLabel: string;
+  readonly browserLabel: string;
   readonly playwrightVersion: string;
   readonly browserVersion: string;
+  readonly build: string;
   readonly viewport: EnvironmentViewport;
   readonly locale: string;
   readonly timezone: string;
@@ -51,6 +59,7 @@ export interface CollectEnvironmentOptions {
   readonly arch?: string;
   readonly playwrightVersion?: string;
   readonly gpuMode?: 'cpu' | 'unknown';
+  readonly build?: string;
 }
 
 interface PageLocaleInfo {
@@ -64,22 +73,32 @@ export async function collectEnvironmentManifest(
   options: CollectEnvironmentOptions,
 ): Promise<EnvironmentManifest> {
   const runVersionCommand = options.runVersionCommand ?? runVersionCommandFrom;
-  const [pageInfo, ffmpegVersion, ffprobeVersion] = await Promise.all([
-    pageLocaleInfo(options.page),
-    runVersionCommand('ffmpeg'),
-    runVersionCommand('ffprobe'),
-  ]);
+  const browserVersion = options.browser?.version() ?? 'unknown';
+  const osPlatform = options.platform ?? platform;
+  const [pageInfo, ffmpegVersion, ffprobeVersion, fonts, build] =
+    await Promise.all([
+      pageLocaleInfo(options.page),
+      runVersionCommand('ffmpeg'),
+      runVersionCommand('ffprobe'),
+      enumerateFonts(),
+      options.build === undefined
+        ? resolveBuildLabel()
+        : Promise.resolve(options.build),
+    ]);
 
   return {
     arch: options.arch ?? arch,
-    browserVersion: options.browser?.version() ?? 'unknown',
+    browserLabel: prettyBrowser(browserVersion),
+    browserVersion,
+    build,
     ffmpegVersion,
     ffprobeVersion,
-    fontManifest: fontManifestStub(),
+    fontManifest: fonts,
     gpuMode: options.gpuMode ?? 'unknown',
     locale: pageInfo.locale,
     nodeVersion: options.nodeVersion ?? process.version,
-    platform: options.platform ?? platform,
+    osLabel: prettyOs(osPlatform),
+    platform: osPlatform,
     playwrightVersion: options.playwrightVersion ?? playwrightVersion(),
     schemaVersion: 1,
     timezone: pageInfo.timezone,
@@ -89,6 +108,29 @@ export async function collectEnvironmentManifest(
       width: options.viewport.width,
     },
   };
+}
+
+export function prettyBrowser(version: string): string {
+  if (version === 'unknown' || version.length === 0) {
+    return 'Chromium unknown';
+  }
+  if (version.toLowerCase().includes('chrom')) {
+    return version;
+  }
+  return `Chromium ${version}`;
+}
+
+export function prettyOs(value: string): string {
+  switch (value) {
+    case 'linux':
+      return 'Linux';
+    case 'darwin':
+      return 'macOS';
+    case 'win32':
+      return 'Windows';
+    default:
+      return value;
+  }
 }
 
 export function runVersionCommandFrom(command: string): Promise<string | null> {
@@ -121,6 +163,74 @@ export function runVersionCommandFrom(command: string): Promise<string | null> {
   });
 }
 
+async function enumerateFonts(): Promise<readonly FontManifestEntry[]> {
+  try {
+    const { stdout } = await execFileAsync(
+      'fc-list',
+      [':family', '-f', '%{family[0]}\n'],
+      { timeout: 2_000 },
+    );
+    const families = [
+      ...new Set(
+        stdout
+          .split(/\r?\n/u)
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0),
+      ),
+    ].slice(0, 64);
+
+    if (families.length === 0) {
+      return defaultFonts();
+    }
+
+    return families.map((family) => ({
+      family,
+      sha256: createHash('sha256').update(family).digest('hex').slice(0, 16),
+      source: 'fontconfig',
+    }));
+  } catch {
+    return defaultFonts();
+  }
+}
+
+function defaultFonts(): readonly FontManifestEntry[] {
+  return [
+    {
+      family: 'DejaVu Sans',
+      sha256: createHash('sha256').update('DejaVu Sans').digest('hex').slice(0, 16),
+      source: 'pinned',
+    },
+    {
+      family: 'DejaVu Sans Mono',
+      sha256: createHash('sha256')
+        .update('DejaVu Sans Mono')
+        .digest('hex')
+        .slice(0, 16),
+      source: 'pinned',
+    },
+  ];
+}
+
+async function resolveBuildLabel(): Promise<string> {
+  try {
+    const { stdout: branchOut } = await execFileAsync(
+      'git',
+      ['rev-parse', '--abbrev-ref', 'HEAD'],
+      { timeout: 2_000 },
+    );
+    const { stdout: shaOut } = await execFileAsync(
+      'git',
+      ['rev-parse', '--short=7', 'HEAD'],
+      { timeout: 2_000 },
+    );
+    const branch = branchOut.trim() || 'unknown';
+    const sha = shaOut.trim() || '0000000';
+    return `${branch} @ ${sha}`;
+  } catch {
+    return 'unknown @ 0000000';
+  }
+}
+
 async function pageLocaleInfo(
   page: EnvironmentPage | undefined,
 ): Promise<PageLocaleInfo> {
@@ -145,10 +255,6 @@ function firstVersionLine(output: string): string | null {
     .find((item) => item.length > 0);
 
   return line ?? null;
-}
-
-function fontManifestStub(): readonly FontManifestEntry[] {
-  return [{ family: 'unknown', sha256: null, source: 'stub' }];
 }
 
 function playwrightVersion(): string {

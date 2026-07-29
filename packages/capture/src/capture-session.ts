@@ -273,7 +273,56 @@ export class CaptureSession {
     this.#tracker?.emitEditorialCut(reason);
   }
 
-  async showChapter(title: string): Promise<void> {
+  /**
+   * Emit a planner-facing semantic event (pause, slowmo, zoom, hit-target…).
+   * Used by fixture drivers when the probe does not yet cover a cue type.
+   */
+  emitSemantic(
+    kind: string,
+    payload: Readonly<Record<string, unknown>> = {},
+  ): void {
+    this.#sink.emitEvent({
+      kind,
+      pageId: this.#primaryPageId(),
+      payload: jsonValueFrom(payload),
+      tMono: this.#clock.nowMono(),
+    });
+  }
+
+  async emitElementCue(
+    kind: string,
+    selector: string,
+    extra: Readonly<Record<string, unknown>> = {},
+  ): Promise<void> {
+    const box = await this.page.locator(selector).boundingBox().catch(() => null);
+    this.emitSemantic(kind, {
+      selector,
+      ...(box === null
+        ? {}
+        : {
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height,
+            bbox: {
+              x: box.x,
+              y: box.y,
+              w: box.width,
+              h: box.height,
+            },
+          }),
+      ...extra,
+    });
+  }
+
+  async markStep(input: {
+    readonly id: string;
+    readonly title: string;
+  }): Promise<void> {
+    await this.showChapter(input.title, input.id);
+  }
+
+  async showChapter(title: string, stepId?: string): Promise<void> {
     if (this.#config.features.steps !== true) {
       return;
     }
@@ -281,8 +330,16 @@ export class CaptureSession {
     this.#sink.emitEvent({
       kind: 'step.chapter',
       pageId: this.#primaryPageId(),
-      payload: { title },
+      payload: {
+        title,
+        ...(stepId === undefined ? {} : { stepId }),
+      },
     });
+
+    // Delivery captures keep frames clean; overlays are burned at annotate.
+    if (this.#config.capturePreviewUi !== true) {
+      return;
+    }
 
     try {
       await showScreencastChapter(this.page, title);
@@ -738,6 +795,7 @@ export function captureStageManifest(input: {
 
 export function canShowActions(config: ReproConfig): boolean {
   return (
+    config.capturePreviewUi === true &&
     config.showActions === true &&
     config.timingSensitive !== true &&
     config.compare?.streams.includes('pixel-diff') !== true

@@ -1,0 +1,9 @@
+{
+  "description": "4s clip below hard minimum duration",
+  "expectedFailures": ["duration"],
+  "mode": "repro",
+  "timeline": {
+    "schemaVersion": "1.0.0",
+    "targetDurationMs": 4000
+  }
+}

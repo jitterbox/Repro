@@ -143,6 +143,27 @@
         "functional"
       ],
       "path": "testdata/bugs/BUG-1014.json"
+    },
+    {
+      "id": "BUG-1015",
+      "title": "Toast stack push causes CLS and sticky tip under submenu",
+      "severity": "high",
+      "tags": [
+        "cls",
+        "stacking",
+        "hidden"
+      ],
+      "path": "testdata/bugs/BUG-1015.json"
+    },
+    {
+      "id": "BUG-1016",
+      "title": "Heavy sort freezes main thread ~900ms",
+      "severity": "high",
+      "tags": [
+        "freeze",
+        "timing"
+      ],
+      "path": "testdata/bugs/BUG-1016.json"
     }
   ]
 }

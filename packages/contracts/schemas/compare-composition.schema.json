@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/compare-composition.schema.json",
+  "title": "ReproCompareComposition",
+  "description": "Written by `repro compare`, consumed by `repro render-compare`. Replaces the six raw ffmpeg filter strings returned by compareRepros(). The composite frame is the product.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "layout",
+    "panes",
+    "sync",
+    "output"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "bugId": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "string",
+      "enum": [
+        "side-by-side",
+        "onion",
+        "wipe",
+        "cropped-roi",
+        "difference",
+        "edge",
+        "blink"
+      ]
+    },
+    "layoutReason": {
+      "type": "string",
+      "description": "geometry->onion, color/type->wipe, content/flow->side-by-side, sub-8px->cropped-roi. Printed on the slate."
+    },
+    "output": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "fps"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "fps": {
+          "type": "integer"
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+    "panes": {
+      "type": "object",
+      "required": [
+        "a",
+        "b"
+      ],
+      "properties": {
+        "a": {
+          "type": "object",
+          "required": [
+            "runId",
+            "role",
+            "label"
+          ],
+          "properties": {
+            "runId": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "build": {
+              "type": "string"
+            },
+            "viewport": {
+              "type": "object"
+            },
+            "color": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            }
+          }
+        },
+        "b": {
+          "type": "object",
+          "required": [
+            "runId",
+            "role",
+            "label"
+          ],
+          "properties": {
+            "runId": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "build": {
+              "type": "string"
+            },
+            "viewport": {
+              "type": "object"
+            },
+            "color": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "required": [
+        "strategy",
+        "knots"
+      ],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "anchored-dtw",
+            "anchors-only",
+            "dtw-only"
+          ],
+          "default": "anchored-dtw"
+        },
+        "anchors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "stepId",
+              "aMs",
+              "bMs"
+            ],
+            "properties": {
+              "stepId": {
+                "type": "string"
+              },
+              "aMs": {
+                "type": "number"
+              },
+              "bMs": {
+                "type": "number"
+              },
+              "outMs": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "band": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "sakoe-chiba"
+            },
+            "radiusMs": {
+              "type": "number",
+              "default": 250
+            }
+          }
+        },
+        "signature": {
+          "type": "string",
+          "default": "luma-32x18",
+          "description": "Downscaled frame signature DTW runs on between anchors."
+        },
+        "maxStretch": {
+          "type": "number",
+          "default": 2.5
+        },
+        "knots": {
+          "type": "array",
+          "description": "[aMs, bMs, outMs, confidence] — the syncMap. Shared by encoder, viewer dual player and quality gate.",
+          "items": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "lowConfidenceSpans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "outStartMs": {
+                "type": "number"
+              },
+              "outEndMs": {
+                "type": "number"
+              },
+              "confidence": {
+                "type": "number"
+              }
+            }
+          },
+          "description": "Rendered as DRIFT ticks on the shared rail rather than silently warped."
+        }
+      }
+    },
+    "onion": {
+      "type": "object",
+      "properties": {
+        "beforeOpacity": {
+          "type": "number",
+          "default": 0.45
+        },
+        "ghostRing": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "wipe": {
+      "type": "object",
+      "properties": {
+        "axis": {
+          "type": "string",
+          "enum": [
+            "vertical",
+            "horizontal"
+          ],
+          "default": "vertical"
+        },
+        "animate": {
+          "type": "boolean",
+          "default": true
+        },
+        "restAt": {
+          "type": "number",
+          "default": 0.5
+        },
+        "restForMs": {
+          "type": "integer",
+          "default": 1000
+        }
+      }
+    },
+    "croppedRoi": {
+      "type": "object",
+      "properties": {
+        "rect": {
+          "type": "object"
+        },
+        "magnification": {
+          "type": "number",
+          "default": 2.5
+        }
+      }
+    },
+    "blink": {
+      "type": "object",
+      "properties": {
+        "hz": {
+          "type": "number",
+          "maximum": 2,
+          "default": 2
+        },
+        "optIn": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "description": "Never a default. Emits an a11y warning into the manifest whenever used."
+    },
+    "deltas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "selector",
+          "class"
+        ],
+        "properties": {
+          "selector": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string",
+            "enum": [
+              "geometry",
+              "color",
+              "typography",
+              "content",
+              "visibility",
+              "flow"
+            ]
+          },
+          "dx": {
+            "type": "number"
+          },
+          "dy": {
+            "type": "number"
+          },
+          "dw": {
+            "type": "number"
+          },
+          "dh": {
+            "type": "number"
+          },
+          "before": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "ringA": {
+            "type": "string",
+            "enum": [
+              "remove",
+              "change",
+              "before"
+            ]
+          },
+          "ringB": {
+            "type": "string",
+            "enum": [
+              "add",
+              "change",
+              "after"
+            ]
+          }
+        }
+      }
+    },
+    "chrome": {
+      "type": "object",
+      "properties": {
+        "sharedRail": {
+          "type": "boolean",
+          "default": true
+        },
+        "driftTicks": {
+          "type": "boolean",
+          "default": true
+        },
+        "legend": {
+          "type": "string"
+        },
+        "stepCounter": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "a11y": {
+      "type": "object",
+      "properties": {
+        "blinkUsed": {
+          "type": "boolean"
+        },
+        "maxFlashHz": {
+          "type": "number",
+          "maximum": 2
+        }
+      }
+    }
+  }
+}

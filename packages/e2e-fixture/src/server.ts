@@ -8,7 +8,7 @@ export type FixtureMode = 'broken' | 'fixed';
 export interface ShopliteServer {
   readonly url: string;
   readonly close: () => Promise<void>;
-  fixtureUrl(mode: FixtureMode): string;
+  fixtureUrl(mode: FixtureMode, bugId?: string): string;
 }
 
 export async function startShopliteServer(): Promise<ShopliteServer> {
@@ -35,7 +35,13 @@ export async function startShopliteServer(): Promise<ShopliteServer> {
 
   return {
     url: normalized,
-    fixtureUrl: (mode) => `${normalized}/?fixture=${mode}`,
+    fixtureUrl: (mode, bugId) => {
+      const params = new URLSearchParams({ fixture: mode });
+      if (bugId !== undefined) {
+        params.set('bug', bugId);
+      }
+      return `${normalized}/?${params.toString()}`;
+    },
     close: async () => {
       await server.close();
     },

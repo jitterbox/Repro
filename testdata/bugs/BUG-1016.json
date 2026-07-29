@@ -1,0 +1,45 @@
+{
+  "id": "BUG-1016",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Heavy sort freezes main thread ~900ms",
+  "System.Description": "<p>Heavy sort busy-waits on the main thread, second freeze instance for overlay coverage.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken&amp;bug=BUG-1016</li><li>Click Heavy sort</li><li>Observe UI freeze</li></ol></div>",
+  "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr></table>",
+  "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
+  "Custom.Severity": "high",
+  "Custom.Tags": ["freeze", "timing"],
+  "Custom.Selectors": {
+    "sort": "btn-sort-heavy"
+  },
+  "Custom.AnnotationHints": [
+    {
+      "target": "btn-sort-heavy",
+      "shape": "rect",
+      "label": "Heavy sort trigger"
+    }
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "features": {
+      "freezeDetect": true,
+      "vitalsHud": true,
+      "pauses": true,
+      "steps": true,
+      "specCard": true
+    },
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "metadata": {
+      "title": "Heavy sort main-thread freeze",
+      "bugId": "BUG-1016",
+      "expected": "Sort yields to UI",
+      "actual": "Main thread blocked ~900ms"
+    }
+  }
+}

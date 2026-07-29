@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/visual-cue.schema.json",
+  "title": "ReproVisualCue",
+  "description": "Typed visual cue document. Discriminated by component; each variant owns required content.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "component",
+    "severity",
+    "outTimeRange",
+    "renderer",
+    "layer"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": { "type": "string", "minLength": 1 },
+    "component": {
+      "type": "string",
+      "enum": [
+        "target-ring",
+        "leader",
+        "plate",
+        "callout",
+        "step-badge",
+        "progress-rail",
+        "chapter",
+        "console-toast",
+        "pause-badge",
+        "speed-chip",
+        "click-ripple",
+        "cursor-path",
+        "keystroke-pill",
+        "layout-shift-pair",
+        "hit-target-guide",
+        "hidden-ghost",
+        "stacking-labels",
+        "roi-magnifier",
+        "freeze-banner",
+        "vitals-hud",
+        "redaction",
+        "outcome-pair",
+        "slate",
+        "delta-caption"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "low", "medium", "warn", "high", "critical"]
+    },
+    "outTimeRange": {
+      "type": "object",
+      "required": ["start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "number", "minimum": 0 },
+        "end": { "type": "number", "minimum": 0 }
+      }
+    },
+    "renderer": { "type": "string", "enum": ["ass", "compositor"] },
+    "layer": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "accessibilityText": { "type": "string" },
+    "evidenceRef": { "type": "string" },
+    "step": {
+      "type": "object",
+      "required": ["index", "total", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "index": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 1 },
+        "title": { "type": "string", "minLength": 1 }
+      }
+    },
+    "console": {
+      "type": "object",
+      "required": ["level", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warn", "info", "log"]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "string" }
+      }
+    },
+    "layoutShift": {
+      "type": "object",
+      "required": ["before", "after"],
+      "additionalProperties": false,
+      "properties": {
+        "before": { "$ref": "#/$defs/rect" },
+        "after": { "$ref": "#/$defs/rect" },
+        "dx": { "type": "number" },
+        "dy": { "type": "number" },
+        "dw": { "type": "number" },
+        "dh": { "type": "number" }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["expected", "actual"],
+      "additionalProperties": false,
+      "properties": {
+        "expected": { "type": "string", "minLength": 1 },
+        "actual": { "type": "string", "minLength": 1 }
+      }
+    },
+    "roi": {
+      "type": "object",
+      "required": ["source", "magnification"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "$ref": "#/$defs/rect" },
+        "magnification": { "type": "number", "minimum": 1 },
+        "destination": { "$ref": "#/$defs/rect" }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "required": ["class", "caption"],
+      "additionalProperties": false,
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "geometry",
+            "color",
+            "typography",
+            "content",
+            "visibility",
+            "flow"
+          ]
+        },
+        "caption": { "type": "string", "minLength": 1 },
+        "before": { "type": "string" },
+        "after": { "type": "string" }
+      }
+    },
+    "plate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kicker": { "type": "string" },
+        "label": { "type": "string" },
+        "measurement": { "type": "string" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "selector": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "component": { "const": "step-badge" } }
+      },
+      "then": { "required": ["step"] }
+    },
+    {
+      "if": {
+        "properties": { "component": { "const": "console-toast" } }
+      },
+      "then": { "required": ["console"] }
+    },
+    {
+      "if": {
+        "properties": { "component": { "const": "layout-shift-pair" } }
+      },
+      "then": { "required": ["layoutShift"] }
+    },
+    {
+      "if": {
+        "properties": { "component": { "const": "outcome-pair" } }
+      },
+      "then": { "required": ["outcome"] }
+    },
+    {
+      "if": {
+        "properties": { "component": { "const": "roi-magnifier" } }
+      },
+      "then": { "required": ["roi"] }
+    },
+    {
+      "if": {
+        "properties": { "component": { "const": "delta-caption" } }
+      },
+      "then": { "required": ["delta"] }
+    }
+  ],
+  "$defs": {
+    "rect": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "bbox": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "w": { "type": "number", "minimum": 0 },
+        "h": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

@@ -4,9 +4,18 @@ import { spawn } from 'node:child_process';
 
 import { generateAss } from './ass.js';
 import { buildFilterGraph } from './filtergraph.js';
+import { writeVtt } from './voiceover.js';
 
-import type { SkiaOverlayInput } from './filtergraph.js';
+import type { CompositorOverlayInput } from './filtergraph.js';
 import type { ReproPlan } from '@repro/plan';
+
+export interface TimedCompositorInput {
+  readonly path: string;
+  readonly startMs: number;
+  readonly endMs: number;
+  readonly x?: number;
+  readonly y?: number;
+}
 
 export interface RenderPlanInput {
   readonly video: string;
@@ -15,12 +24,14 @@ export interface RenderPlanInput {
   readonly outputName?: string;
   readonly ffmpegPath?: string;
   readonly progressBar?: boolean;
-  readonly skiaInputs?: readonly string[];
+  readonly slatePath?: string;
+  readonly compositorInputs?: readonly (string | TimedCompositorInput)[];
 }
 
 export interface RenderPlanResult {
   readonly outputPath: string;
   readonly assPath: string;
+  readonly timelinePath: string;
   readonly filterComplex: string;
 }
 
@@ -45,20 +56,68 @@ const BT709_ARGS = [
   '+faststart',
 ] as const;
 
+export async function probeMediaDurationMs(
+  videoPath: string,
+  ffprobePath = 'ffprobe',
+): Promise<number | undefined> {
+  try {
+    const output = await runFfmpegOutput({
+      args: [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        videoPath,
+      ],
+      ffmpegPath: ffprobePath,
+    });
+    const seconds = Number.parseFloat(output.trim());
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      return undefined;
+    }
+    return seconds * 1_000;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function renderPlan(
   input: RenderPlanInput,
 ): Promise<RenderPlanResult> {
   await mkdir(input.outDir, { recursive: true });
 
   const assPath = join(input.outDir, 'overlay.ass');
+  const timelinePath = join(input.outDir, 'timeline.json');
   await writeFile(assPath, generateAss({ plan: input.plan }));
+  await writeFile(
+    timelinePath,
+    `${JSON.stringify(input.plan.timeline, null, 2)}\n`,
+  );
 
   const ffmpegPath = input.ffmpegPath ?? 'ffmpeg';
-  const overlays = skiaOverlays(input.skiaInputs ?? []);
+  const compositorInputs = (input.compositorInputs ?? []).map(normalizeCompositorInput);
+  const extraInputs = [
+    ...(input.slatePath === undefined ? [] : [input.slatePath]),
+    ...compositorInputs.map((entry) => entry.path),
+  ];
+  const slateStreamIndex =
+    input.slatePath === undefined ? undefined : 1;
+  const overlayStart =
+    input.slatePath === undefined ? 1 : 2;
+  const overlays = compositorOverlays(compositorInputs, overlayStart);
+  const mediaMs = await probeMediaDurationMs(input.video);
+  const timeline =
+    mediaMs === undefined
+      ? input.plan.timeline
+      : clampTimelineToMedia(input.plan.timeline, mediaMs);
   const graph = buildFilterGraph({
     assPath,
     plan: input.plan,
-    skiaOverlays: overlays,
+    timeline,
+    compositorOverlays: overlays,
+    ...(slateStreamIndex === undefined ? {} : { slateStreamIndex }),
     ...(input.progressBar === undefined
       ? {}
       : { progressBar: input.progressBar }),
@@ -67,26 +126,101 @@ export async function renderPlan(
   const outputPath = join(input.outDir, input.outputName ?? 'rendered.mp4');
 
   await runFfmpeg({
-    args: ffmpegArgs(input, graph.filterComplex, graph.videoLabel, outputPath),
+    args: ffmpegArgs(
+      input.video,
+      extraInputs,
+      graph.filterComplex,
+      graph.videoLabel,
+      outputPath,
+    ),
     ffmpegPath,
   });
+
+  const narration = input.plan.narrationSegments ?? [];
+  if (narration.length > 0) {
+    await writeVtt(
+      join(input.outDir, 'captions.vtt'),
+      narration.map((segment) => ({
+        id: segment.id,
+        text: segment.text,
+        timeRange: segment.outTimeRange ?? segment.timeRange,
+      })),
+    );
+  }
 
   return {
     assPath,
     filterComplex: graph.filterComplex,
     outputPath,
+    timelinePath,
   };
 }
 
-function skiaOverlays(paths: readonly string[]): readonly SkiaOverlayInput[] {
-  return paths.map((path, index) => {
-    void path;
-    return { streamIndex: index + 1 };
+function normalizeCompositorInput(
+  input: string | TimedCompositorInput,
+): TimedCompositorInput {
+  if (typeof input === 'string') {
+    return { endMs: Number.POSITIVE_INFINITY, path: input, startMs: 0 };
+  }
+  return input;
+}
+
+function compositorOverlays(
+  inputs: readonly TimedCompositorInput[],
+  startIndex: number,
+): readonly CompositorOverlayInput[] {
+  return inputs.map((entry, index) => {
+    const startSec = Math.max(0, entry.startMs) / 1_000;
+    const endSec =
+      Number.isFinite(entry.endMs) ? Math.max(startSec, entry.endMs / 1_000) : undefined;
+    const enable =
+      endSec === undefined
+        ? `gte(t,${startSec.toFixed(3)})`
+        : `between(t,${startSec.toFixed(3)},${endSec.toFixed(3)})`;
+    return {
+      streamIndex: startIndex + index,
+      enable,
+      ...(entry.x === undefined ? {} : { x: entry.x }),
+      ...(entry.y === undefined ? {} : { y: entry.y }),
+    };
   });
 }
 
+function clampTimelineToMedia(
+  timeline: ReproPlan['timeline'],
+  mediaDurationMs: number,
+): ReproPlan['timeline'] {
+  const mediaEnd = Math.max(0, mediaDurationMs);
+  const lastFrameMs = Math.max(0, mediaEnd - 1_000 / timeline.fps);
+  return {
+    ...timeline,
+    beats: timeline.beats.map((beat) => {
+      if (beat.kind === 'hold') {
+        return {
+          ...beat,
+          captureAtMs: Math.min(beat.captureAtMs ?? 0, lastFrameMs),
+        };
+      }
+      if (beat.kind === 'play' || beat.kind === 'trim') {
+        const start = Math.min(beat.captureStartMs ?? 0, mediaEnd);
+        const end = Math.min(
+          Math.max(beat.captureEndMs ?? start, start),
+          mediaEnd,
+        );
+        return {
+          ...beat,
+          captureStartMs: start,
+          captureEndMs: Math.max(end, start + 1_000 / timeline.fps),
+        };
+      }
+      return beat;
+    }),
+  };
+}
+
 function ffmpegArgs(
-  input: RenderPlanInput,
+  video: string,
+  extraInputs: readonly string[],
   filterComplex: string,
   videoLabel: string,
   outputPath: string,
@@ -94,8 +228,8 @@ function ffmpegArgs(
   return [
     '-y',
     '-i',
-    input.video,
-    ...overlayInputArgs(input.skiaInputs ?? []),
+    video,
+    ...extraInputs.flatMap((path) => ['-i', path]),
     '-filter_complex',
     filterComplex,
     '-map',
@@ -107,10 +241,6 @@ function ffmpegArgs(
     'copy',
     outputPath,
   ];
-}
-
-function overlayInputArgs(paths: readonly string[]): readonly string[] {
-  return paths.flatMap((path) => ['-i', path]);
 }
 
 function runFfmpeg(input: {

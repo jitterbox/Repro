@@ -2,12 +2,15 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path';
 
 import { encodeH264, runCapture } from '@repro/capture';
-import { packageCommand } from '@repro/cli';
+import { annotateCommand, packageCommand } from '@repro/cli';
 import { compareRuns } from '@repro/compare';
-import { EventRecordSchema, ReproStore, validateConfig } from '@repro/core';
-import { buildQualityReport, metricStatus } from '@repro/evaluation';
-import { buildPlan } from '@repro/plan';
-import { renderPlan } from '@repro/render';
+import { ReproStore, validateConfig } from '@repro/core';
+import {
+  buildQualityReport,
+  metricStatus,
+  runDeterministicGates,
+} from '@repro/evaluation';
+import { renderCompare } from '@repro/render';
 
 import { getRepoRoot } from './bugs.js';
 import { startShopliteServer } from './server.js';
@@ -16,7 +19,7 @@ import type { BugWorkItem } from './bugs.js';
 import type { FixtureMode, ShopliteServer } from './server.js';
 import type { CaptureSession } from '@repro/capture';
 import type { CompareManifest, CompareRunResult } from '@repro/compare';
-import type { EventRecord, ReproConfig } from '@repro/core';
+import type { ReproConfig } from '@repro/core';
 import type { Page } from 'playwright';
 
 export interface ScenarioContext {
@@ -60,6 +63,7 @@ export async function runScenarioCapture(input: {
   readonly server: ShopliteServer;
   readonly drive: (session: CaptureSession) => Promise<void>;
   readonly runId?: string;
+  readonly bugId?: string;
 }): Promise<CaptureScenarioResult> {
   const validation = validateConfig(input.config);
   if (!validation.ok) {
@@ -77,7 +81,7 @@ export async function runScenarioCapture(input: {
     outputDir: captureDir,
     ...(input.runId === undefined ? {} : { runId: input.runId }),
     run: input.drive,
-    url: input.server.fixtureUrl(input.fixture),
+    url: input.server.fixtureUrl(input.fixture, input.bugId),
   });
 
   const eventsPath = join(captureDir, 'events.jsonl');
@@ -111,33 +115,45 @@ export async function runScenarioAnnotate(input: {
     outputRoot(input.scenario),
     input.suffix ?? 'render',
   );
+  await rm(renderDir, { force: true, recursive: true });
   await mkdir(renderDir, { recursive: true });
 
-  const events = await readEvents(input.eventsPath);
-  const plan = buildPlan({
-    config: input.config,
-    events,
-    frames: [],
-    viewport: input.config.viewport,
-  });
-  const planPath = join(renderDir, 'plan.json');
-  await writeFile(planPath, `${JSON.stringify(plan, null, 2)}\n`);
+  const configPath = join(renderDir, 'repro.config.json');
+  await writeFile(
+    configPath,
+    `${JSON.stringify(input.config, null, 2)}\n`,
+  );
 
-  const render = await renderPlan({
+  const annotated = await annotateCommand({
+    config: configPath,
+    events: input.eventsPath,
     outDir: renderDir,
     outputName: 'annotated.mp4',
-    plan,
+    planOut: join(renderDir, 'plan.json'),
     video: input.videoPath,
   });
 
-  return { planPath, renderDir, videoPath: render.outputPath };
+  return {
+    planPath: annotated.planPath,
+    renderDir,
+    videoPath: annotated.render.outputPath,
+  };
 }
 
 export async function runScenarioCompare(input: {
   readonly scenario: string;
   readonly left: CompareManifest;
   readonly right: CompareManifest;
-}): Promise<CompareRunResult> {
+  readonly videoA?: string;
+  readonly videoB?: string;
+  readonly layout?: string;
+  readonly layouts?: readonly string[];
+}): Promise<
+  CompareRunResult & {
+    readonly compareVideoPath?: string;
+    readonly compareVideoPaths?: readonly string[];
+  }
+> {
   const outDir = join(outputRoot(input.scenario), 'compare');
   await mkdir(outDir, { recursive: true });
   const leftPath = join(outDir, 'left.json');
@@ -149,7 +165,49 @@ export async function runScenarioCompare(input: {
     join(outDir, 'result.json'),
     `${JSON.stringify(result, null, 2)}\n`,
   );
-  return result;
+
+  if (
+    input.videoA === undefined ||
+    input.videoB === undefined ||
+    result.composition === undefined
+  ) {
+    return result;
+  }
+
+  const layouts = input.layouts ?? [
+    input.layout ?? result.composition.layout ?? 'side-by-side',
+  ];
+  const paths: string[] = [];
+  for (const layout of layouts) {
+    const composition = {
+      ...result.composition,
+      layout: layout as typeof result.composition.layout,
+      output: {
+        ...result.composition.output,
+        filename: `${layout}_compare.mp4`,
+      },
+      ...(layout === 'cropped-roi' && result.composition.croppedRoi === undefined
+        ? {
+            croppedRoi: {
+              rect: { x: 520, y: 280, w: 140, h: 48 },
+              magnification: 2.5,
+            },
+          }
+        : {}),
+    };
+    const rendered = await renderCompare({
+      composition,
+      outDir: join(outDir, 'render'),
+      videoA: input.videoA,
+      videoB: input.videoB,
+    });
+    paths.push(rendered.outputPath);
+  }
+  return {
+    ...result,
+    ...(paths[0] === undefined ? {} : { compareVideoPath: paths[0] }),
+    compareVideoPaths: paths,
+  };
 }
 
 export async function runScenarioPackage(input: {
@@ -185,28 +243,72 @@ export function configFromBug(bug: BugWorkItem): ReproConfig {
 }
 
 export async function writeQualityPass(scenario: string): Promise<string> {
-  const out = join(outputRoot(scenario), 'quality-report.json');
+  const root = outputRoot(scenario);
+  const out = join(root, 'quality-report.json');
+  const videoPath = await findAnnotatedVideo(root);
+  const planPath = videoPath === undefined
+    ? undefined
+    : join(videoPath, '..', 'plan.json');
+  const timelinePath = videoPath === undefined
+    ? undefined
+    : join(videoPath, '..', 'timeline.json');
+
+  const gates =
+    videoPath === undefined
+      ? { pass: false, results: [] }
+      : await runDeterministicGates({
+          videoPath,
+          ...(planPath === undefined ? {} : { planPath }),
+          ...(timelinePath === undefined ? {} : { timelinePath }),
+          frameWidth: 1280,
+          frameHeight: 720,
+          mode: 'repro',
+        });
+
   const report = buildQualityReport({
-    completed: true,
+    completed: gates.pass,
     metrics: [
-      {
-        name: 'redaction-leakage',
-        required: true,
-        status: metricStatus(0, 0, 'at-most'),
-        threshold: 0,
-        value: 0,
-      },
       {
         name: 'determinism',
         required: true,
-        status: metricStatus(1, 1, 'at-least'),
+        status: metricStatus(gates.pass ? 1 : 0, 1, 'at-least'),
         threshold: 1,
-        value: 1,
+        value: gates.pass ? 1 : 0,
+      },
+      {
+        name: 'human-usefulness',
+        required: false,
+        status: metricStatus(gates.results.length, 1, 'at-least'),
+        threshold: 1,
+        value: gates.results.length,
       },
     ],
   });
-  await writeFile(out, `${JSON.stringify(report, null, 2)}\n`);
+  await writeFile(
+    out,
+    `${JSON.stringify({ ...report, gates: gates.results }, null, 2)}\n`,
+  );
   return out;
+}
+
+async function findAnnotatedVideo(
+  root: string,
+): Promise<string | undefined> {
+  for (const sub of ['render', 'render-broken', 'render-fixed']) {
+    const dir = join(root, sub);
+    try {
+      const files = await readdir(dir);
+      const mp4 = files.find(
+        (name) => name.endsWith('.mp4') && !name.includes('raw'),
+      );
+      if (mp4 !== undefined) {
+        return join(dir, mp4);
+      }
+    } catch {
+      // missing render dir
+    }
+  }
+  return undefined;
 }
 
 export async function waitReady(page: Page): Promise<void> {
@@ -252,11 +354,4 @@ async function pickFramePage(framesRoot: string): Promise<string | undefined> {
   }
 
   return best?.id;
-}
-
-async function readEvents(path: string): Promise<readonly EventRecord[]> {
-  const lines = (await readFile(path, 'utf8')).split('\n').filter(Boolean);
-  return lines.map((line) => {
-    return EventRecordSchema.parse(JSON.parse(line) as unknown);
-  });
 }

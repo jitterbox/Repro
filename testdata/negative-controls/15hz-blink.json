@@ -1,0 +1,10 @@
+{
+  "description": "High-frequency blink metadata for flash gate regression",
+  "expectedFailures": ["flash"],
+  "mode": "repro",
+  "videoHint": "synthetic-15hz-blink.mp4",
+  "flash": {
+    "sampleFps": 2,
+    "expectedFlashHz": 15
+  }
+}

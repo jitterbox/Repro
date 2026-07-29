@@ -8,6 +8,7 @@ Monorepo for the **Repro AI** bug reproduction video pipeline.
 | --- | --- |
 | [`AGENTS.md`](AGENTS.md) | Agent entrypoint (constraints + routing) |
 | [`docs/ai-usage.md`](docs/ai-usage.md) | Full AI playbook: modes, features, **bug-class → config matrix**, CLI playbooks |
+| [`docs/design-brief.md`](docs/design-brief.md) | **Claude Design brief** — video chrome, overlay language, theming, viewer UI, skills visuals |
 | [`docs/spikes.md`](docs/spikes.md) | Phase 0 spike results / design locks |
 | [`apps/shoplite/`](apps/shoplite/) | Broken/fixed fixture SPA for demos & E2E videos |
 | [`testdata/bugs/`](testdata/bugs/) | ADO-shaped bug work items for ShopLite |
@@ -29,6 +30,7 @@ Monorepo for the **Repro AI** bug reproduction video pipeline.
 | `@repro/cli`        | Command-line interface               |
 | `@repro/viewer`     | Accessible report viewer             |
 | `@repro/evaluation` | Quality gates / DiffSpot+WUICC stubs |
+| `@repro/agent-e2e` | Tier-3 agent E2E (mock + optional live) |
 
 ## Requirements
 
@@ -47,6 +49,7 @@ pnpm typecheck
 pnpm lint
 pnpm test
 pnpm test:e2e-fixture   # ShopLite feature-coverage videos
+pnpm --filter @repro/agent-e2e test   # mock agent E2E (no API keys)
 pnpm shoplite:dev       # http://localhost:5177/?fixture=broken
 ```
 
@@ -84,6 +87,18 @@ Comparison reads two JSON run manifests and reports structural differences.
 
 ```bash
 repro compare .repro/baseline.json .repro/current.json
+```
+
+Render a compare composition MP4 from two captured videos (see
+[`docs/design-recs/video-system-spec.md`](docs/design-recs/video-system-spec.md)
+and `compare-composition.schema.json`):
+
+```bash
+repro render-compare \
+  --composition .repro/compare-composition.json \
+  --video-a .repro/before.mp4 \
+  --video-b .repro/after.mp4 \
+  -o .repro/compare-render
 ```
 
 Filing runs the OCR redaction gate before preparing or uploading evidence to

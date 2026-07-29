@@ -5,7 +5,14 @@ export const SCHEMA_NAMES = [
   'manifest',
   'capability',
   'annotation',
+  'annotation.v2',
   'quality-report',
+  'timeline',
+  'slate',
+  'compare-composition',
+  'overlay-theme',
+  'visual-cue',
+  'rendered-layer',
 ] as const;
 
 export type SchemaName = (typeof SCHEMA_NAMES)[number];
@@ -71,9 +78,10 @@ export interface BoundingBox {
   height: number;
 }
 
+/** Runtime time range — matches @repro/core. */
 export interface TimeRange {
-  startMono: number;
-  endMono: number;
+  start: number;
+  end: number;
 }
 
 export interface AnnotationTarget {
@@ -83,65 +91,64 @@ export interface AnnotationTarget {
   evidenceRef?: string;
 }
 
+export type AnnotationComponent =
+  | 'target-ring'
+  | 'leader'
+  | 'plate'
+  | 'callout'
+  | 'step-badge'
+  | 'progress-rail'
+  | 'chapter'
+  | 'console-toast'
+  | 'pause-badge'
+  | 'speed-chip'
+  | 'click-ripple'
+  | 'cursor-path'
+  | 'keystroke-pill'
+  | 'layout-shift-pair'
+  | 'hit-target-guide'
+  | 'hidden-ghost'
+  | 'stacking-labels'
+  | 'roi-magnifier'
+  | 'freeze-banner'
+  | 'vitals-hud'
+  | 'redaction'
+  | 'outcome-pair'
+  | 'slate'
+  | 'delta-caption';
+
 export interface ReproAnnotation {
   id: string;
-  kind:
-    | 'callout'
-    | 'highlight'
-    | 'cursor'
-    | 'keystroke'
-    | 'console'
-    | 'step'
-    | 'chapter'
-    | 'redaction'
-    | 'diff'
-    | 'freeze'
-    | 'spec';
-  severity: 'info' | 'warn' | 'critical';
-  timeRange: TimeRange;
+  component: AnnotationComponent;
+  severity: 'info' | 'low' | 'medium' | 'warn' | 'high' | 'critical';
+  kind?: string;
+  feature?: string;
+  beatId?: string;
+  timeRange?: TimeRange;
+  outTimeRange?: TimeRange;
   target?: AnnotationTarget;
-  label: string;
-  shape?: 'rect' | 'ellipse' | 'arrow' | 'line' | 'badge' | 'none';
+  label?: string;
+  shape?: 'rect' | 'ellipse' | 'underline' | 'arrow' | 'line' | 'badge' | 'none';
   icon?: string;
   lineStyle?: 'solid' | 'dashed' | 'dotted';
-  placement?:
-    | 'auto'
-    | 'top'
-    | 'bottom'
-    | 'left'
-    | 'right'
-    | 'center'
-    | 'leader';
   priority?: number;
-  collisionPolicy?: 'avoid' | 'overlap' | 'truncate';
   confidence?: number;
   reviewState?: 'open' | 'resolved' | 'dismissed' | 'verified';
+  renderer?: 'ass' | 'compositor';
 }
 
 export interface ReproEvent {
-  schemaVersion: string;
+  id: string;
+  schemaVersion: number;
   runId: string;
   pageId: string;
   seq: number;
-  tMono: number;
-  tSource?: number;
-  type:
-    | 'navigation'
-    | 'pointer'
-    | 'keyboard'
-    | 'console'
-    | 'exception'
-    | 'vitals'
-    | 'geometry'
-    | 'frame'
-    | 'cut'
-    | 'lifecycle'
-    | 'action'
-    | 'redaction'
-    | 'stage';
-  payload: Record<string, unknown>;
+  t_mono: number;
+  t_epoch?: number;
+  kind: string;
+  payload: unknown;
   prevHash?: string;
-  hash?: string;
+  hash: string;
 }
 
 export interface ValidationResult {

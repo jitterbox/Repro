@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/slate.schema.json",
+  "title": "ReproSlate",
+  "description": "Opening spec-card content model, populated from probe + capture environment + ALM. Build fails when a required field is missing; quality gate asserts slate bugId === filename bugId.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "mode",
+    "bugId",
+    "title",
+    "browser",
+    "os",
+    "viewport",
+    "appLabel"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "repro",
+        "demo",
+        "compare"
+      ]
+    },
+    "bugId": {
+      "type": "string",
+      "description": "The only accent-coloured element on the card. Must equal the filename bug ID."
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 90
+    },
+    "browser": {
+      "type": "string"
+    },
+    "os": {
+      "type": "string"
+    },
+    "viewport": {
+      "type": "object",
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "deviceScaleFactor": {
+          "type": "number",
+          "default": 1
+        }
+      }
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "faithful",
+        "controlled"
+      ]
+    },
+    "profileChip": {
+      "type": "string",
+      "description": "faithful -> \"Live timing\"; controlled -> \"Deterministic\"."
+    },
+    "locale": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "build": {
+      "type": "string",
+      "description": "branch @ short SHA"
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "appLabel": {
+      "type": "string",
+      "description": "App name + URL/fixture, e.g. \"ShopLite Admin · localhost:5177/?fixture=broken\""
+    },
+    "stepCount": {
+      "type": "integer"
+    },
+    "durationMs": {
+      "type": "integer"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "expected-pass",
+        "expected-fail",
+        "unknown"
+      ],
+      "description": "demo mode states this up front."
+    },
+    "comparePanes": {
+      "type": "object",
+      "description": "compare mode only.",
+      "properties": {
+        "a": {
+          "type": "object",
+          "properties": {
+            "runId": {
+              "type": "string"
+            },
+            "build": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        },
+        "b": {
+          "type": "object",
+          "properties": {
+            "runId": {
+              "type": "string"
+            },
+            "build": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "holdMs": {
+      "type": "integer",
+      "default": 2200,
+      "minimum": 2000
+    },
+    "dissolveMs": {
+      "type": "integer",
+      "default": 320
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "compare"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "comparePanes"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "demo"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "outcome"
+        ]
+      }
+    }
+  ]
+}

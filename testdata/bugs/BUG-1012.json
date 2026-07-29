@@ -13,13 +13,19 @@
     "pii"
   ],
   "Custom.Selectors": {
-    "email": "input-email"
+    "email": "input-email",
+    "ssn": "input-ssn"
   },
   "Custom.AnnotationHints": [
     {
       "target": "input-email",
       "shape": "rect",
       "label": "PII canary"
+    },
+    {
+      "target": "input-ssn",
+      "shape": "rect",
+      "label": "Tax ID canary"
     }
   ],
   "Custom.ReproConfig": {
@@ -34,7 +40,8 @@
     "redaction": {
       "strict": true,
       "masks": [
-        "input-email"
+        "input-email",
+        "input-ssn"
       ]
     },
     "surfaceCapture": "page",

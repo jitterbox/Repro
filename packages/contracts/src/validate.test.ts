@@ -28,8 +28,8 @@ describe('validateAgainst', () => {
 
   it('rejects invalid event payloads', () => {
     const result = validateAgainst('event', {
-      schemaVersion: '1.0.0',
-      type: 'pointer',
+      schemaVersion: 1,
+      kind: 'pointer',
     });
     expect(result.valid).toBe(false);
     expect(result.errors?.length).toBeGreaterThan(0);
@@ -43,6 +43,32 @@ describe('validateAgainst', () => {
     });
     expect(result.valid).toBe(false);
   });
+
+  it('rejects step-badge without step payload', () => {
+    const result = validateAgainst('visual-cue', {
+      schemaVersion: '1.0.0',
+      id: 'bad-step',
+      component: 'step-badge',
+      severity: 'info',
+      outTimeRange: { start: 0, end: 1000 },
+      renderer: 'ass',
+      layer: 8,
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('rejects outcome-pair without outcome payload', () => {
+    const result = validateAgainst('visual-cue', {
+      schemaVersion: '1.0.0',
+      id: 'bad-outcome',
+      component: 'outcome-pair',
+      severity: 'info',
+      outTimeRange: { start: 0, end: 1000 },
+      renderer: 'compositor',
+      layer: 9,
+    });
+    expect(result.valid).toBe(false);
+  });
 });
 
 describe('zod mirrors', () => {
@@ -53,10 +79,11 @@ describe('zod mirrors', () => {
     expect(parsed.determinism.level).toBe('best-effort');
   });
 
-  it('parses config fixture', () => {
+  it('parses config fixture via @repro/core', () => {
     const data = loadFixture('config');
     const parsed = parseReproConfig(data);
     expect(parsed.mode).toBe('repro');
+    expect(parsed.profile).toBe('faithful');
   });
 
   it('matches ajv for capability fixture', () => {

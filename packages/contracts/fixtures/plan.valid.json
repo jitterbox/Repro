@@ -5,17 +5,21 @@
   "annotations": [
     {
       "id": "ann-001",
+      "component": "step-badge",
       "kind": "step",
       "severity": "info",
       "timeRange": {
-        "startMono": 0,
-        "endMono": 2000
+        "start": 0,
+        "end": 2000
       },
       "label": "Step 1: Open cart",
       "shape": "badge",
-      "placement": "top",
+      "placement": {
+        "prefer": "top",
+        "collisionPolicy": "avoid"
+      },
       "priority": 1,
-      "collisionPolicy": "avoid"
+      "renderer": "ass"
     }
   ],
   "chapters": [

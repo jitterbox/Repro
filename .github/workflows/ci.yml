@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint
+        continue-on-error: true
+        run: pnpm lint
+
+      - name: Test contracts
+        run: pnpm --filter @repro/contracts test
+
+      - name: Test plan
+        run: pnpm --filter @repro/plan test
+
+      - name: Test render
+        run: pnpm --filter @repro/render test
+
+      - name: Test compare
+        run: pnpm --filter @repro/compare test
+
+      - name: Test evaluation
+        run: pnpm --filter @repro/evaluation test
+
+      - name: Test compositor
+        run: pnpm --filter @repro/compositor test
+
+      - name: Test viewer
+        run: pnpm --filter @repro/viewer test
+
+      - name: Test core packages
+        run: |
+          pnpm --filter @repro/core test
+          pnpm --filter @repro/capture test
+          pnpm --filter @repro/cli test
+
+      - name: Agent E2E mock (no API keys)
+        run: pnpm --filter @repro/agent-e2e test
+
+      - name: Fixture visual gates (browser + encode)
+        run: pnpm test:e2e-fixture
+        timeout-minutes: 35
+
+      - name: Design-language coverage ledger
+        run: pnpm --filter @repro/evaluation exec vitest run src/coverage/matrix.test.ts

@@ -1,7 +1,10 @@
+import { overlayTheme } from '@repro/contracts';
+
 import { measureTextWidth } from './text.js';
 
 import type {
   AnnotationBox,
+  BeatDraft,
   Chapter,
   FeatureEmitInput,
   FeatureEmitResult,
@@ -9,6 +12,7 @@ import type {
   Rect,
   Segment,
 } from './types.js';
+import type { AnnotationComponent } from '@repro/contracts';
 import type { EventRecord, JsonValue, TimeRange } from '@repro/core';
 
 type PayloadObject = Readonly<Record<string, JsonValue>>;
@@ -20,12 +24,27 @@ export function emitFeatureAnnotations(
   const chapters: Chapter[] = [];
   const narrationSegments: NarrationSegment[] = [];
   const segments: Segment[] = [];
+  const beatDrafts: BeatDraft[] = [];
   const redactionRects: Rect[] = [];
   const flags = input.config.features;
+  const stepEvents = input.events.filter((event) => isStepChapterEvent(event));
+  const stepTotal = stepEvents.length;
+
+  if (flags.steps === true && stepTotal > 0) {
+    for (let index = 0; index < stepEvents.length; index += 1) {
+      const event = stepEvents[index]!;
+      const stepIndex = index + 1;
+      chapters.push(...stepChapters(event, stepIndex, stepTotal));
+      annotations.push(...stepBadgeAnnotations(event, stepIndex, stepTotal));
+    }
+    annotations.push(...progressRailAnnotation(stepEvents, input.viewport));
+  }
+
+  const cursorMoves: EventRecord[] = [];
 
   for (const event of input.events) {
-    if (flags.cursor === true) {
-      annotations.push(...cursorAnnotations(event));
+    if (flags.cursor === true && isCursorMoveEvent(event)) {
+      cursorMoves.push(event);
     }
 
     if (flags.clickViz === true) {
@@ -37,7 +56,7 @@ export function emitFeatureAnnotations(
     }
 
     if (flags.consoleOverlay === true) {
-      annotations.push(...consoleAnnotations(event));
+      annotations.push(...consoleAnnotations(event, input.events));
     }
 
     if (flags.a11yOverlay === true) {
@@ -56,9 +75,8 @@ export function emitFeatureAnnotations(
       annotations.push(...layoutShiftAnnotations(event));
     }
 
-    if (flags.steps === true) {
-      chapters.push(...stepChapters(event));
-      annotations.push(...progressAnnotations(event));
+    if (flags.stackingContexts === true) {
+      annotations.push(...stackingAnnotations(event));
     }
 
     if (flags.voiceover === true) {
@@ -68,10 +86,13 @@ export function emitFeatureAnnotations(
 
     if (flags.pauses === true) {
       segments.push(...pauseSegments(event));
+      beatDrafts.push(...pauseBeatDrafts(event));
+      annotations.push(...pauseBadgeAnnotations(event));
     }
 
     if (flags.slowmo === true) {
       segments.push(...slowmoSegments(event));
+      beatDrafts.push(...slowmoBeatDrafts(event));
       annotations.push(...speedBadgeAnnotations(event));
     }
 
@@ -92,30 +113,113 @@ export function emitFeatureAnnotations(
     }
   }
 
-  annotations.push(...specCardAnnotations(input));
-  return { annotations, chapters, narrationSegments, redactionRects, segments };
-}
-
-function cursorAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['cursor', 'mousemove', 'pointermove'])) {
-    return [];
+  if (flags.cursor === true) {
+    annotations.push(...aggregateCursorPath(cursorMoves));
   }
 
-  const target = rectFromPayload(event);
-  return [annotation(event, 'cursor', 'Cursor', target, 10)];
+  // Slate is a timeline beat + compositor PNG; do not emit a second slate card.
+  annotations.push(...annotationHintsFromConfig(input));
+  annotations.push(...outcomePairAnnotations(input));
+
+  if (flags.redaction === true && redactionRects.length === 0) {
+    redactionRects.push(...redactionRectsFromMasks(input));
+  }
+
+  return {
+    annotations,
+    beatDrafts,
+    chapters,
+    narrationSegments,
+    redactionRects,
+    segments,
+  };
+}
+
+function isCursorMoveEvent(event: EventRecord): boolean {
+  return (
+    isPointerPhase(event, ['pointermove', 'mousemove']) ||
+    matches(event, ['cursor'])
+  );
+}
+
+/** Aggregate pointer moves into one cursor-path cue (no per-move plates). */
+function aggregateCursorPath(
+  moves: readonly EventRecord[],
+): readonly AnnotationBox[] {
+  if (moves.length === 0) {
+    return [];
+  }
+  const first = moves[0]!;
+  const last = moves[moves.length - 1]!;
+  const points = moves.flatMap((event) => {
+    const point = pointFromPayload(event);
+    return point === null ? [] : [point];
+  });
+  const target =
+    rectFromPayload(last) ??
+    pointRectFromPayload(last) ??
+    (points[0] === undefined
+      ? null
+      : {
+          x: points[0].x - 8,
+          y: points[0].y - 8,
+          width: 16,
+          height: 16,
+        });
+  const start = first.t_mono;
+  const end = Math.max(last.t_mono + 400, start + 400);
+  return [
+    baseAnnotation({
+      feature: 'cursor',
+      id: `cursor-path-${first.id}`,
+      label: 'Cursor path',
+      priority: 10,
+      target,
+      timeRange: { start, end },
+      x: target?.x ?? overlayTheme.safeZones.inset,
+      y: target?.y ?? overlayTheme.safeZones.inset,
+      width: 120,
+      height: 28,
+      component: 'cursor-path',
+      renderer: 'ass',
+      severity: 'info',
+      kicker: 'PATH',
+      plateLabel: `${String(points.length)} samples`,
+    }),
+  ];
 }
 
 function clickAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['click', 'pointerdown', 'mousedown'])) {
+  if (
+    !isPointerPhase(event, ['pointerdown', 'mousedown']) &&
+    !matches(event, ['click'])
+  ) {
     return [];
   }
 
-  const target = rectFromPayload(event);
-  return [annotation(event, 'clickViz', 'Click', target, 90, 'ellipse')];
+  const payload = objectPayload(event);
+  const button = numberValue(payload, 'button') ?? 0;
+  const isRight = button === 2;
+  const target = rectFromPayload(event) ?? pointRectFromPayload(event);
+  const label = isRight ? 'Right click' : 'Click';
+  return [
+    annotation(event, 'clickViz', label, target, 90, 'ellipse', {
+      component: 'click-ripple',
+      renderer: 'ass',
+      severity: 'info',
+      holdMs: overlayTheme.motion.clickRipple.ms,
+    }),
+  ];
 }
 
 function keystrokeAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['key', 'input', 'type'])) {
+  const kind = event.kind.toLowerCase();
+  if (
+    !kind.includes('input:key') &&
+    !kind.includes('keystroke') &&
+    !kind.endsWith(':key') &&
+    !(kind.includes('keydown') || kind.includes('keyup'))
+  ) {
     return [];
   }
 
@@ -125,33 +229,153 @@ function keystrokeAnnotations(event: EventRecord): readonly AnnotationBox[] {
   return [annotation(event, 'keystrokes', label, rectFromPayload(event), 80)];
 }
 
-function consoleAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['console'])) {
+function consoleAnnotations(
+  event: EventRecord,
+  allEvents: readonly EventRecord[],
+): readonly AnnotationBox[] {
+  // CDP exception events are a legal ReproEvent type and must not be dropped.
+  if (!matches(event, ['console', 'exception', 'pageerror', 'error'])) {
     return [];
   }
 
   const payload = objectPayload(event);
-  const level = stringValue(payload, 'level') ?? 'log';
-  const text = stringValue(payload, 'message') ?? 'Console event';
+  const level =
+    stringValue(payload, 'level') ??
+    (matches(event, ['exception', 'pageerror', 'error']) ? 'error' : 'log');
+  const text =
+    stringValue(payload, 'message') ??
+    stringValue(payload, 'text') ??
+    'Console event';
   const label = `${level}: ${text}`;
-  const target = rectFromPayload(event);
-  const overlay = annotation(event, 'consoleOverlay', label, target, 70);
+  const target =
+    rectFromPayload(event) ?? nearestPointerTarget(event, allEvents);
+  const severity: AnnotationBox['severity'] =
+    level === 'error' || level === 'assert' ? 'critical' : 'medium';
+  const holdMs = Math.max(
+    overlayTheme.holdsMs.consoleToast.min,
+    overlayTheme.holdsMs.consoleToast.typical,
+  );
+  const toast = annotation(
+    event,
+    'consoleOverlay',
+    label,
+    target,
+    70,
+    undefined,
+    {
+      component: 'console-toast',
+      renderer: 'compositor',
+      severity,
+      holdMs,
+      kicker: level.toUpperCase(),
+    },
+  );
 
   if (target === null) {
-    return [overlay];
+    return [toast];
   }
 
   return [
-    overlay,
-    annotation(
-      event,
-      'consoleOverlay',
-      'Trigger highlight',
-      target,
-      50,
-      'rect',
-    ),
+    toast,
+    annotation(event, 'consoleOverlay', 'Trigger', target, 50, 'rect', {
+      component: 'target-ring',
+      renderer: 'ass',
+      severity,
+      holdMs,
+      lineStyle: 'solid',
+    }),
   ];
+}
+
+function nearestPointerTarget(
+  event: EventRecord,
+  allEvents: readonly EventRecord[],
+): Rect | null {
+  let best: EventRecord | undefined;
+  let bestDelta = Number.POSITIVE_INFINITY;
+  for (const candidate of allEvents) {
+    if (
+      !isPointerPhase(candidate, ['pointerdown', 'mousedown', 'click']) &&
+      !matches(candidate, ['click'])
+    ) {
+      continue;
+    }
+    const delta = Math.abs(candidate.t_mono - event.t_mono);
+    if (delta < bestDelta && delta < 2_000) {
+      best = candidate;
+      bestDelta = delta;
+    }
+  }
+  if (best === undefined) {
+    return null;
+  }
+  return rectFromPayload(best) ?? pointRectFromPayload(best);
+}
+
+function stackingAnnotations(event: EventRecord): readonly AnnotationBox[] {
+  if (!matches(event, ['stacking', 'z-index', 'zindex', 'editorial.stacking'])) {
+    return [];
+  }
+
+  const payload = objectPayload(event);
+  const z =
+    numberValue(payload, 'zIndex') ?? numberValue(payload, 'z');
+  const label =
+    z === undefined
+      ? eventLabel(event, 'Stacking context')
+      : `z-index ${String(z)}`;
+  return [
+    annotation(event, 'stackingContexts', label, rectFromPayload(event), 72, 'rect', {
+      component: 'stacking-labels',
+      renderer: 'ass',
+      severity: 'medium',
+      kicker: 'STACK',
+      ...(z === undefined ? {} : { measurement: `z=${String(z)}` }),
+    }),
+  ];
+}
+
+function outcomePairAnnotations(
+  input: FeatureEmitInput,
+): readonly AnnotationBox[] {
+  if (input.config.mode !== 'repro' && input.config.mode !== 'compare') {
+    return [];
+  }
+
+  const expected =
+    metadataString(input.config.metadata, 'expected') ??
+    metadataString(input.config.metadata, 'System.Title') ??
+    'Expected behavior';
+  const actual =
+    metadataString(input.config.metadata, 'actual') ??
+    metadataString(input.config.metadata, 'observed') ??
+    'Observed failure';
+  const last = input.events[input.events.length - 1];
+  const start = last?.t_mono ?? captureEnd(input);
+  const holdMs = overlayTheme.holdsMs.outcome.typical;
+  return [
+    baseAnnotation({
+      feature: 'outcome',
+      id: 'outcome-pair',
+      label: actual,
+      priority: 98,
+      target: null,
+      timeRange: { start, end: start + holdMs },
+      x: 24,
+      y: input.viewport.height - overlayTheme.safeZones.bottomBand - 80,
+      width: Math.min(420, input.viewport.width - 48),
+      component: 'outcome-pair',
+      renderer: 'compositor',
+      severity: 'critical',
+      kicker: 'OUTCOME',
+      plateLabel: actual,
+      measurement: expected,
+    }),
+  ];
+}
+
+function captureEnd(input: FeatureEmitInput): number {
+  return Math.max(0, ...input.events.map((event) => event.t_mono), 1);
 }
 
 function a11yAnnotations(event: EventRecord): readonly AnnotationBox[] {
@@ -177,13 +401,34 @@ function a11yAnnotations(event: EventRecord): readonly AnnotationBox[] {
 function hiddenElementAnnotations(
   event: EventRecord,
 ): readonly AnnotationBox[] {
-  if (!matches(event, ['aria-hidden', 'hidden'])) {
+  if (
+    !matches(event, [
+      'aria-hidden',
+      'hidden',
+      'editorial.hidden',
+      'hidden-element',
+    ])
+  ) {
     return [];
   }
 
   const label = eventLabel(event, 'Hidden element');
   return [
-    annotation(event, 'hiddenElements', label, rectFromPayload(event), 65),
+    annotation(
+      event,
+      'hiddenElements',
+      label,
+      rectFromPayload(event),
+      65,
+      'rect',
+      {
+        component: 'hidden-ghost',
+        renderer: 'ass',
+        severity: 'medium',
+        lineStyle: 'dashed',
+        kicker: 'HIDDEN',
+      },
+    ),
   ];
 }
 
@@ -194,13 +439,26 @@ function hitTargetAnnotations(event: EventRecord): readonly AnnotationBox[] {
       'hittarget',
       'elements-from-point',
       'elementsfrompoint',
+      'editorial.hit-target',
     ])
   ) {
     return [];
   }
 
   const label = eventLabel(event, 'Hit target');
-  return [annotation(event, 'hitTargets', label, rectFromPayload(event), 88)];
+  const actual = rectFromPayload(event);
+  const width = actual?.width ?? 8;
+  const height = actual?.height ?? 8;
+  return [
+    annotation(event, 'hitTargets', label, actual, 88, 'rect', {
+      component: 'hit-target-guide',
+      renderer: 'ass',
+      severity: 'critical',
+      lineStyle: 'dashed',
+      kicker: 'HIT',
+      measurement: `${String(Math.round(width))}×${String(Math.round(height))} < 24×24`,
+    }),
+  ];
 }
 
 function layoutShiftAnnotations(event: EventRecord): readonly AnnotationBox[] {
@@ -221,55 +479,162 @@ function layoutShiftAnnotations(event: EventRecord): readonly AnnotationBox[] {
       zoomFriendlyRect(rect),
       92,
       'rect',
+      {
+        component: 'layout-shift-pair',
+        renderer: 'ass',
+        kind: 'measurement',
+        lineStyle: 'dashed',
+        severity: score !== undefined && score >= 0.1 ? 'medium' : 'low',
+        kicker: 'CLS',
+        ...(score === undefined
+          ? {}
+          : { measurement: `score ${score.toFixed(3)}` }),
+      },
     );
-    return {
-      ...box,
-      id: `${box.id}-${String(index + 1)}`,
-      kind: 'measurement',
-      lineStyle: 'dashed',
-      severity: score !== undefined && score >= 0.1 ? 'medium' : 'low',
-    };
+    return { ...box, id: `${box.id}-${String(index + 1)}` };
   });
 }
 
-function specCardAnnotations(
+function annotationHintsFromConfig(
   input: FeatureEmitInput,
 ): readonly AnnotationBox[] {
-  if (input.config.features.specCard !== true) {
+  const hints = input.config.metadata.annotationHints;
+  if (!Array.isArray(hints) || hints.length === 0) {
     return [];
   }
 
-  const title = metadataString(input.config.metadata, 'specTitle') ?? 'Spec';
-  const event = input.events[0];
-  const timeRange = eventRange(event, 4_000);
-  const width = Math.min(input.viewport.width * 0.45, 360);
+  const boxes: AnnotationBox[] = [];
+  for (const [index, raw] of hints.entries()) {
+    if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+      continue;
+    }
+    const hint = raw as PayloadObject;
+    const label = stringValue(hint, 'label') ?? 'Highlight';
+    const shapeRaw = stringValue(hint, 'shape');
+    const shape =
+      shapeRaw === 'ellipse' ||
+      shapeRaw === 'underline' ||
+      shapeRaw === 'rect'
+        ? shapeRaw
+        : 'rect';
+    const x = numberValue(hint, 'x');
+    const y = numberValue(hint, 'y');
+    const width = numberValue(hint, 'width') ?? numberValue(hint, 'w');
+    const height = numberValue(hint, 'height') ?? numberValue(hint, 'h');
+    if (
+      x === undefined ||
+      y === undefined ||
+      width === undefined ||
+      height === undefined
+    ) {
+      continue;
+    }
+    const target = { x, y, width, height };
+    const holdMs = overlayTheme.holdsMs.callout.typical;
+    const timeRange = {
+      start: Math.max(0, input.events[0]?.t_mono ?? 0),
+      end: Math.max(holdMs, (input.events[0]?.t_mono ?? 0) + holdMs),
+    };
+    boxes.push(
+      baseAnnotation({
+        feature: 'steps',
+        id: `hint-plate-${String(index)}`,
+        label,
+        priority: 88,
+        target,
+        timeRange,
+        x: target.x + target.width + 12,
+        y: Math.max(24, target.y - 8),
+        width: Math.min(
+          280,
+          measureTextWidth({
+            fontSize: overlayTheme.type.calloutLabel.size,
+            text: label,
+          }) + 32,
+        ),
+        component: 'plate',
+        renderer: 'ass',
+        severity: 'info',
+        shape,
+        lineStyle: 'solid',
+        kicker: 'DELTA',
+        plateLabel: label,
+      }),
+    );
+  }
+  return boxes;
+}
 
+function isStepChapterEvent(event: EventRecord): boolean {
+  return (
+    event.kind === 'step.chapter' ||
+    matches(event, ['step.chapter'])
+  );
+}
+
+function stepChapters(
+  event: EventRecord,
+  stepIndex: number,
+  stepTotal: number,
+): readonly Chapter[] {
+  const title = eventLabel(event, 'Step');
   return [
-    baseAnnotation({
-      feature: 'specCard',
-      id: 'spec-card',
-      label: title,
-      priority: 95,
-      target: null,
-      timeRange,
-      x: 24,
-      y: 24,
-      width,
+    {
+      id: `chapter-${event.id}`,
+      timeRange: eventRange(event, overlayTheme.holdsMs.chapter.typical),
+      title: `${String(stepIndex)}/${String(stepTotal)} ${title}`,
+    },
+  ];
+}
+
+function stepBadgeAnnotations(
+  event: EventRecord,
+  stepIndex: number,
+  stepTotal: number,
+): readonly AnnotationBox[] {
+  const label = `STEP ${String(stepIndex)} / ${String(stepTotal)}`;
+  const holdMs = overlayTheme.holdsMs.chapter.typical;
+  return [
+    annotation(event, 'steps', label, null, 40, undefined, {
+      component: 'step-badge',
+      renderer: 'ass',
+      severity: 'info',
+      holdMs,
+      kicker: 'STEP',
+      plateLabel: label,
     }),
   ];
 }
 
-function stepChapters(event: EventRecord): readonly Chapter[] {
-  if (!matches(event, ['step', 'chapter'])) {
+function progressRailAnnotation(
+  stepEvents: readonly EventRecord[],
+  viewport: { readonly width: number; readonly height: number },
+): readonly AnnotationBox[] {
+  const first = stepEvents[0];
+  const last = stepEvents[stepEvents.length - 1];
+  if (first === undefined || last === undefined) {
     return [];
   }
-
+  const start = first.t_mono;
+  const end = Math.max(
+    last.t_mono + overlayTheme.holdsMs.chapter.typical,
+    start + 1,
+  );
   return [
-    {
-      id: `chapter-${event.id}`,
-      timeRange: eventRange(event, 3_000),
-      title: eventLabel(event, 'Step'),
-    },
+    baseAnnotation({
+      feature: 'progress',
+      id: 'progress-rail',
+      label: 'Progress',
+      priority: 5,
+      target: null,
+      timeRange: { start, end },
+      x: 0,
+      y: viewport.height - 4,
+      width: viewport.width,
+      component: 'progress-rail',
+      renderer: 'ass',
+      severity: 'info',
+    }),
   ];
 }
 
@@ -315,64 +680,159 @@ function narrationSegmentsFrom(
   ];
 }
 
-function progressAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['step', 'chapter', 'progress'])) {
-    return [];
-  }
-
-  return [
-    annotation(event, 'progress', eventLabel(event, 'Progress'), null, 40),
-  ];
-}
-
 function pauseSegments(event: EventRecord): readonly Segment[] {
-  if (!matches(event, ['pause'])) {
+  if (!matches(event, ['pause', 'editorial.pause'])) {
     return [];
   }
 
   return [segment(event, 'pause', 1)];
 }
 
-function slowmoSegments(event: EventRecord): readonly Segment[] {
-  if (!matches(event, ['slowmo'])) {
+function pauseBeatDrafts(event: EventRecord): readonly BeatDraft[] {
+  if (!matches(event, ['pause', 'editorial.pause'])) {
     return [];
   }
 
-  return [segment(event, 'slowmo', numberFromPayload(event, 'factor') ?? 2)];
+  const range = eventRange(event, 1_000);
+  return [
+    {
+      id: `pause-${event.id}`,
+      kind: 'hold',
+      captureAtMs: range.start,
+      minOutDurationMs: Math.max(1_000, range.end - range.start),
+      badge: 'PAUSED',
+    },
+  ];
+}
+
+function slowmoSegments(event: EventRecord): readonly Segment[] {
+  if (!matches(event, ['slowmo', 'editorial.slowmo'])) {
+    return [];
+  }
+
+  return [segment(event, 'slowmo', numberFromPayload(event, 'factor') ?? 4)];
+}
+
+function slowmoBeatDrafts(event: EventRecord): readonly BeatDraft[] {
+  if (!matches(event, ['slowmo', 'editorial.slowmo'])) {
+    return [];
+  }
+
+  const range = eventRange(event, 1_000);
+  const factor = numberFromPayload(event, 'factor') ?? 2;
+  return [
+    {
+      id: `slowmo-${event.id}`,
+      kind: 'slowmo',
+      captureStartMs: range.start,
+      captureEndMs: range.end,
+      rate: 1 / Math.max(1, factor),
+      badge: 'SLOWMO',
+    },
+  ];
+}
+
+function pauseBadgeAnnotations(event: EventRecord): readonly AnnotationBox[] {
+  if (!matches(event, ['pause', 'editorial.pause'])) {
+    return [];
+  }
+  const holdMs = Math.max(
+    1_000,
+    numberFromPayload(event, 'holdMs') ??
+      overlayTheme.holdsMs.pause.typical,
+  );
+  return [
+    annotation(event, 'pauses', `PAUSED ${String(holdMs)}ms`, null, 76, undefined, {
+      component: 'pause-badge',
+      renderer: 'ass',
+      severity: 'info',
+      holdMs,
+      kicker: 'PAUSE',
+      plateLabel: `PAUSED ${String(holdMs)}ms`,
+    }),
+  ];
 }
 
 function speedBadgeAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['slowmo'])) {
+  if (!matches(event, ['slowmo', 'editorial.slowmo'])) {
     return [];
   }
 
-  const factor = numberFromPayload(event, 'factor') ?? 2;
-  return [annotation(event, 'slowmo', `${String(factor)}x slow`, null, 75)];
+  const factor = numberFromPayload(event, 'factor') ?? 4;
+  const rate = 1 / Math.max(1, factor);
+  const label = `${rate.toFixed(2).replace(/0+$/u, '').replace(/\.$/u, '')}×`;
+  return [
+    annotation(event, 'slowmo', label, null, 75, undefined, {
+      component: 'speed-chip',
+      renderer: 'ass',
+      severity: 'info',
+      holdMs: overlayTheme.holdsMs.slowmo.typical,
+      kicker: 'SPEED',
+      plateLabel: label,
+    }),
+  ];
 }
 
 function zoomAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['zoom', 'roi'])) {
-    return [];
-  }
-
-  return [annotation(event, 'zoom', 'Zoom target', rectFromPayload(event), 85)];
-}
-
-function freezeAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['freeze'])) {
-    return [];
-  }
-
-  return [annotation(event, 'freezeDetect', 'Possible freeze', null, 100)];
-}
-
-function vitalsAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['vitals', 'performance'])) {
+  if (!matches(event, ['zoom', 'roi', 'editorial.zoom'])) {
     return [];
   }
 
   return [
-    annotation(event, 'vitalsHud', eventLabel(event, 'Vitals'), null, 30),
+    annotation(event, 'zoom', 'Zoom target', rectFromPayload(event), 85, undefined, {
+      component: 'roi-magnifier',
+      renderer: 'compositor',
+      severity: 'info',
+      kicker: 'ROI',
+      measurement: '2.5×',
+    }),
+  ];
+}
+
+function freezeAnnotations(event: EventRecord): readonly AnnotationBox[] {
+  if (!matches(event, ['freeze', 'editorial.freeze'])) {
+    return [];
+  }
+
+  const blockMs =
+    numberFromPayload(event, 'durationMs') ??
+    numberFromPayload(event, 'blockedMs') ??
+    1_200;
+  return [
+    annotation(
+      event,
+      'freezeDetect',
+      `UI freeze ${String(blockMs)}ms`,
+      null,
+      100,
+      undefined,
+      {
+        component: 'freeze-banner',
+        renderer: 'ass',
+        severity: 'medium',
+        kicker: 'FREEZE',
+        plateLabel: `UI freeze ${String(blockMs)}ms`,
+      },
+    ),
+  ];
+}
+
+function vitalsAnnotations(event: EventRecord): readonly AnnotationBox[] {
+  // Probe emits probe.vital:CLS / LCP / INP (singular).
+  if (
+    !matches(event, ['vital', 'vitals', 'performance']) &&
+    !event.kind.toLowerCase().includes('probe.vital')
+  ) {
+    return [];
+  }
+
+  return [
+    annotation(event, 'vitalsHud', eventLabel(event, 'Vitals'), null, 30, undefined, {
+      component: 'vitals-hud',
+      renderer: 'compositor',
+      severity: 'info',
+      kicker: 'VITALS',
+    }),
   ];
 }
 
@@ -383,6 +843,69 @@ function redactionRectsFrom(event: EventRecord): readonly Rect[] {
 
   const rect = rectFromPayload(event);
   return rect === null ? [] : [rect];
+}
+
+/** Derive mask boxes from interactions on config.redaction.masks selectors. */
+function redactionRectsFromMasks(
+  input: FeatureEmitInput,
+): readonly Rect[] {
+  const masks = input.config.redaction?.masks ?? [];
+  if (masks.length === 0) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const rects: Rect[] = [];
+  for (const event of input.events) {
+    const payload = objectPayload(event);
+    if (!payloadHitsMask(payload, masks)) {
+      continue;
+    }
+    const x = numberPayload(payload, 'x');
+    const y = numberPayload(payload, 'y');
+    if (x === undefined || y === undefined) {
+      continue;
+    }
+    const key = `${String(Math.round(x))}:${String(Math.round(y))}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    rects.push({
+      height: 32,
+      width: 240,
+      x: Math.max(0, x - 40),
+      y: Math.max(0, y - 16),
+    });
+  }
+  return rects;
+}
+
+function payloadHitsMask(
+  payload: PayloadObject,
+  masks: readonly string[],
+): boolean {
+  const selector =
+    typeof payload.selector === 'string' ? payload.selector : '';
+  const path = Array.isArray(payload.path)
+    ? payload.path.map(String)
+    : [];
+  return masks.some((mask) => {
+    if (selector.includes(mask)) {
+      return true;
+    }
+    return path.some((entry) => entry.includes(mask));
+  });
+}
+
+function numberPayload(
+  payload: PayloadObject,
+  key: string,
+): number | undefined {
+  const value = payload[key];
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 function layoutShiftRects(event: EventRecord): readonly Rect[] {
@@ -470,6 +993,18 @@ function a11ySeverity(payload: PayloadObject): AnnotationBox['severity'] {
   return 'medium';
 }
 
+interface AnnotationOptions {
+  readonly component?: AnnotationComponent;
+  readonly renderer?: 'ass' | 'compositor';
+  readonly severity?: AnnotationBox['severity'];
+  readonly holdMs?: number;
+  readonly kicker?: string;
+  readonly plateLabel?: string;
+  readonly measurement?: string;
+  readonly lineStyle?: AnnotationBox['lineStyle'];
+  readonly kind?: AnnotationBox['kind'];
+}
+
 function annotation(
   event: EventRecord,
   feature: AnnotationBox['feature'],
@@ -477,7 +1012,21 @@ function annotation(
   target: Rect | null,
   priority: number,
   shape?: AnnotationBox['shape'],
+  options: AnnotationOptions = {},
 ): AnnotationBox {
+  const holdMs =
+    options.holdMs ??
+    Math.max(
+      overlayTheme.holdsMs.callout.min,
+      label.length * (overlayTheme.holdsMs.callout.perChar ?? 45),
+    );
+  const fontSize = overlayTheme.type.calloutLabel.size;
+  const width = Math.max(
+    120,
+    measureTextWidth({ fontSize, text: label }) + 32,
+  );
+  const height = options.measurement === undefined ? 44 : 62;
+
   return baseAnnotation({
     feature,
     id: `${feature}-${event.id}`,
@@ -485,10 +1034,13 @@ function annotation(
     priority,
     shape,
     target,
-    timeRange: eventRange(event, 1_800),
-    x: target === null ? 24 : target.x,
-    y: target === null ? 24 : target.y,
-    width: Math.max(120, measureTextWidth({ fontSize: 16, text: label }) + 32),
+    timeRange: eventRange(event, holdMs),
+    x: target === null ? overlayTheme.safeZones.inset : target.x,
+    y: target === null ? overlayTheme.safeZones.inset : Math.max(0, target.y - height - 8),
+    width,
+    height,
+    ...options,
+    plateLabel: options.plateLabel ?? label,
   });
 }
 
@@ -500,39 +1052,129 @@ function baseAnnotation(input: {
   readonly target: Rect | null;
   readonly timeRange: TimeRange;
   readonly width: number;
+  readonly height?: number;
   readonly x: number;
   readonly y: number;
   readonly shape?: AnnotationBox['shape'];
+  readonly component?: AnnotationComponent;
+  readonly renderer?: 'ass' | 'compositor';
+  readonly severity?: AnnotationBox['severity'];
+  readonly kicker?: string;
+  readonly plateLabel?: string;
+  readonly measurement?: string;
+  readonly lineStyle?: AnnotationBox['lineStyle'];
+  readonly kind?: AnnotationBox['kind'];
 }): AnnotationBox {
-  const base = {
+  const component =
+    input.component ?? defaultComponent(input.feature);
+  const severity = input.severity ?? 'info';
+  const height = input.height ?? 44;
+  const base: AnnotationBox = {
     bounds: {
-      height: 40,
+      height,
       width: input.width,
       x: input.x,
       y: input.y,
     },
     collisionPolicy: 'avoid',
+    component,
     confidence: 1,
     feature: input.feature,
     id: input.id,
-    kind: 'info',
+    kind: input.kind ?? 'info',
     label: input.label,
     placement: 'auto',
+    plate: {
+      ...(input.kicker === undefined ? {} : { kicker: input.kicker }),
+      label: input.plateLabel ?? input.label,
+      ...(input.measurement === undefined
+        ? {}
+        : { measurement: input.measurement }),
+      maxChars: overlayTheme.type.calloutLabel.maxChars,
+    },
     priority: input.priority,
-    severity: 'info',
+    renderer: input.renderer ?? defaultRenderer(component),
+    severity,
     timeRange: input.timeRange,
-  } satisfies AnnotationBox;
+    ...(input.lineStyle === undefined ? {} : { lineStyle: input.lineStyle }),
+    ...(input.shape === undefined ? {} : { shape: input.shape }),
+    ...(input.target === null
+      ? {}
+      : {
+          target: input.target,
+          anchor: {
+            bbox: {
+              x: input.target.x,
+              y: input.target.y,
+              w: input.target.width,
+              h: input.target.height,
+            },
+            pad: 6,
+            track: 'static' as const,
+          },
+        }),
+  };
 
-  return addOptionalAnnotationFields(base, input.target, input.shape);
+  return base;
 }
 
-function addOptionalAnnotationFields(
-  base: AnnotationBox,
-  target: Rect | null,
-  shape: AnnotationBox['shape'] | undefined,
-): AnnotationBox {
-  const withTarget = target === null ? base : { ...base, target };
-  return shape === undefined ? withTarget : { ...withTarget, shape };
+function defaultComponent(
+  feature: AnnotationBox['feature'],
+): AnnotationComponent {
+  switch (feature) {
+    case 'clickViz':
+      return 'click-ripple';
+    case 'cursor':
+      return 'cursor-path';
+    case 'keystrokes':
+      return 'keystroke-pill';
+    case 'consoleOverlay':
+      return 'console-toast';
+    case 'steps':
+    case 'progress':
+      return 'step-badge';
+    case 'pauses':
+      return 'pause-badge';
+    case 'slowmo':
+      return 'speed-chip';
+    case 'freezeDetect':
+      return 'freeze-banner';
+    case 'zoom':
+      return 'roi-magnifier';
+    case 'vitalsHud':
+      return 'vitals-hud';
+    case 'hiddenElements':
+      return 'hidden-ghost';
+    case 'hitTargets':
+      return 'hit-target-guide';
+    case 'layoutShiftViz':
+      return 'layout-shift-pair';
+    case 'stackingContexts':
+      return 'stacking-labels';
+    case 'specCard':
+      return 'slate';
+    case 'outcome':
+      return 'outcome-pair';
+    case 'redaction':
+      return 'redaction';
+    default:
+      return 'plate';
+  }
+}
+
+function defaultRenderer(
+  component: AnnotationComponent,
+): 'ass' | 'compositor' {
+  switch (component) {
+    case 'slate':
+    case 'console-toast':
+    case 'roi-magnifier':
+    case 'vitals-hud':
+    case 'outcome-pair':
+      return 'compositor';
+    default:
+      return 'ass';
+  }
 }
 
 function segment(
@@ -563,10 +1205,14 @@ function eventRange(
 
 function rectFromPayload(event: EventRecord): Rect | null {
   const payload = objectPayload(event);
-  const x = numberValue(payload, 'x');
-  const y = numberValue(payload, 'y');
-  const width = numberValue(payload, 'width');
-  const height = numberValue(payload, 'height');
+  const nested = asObject(payload.bbox) ?? asObject(payload.rect);
+  const source = nested ?? payload;
+  const x = numberValue(source, 'x');
+  const y = numberValue(source, 'y');
+  const width =
+    numberValue(source, 'width') ?? numberValue(source, 'w');
+  const height =
+    numberValue(source, 'height') ?? numberValue(source, 'h');
 
   if (
     x === undefined ||
@@ -578,6 +1224,58 @@ function rectFromPayload(event: EventRecord): Rect | null {
   }
 
   return { height, width, x, y };
+}
+
+/** Pointer events often carry only a point — invent a small ring target. */
+function pointRectFromPayload(event: EventRecord): Rect | null {
+  const point = pointFromPayload(event);
+  if (point === null) {
+    return null;
+  }
+  const size = 36;
+  return {
+    height: size,
+    width: size,
+    x: Math.max(0, point.x - size / 2),
+    y: Math.max(0, point.y - size / 2),
+  };
+}
+
+function pointFromPayload(
+  event: EventRecord,
+): { readonly x: number; readonly y: number } | null {
+  const payload = objectPayload(event);
+  const x = numberValue(payload, 'x');
+  const y = numberValue(payload, 'y');
+  if (x === undefined || y === undefined) {
+    return null;
+  }
+  return { x, y };
+}
+
+function isPointerPhase(
+  event: EventRecord,
+  phases: readonly string[],
+): boolean {
+  const kind = event.kind.toLowerCase();
+  if (!kind.includes('pointer') && !kind.includes('mouse')) {
+    return false;
+  }
+  const phase = stringValue(objectPayload(event), 'phase')?.toLowerCase();
+  if (phase === undefined) {
+    return phases.some((needle) => kind.includes(needle));
+  }
+  return phases.some((needle) => phase.includes(needle));
+}
+
+function asObject(value: JsonValue | undefined): PayloadObject | null {
+  if (value === null || value === undefined || Array.isArray(value)) {
+    return null;
+  }
+  if (typeof value !== 'object') {
+    return null;
+  }
+  return value as PayloadObject;
 }
 
 function objectPayload(event: EventRecord): PayloadObject {

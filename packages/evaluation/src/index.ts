@@ -1,3 +1,6 @@
+import type { JudgeVerdict, VideoJudge } from './judge/index.js';
+import { anthropicJudge, mockJudge } from './judge/index.js';
+
 export const REPRO_EVALUATION_VERSION = '0.0.0' as const;
 
 export type QualityMetricName =
@@ -48,17 +51,78 @@ export interface QualityMetricValues {
 export interface AdapterRequest {
   readonly manifestPath: string;
   readonly runId: string;
+  readonly videoPath?: string;
+  readonly planPath?: string;
 }
 
 export interface AdapterFinding {
   readonly confidence: number;
   readonly message: string;
-  readonly source: 'diffspot' | 'wuicc';
+  readonly source: 'judge' | 'local';
 }
 
 export interface EvaluationAdapter {
   evaluate(input: AdapterRequest): Promise<readonly AdapterFinding[]>;
 }
+
+export type {
+  GateResult,
+  ReproMode,
+  RunDeterministicGatesInput,
+} from './gates/index.js';
+export {
+  checkBottomBand,
+  checkCompare,
+  checkContrast,
+  checkDesignLanguage,
+  checkDeterminism,
+  checkDuplicateLabels,
+  checkDuration,
+  checkFlash,
+  checkHolds,
+  checkOverlayPresence,
+  checkPlacement,
+  checkRedaction,
+  checkSlate,
+  runDeterministicGates,
+} from './gates/index.js';
+
+export type {
+  JudgeFinding,
+  JudgeInput,
+  JudgeVerdict,
+  VideoJudge,
+} from './judge/index.js';
+export { anthropicJudge, mockJudge } from './judge/index.js';
+
+export {
+  extractContactSheet,
+  extractCroppedFrameAt,
+  extractFrameAt,
+  lumaStats,
+  meanLuminance,
+  probeDurationMs,
+  probeVideoSize,
+} from './frames.js';
+
+export {
+  cueSamplesFromPlan,
+  extractCueStoryboard,
+} from './review/cue-frames.js';
+export type {
+  CueSample,
+  ReviewStoryboardFrame,
+} from './review/cue-frames.js';
+
+export {
+  evaluateCoverage,
+  loadCoverageMatrix,
+} from './coverage/matrix.js';
+export type {
+  CoverageMatrix,
+  CoverageReport,
+  CoverageRow,
+} from './coverage/matrix.js';
 
 export function buildQualityReport(input: QualityReportInput): QualityReport {
   const metrics = input.metrics;
@@ -220,67 +284,51 @@ export function humanUsefulness(input: {
   return input.maxRating === 0 ? 0 : input.averageRating / input.maxRating;
 }
 
-export function diffSpotAdapter(endpoint: string): EvaluationAdapter {
-  return httpAdapter(endpoint, 'diffspot');
+export function judgeAdapter(judge: VideoJudge): EvaluationAdapter {
+  return {
+    evaluate: async (input) => {
+      const videoPath = input.videoPath ?? input.manifestPath;
+      const verdict = await judge.assess({
+        videoPath,
+        ...(input.planPath ? { planPath: input.planPath } : {}),
+      });
+      return verdictToFindings(verdict);
+    },
+  };
 }
 
-export function wuiccAdapter(endpoint: string): EvaluationAdapter {
-  return httpAdapter(endpoint, 'wuicc');
+export function anthropicJudgeAdapter(options: {
+  readonly apiKey: string;
+  readonly model?: string;
+}): EvaluationAdapter {
+  return judgeAdapter(anthropicJudge(options));
+}
+
+export function mockJudgeAdapter(verdict: JudgeVerdict): EvaluationAdapter {
+  return judgeAdapter(mockJudge(verdict));
 }
 
 export function localAdapter(
   findings: readonly AdapterFinding[],
 ): EvaluationAdapter {
   return {
-    evaluate: () => Promise.resolve(findings),
+    evaluate: () =>
+      Promise.resolve(
+        findings.map((finding) => ({ ...finding, source: 'local' as const })),
+      ),
   };
 }
 
-function httpAdapter(
-  endpoint: string,
-  source: AdapterFinding['source'],
-): EvaluationAdapter {
-  return {
-    evaluate: async (input) => {
-      const response = await fetch(endpoint, {
-        body: JSON.stringify(input),
-        headers: { 'content-type': 'application/json' },
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error(`${source} adapter failed`);
-      }
-
-      return parseFindings(await response.json(), source);
-    },
+function verdictToFindings(verdict: JudgeVerdict): readonly AdapterFinding[] {
+  const summaryFinding = {
+    confidence: verdict.score,
+    message: verdict.summary,
+    source: 'judge' as const,
   };
-}
-
-function parseFindings(
-  value: unknown,
-  source: AdapterFinding['source'],
-): readonly AdapterFinding[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((item) => {
-    if (!isRecord(item)) {
-      return [];
-    }
-
-    const message = item.message;
-    const confidence = item.confidence;
-
-    if (typeof message !== 'string' || typeof confidence !== 'number') {
-      return [];
-    }
-
-    return [{ confidence, message, source }];
-  });
-}
-
-function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+  const detailFindings = verdict.findings.map((finding) => ({
+    confidence: finding.confidence,
+    message: finding.message,
+    source: 'judge' as const,
+  }));
+  return [summaryFinding, ...detailFindings];
 }

@@ -24,6 +24,43 @@ const config = {
 } satisfies ReproConfig;
 
 describe('feature annotation emitters', () => {
+  it('emits STEP N/M badges, progress rail, and pointer ripples', () => {
+    const stepped = {
+      ...config,
+      features: { ...config.features, steps: true, clickViz: true },
+    } satisfies ReproConfig;
+    const result = emitFeatureAnnotations({
+      config: stepped,
+      events: [
+        event('ch-1', 'step.chapter', { title: 'Inspect Save', stepId: 'save' }),
+        event('ch-2', 'step.chapter', { title: 'Confirm', stepId: 'confirm' }),
+        event('ptr-1', 'probe.pointer:path', {
+          button: 0,
+          phase: 'pointerdown',
+          x: 120,
+          y: 240,
+        }),
+      ],
+      frames: [],
+      viewport: config.viewport,
+    });
+
+    const badges = result.annotations.filter(
+      (item) => item.component === 'step-badge',
+    );
+    expect(badges.map((item) => item.label)).toEqual([
+      'STEP 1 / 2',
+      'STEP 2 / 2',
+    ]);
+    expect(
+      result.annotations.some((item) => item.component === 'progress-rail'),
+    ).toBe(true);
+    expect(
+      result.annotations.some((item) => item.component === 'click-ripple'),
+    ).toBe(true);
+    expect(result.chapters[0]?.title).toContain('1/2');
+  });
+
   it('emits annotations and narration stubs for feature events', () => {
     const result = emitFeatureAnnotations({
       config,

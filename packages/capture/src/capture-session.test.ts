@@ -5,6 +5,7 @@ import { canShowActions } from './capture-session.js';
 import type { ReproConfig } from '@repro/core';
 
 const baseConfig = {
+  capturePreviewUi: true,
   features: {},
   metadata: {},
   mode: 'repro',
@@ -19,8 +20,11 @@ const baseConfig = {
 } satisfies ReproConfig;
 
 describe('capture showActions eligibility', () => {
-  it('allows showActions only when validator conflicts are absent', () => {
+  it('allows burned-in actions only with capturePreviewUi and no conflicts', () => {
     expect(canShowActions(baseConfig)).toBe(true);
+    expect(canShowActions({ ...baseConfig, capturePreviewUi: false })).toBe(
+      false,
+    );
     expect(canShowActions({ ...baseConfig, timingSensitive: true })).toBe(
       false,
     );

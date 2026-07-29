@@ -8,9 +8,14 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
 1. **[`docs/ai-usage.md`](docs/ai-usage.md)** — full AI playbook: modes, feature
    flags, **bug-class → config matrix**, CLI playbooks, conflict rules, example
    configs, and hard constraints.
-2. Skills (thin CLI wrappers): `skills/repro-{capture,annotate,compare,file}/`
-3. Spike decisions: [`docs/spikes.md`](docs/spikes.md)
-4. Fixture corpus: [`apps/shoplite/`](apps/shoplite/) + [`testdata/bugs/`](testdata/bugs/)
+2. **[`docs/design-brief.md`](docs/design-brief.md)** — Claude Design brief for
+   overlay language, theming, viewer UI, compare layouts, and skill visuals.
+3. **Product pipeline** — `capture → annotate → package/file` via `repro` CLI;
+   deterministic artifacts in CI (`.github/workflows/ci.yml`). Nightly agent +
+   judge eval is optional/non-blocking (`.github/workflows/ai-eval.yml`).
+4. Skills (thin CLI wrappers): `skills/repro-{capture,annotate,compare,file}/`
+5. Spike decisions: [`docs/spikes.md`](docs/spikes.md)
+6. Fixture corpus: [`apps/shoplite/`](apps/shoplite/) + [`testdata/bugs/`](testdata/bugs/)
    (ADO-shaped work items). Run videos via `pnpm test:e2e-fixture`.
 
 ## Non-negotiables
@@ -29,7 +34,10 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
 | Need | Start with |
 | --- | --- |
 | Classify bug → features | `docs/ai-usage.md` §5 |
+| Design overlays / viewer / themes | `docs/design-brief.md` |
 | Capture / annotate / file | matching `skills/repro-*` |
 | Before/after | mode `compare` + `repro compare` |
 | Validate setup | `pnpm build && node scripts/e2e/smoke.mjs` |
+| CI (no LLM) | `.github/workflows/ci.yml` |
+| Agent / judge eval | `.github/workflows/ai-eval.yml` (nightly, non-blocking) |
 | Fixture bugs / feature videos | `apps/shoplite`, `testdata/bugs`, `pnpm test:e2e-fixture` |

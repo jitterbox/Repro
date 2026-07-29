@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "step-1",
+  "component": "step-badge",
+  "severity": "info",
+  "outTimeRange": { "start": 1000, "end": 3000 },
+  "renderer": "ass",
+  "layer": 8,
+  "accessibilityText": "Step 1 of 3",
+  "step": {
+    "index": 1,
+    "total": 3,
+    "title": "Inspect Save alignment"
+  }
+}

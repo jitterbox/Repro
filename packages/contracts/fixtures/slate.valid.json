@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "mode": "repro",
+  "bugId": "BUG-1001",
+  "title": "Save button misaligned 12px left of settings column",
+  "browser": "Chromium 131.0.0",
+  "os": "Linux",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "profile": "controlled",
+  "profileChip": "Deterministic",
+  "locale": "en-US",
+  "timezone": "UTC",
+  "build": "main @ abcdef1",
+  "capturedAt": "2026-07-28T16:00:00.000Z",
+  "appLabel": "ShopLite Admin · localhost:5177/?fixture=broken&bug=BUG-1001",
+  "stepCount": 4,
+  "durationMs": 22000,
+  "holdMs": 2200,
+  "dissolveMs": 320
+}

@@ -9,13 +9,22 @@ export type ViewerStateKind =
 
 export interface EvidenceManifest {
   readonly assets: readonly EvidenceManifestAsset[];
+  readonly compare?: EvidenceCompareMeta;
   readonly schemaVersion: number;
 }
+
+export interface EvidenceCompareMeta {
+  readonly syncMap?: readonly SyncKnot[];
+}
+
+/** [aMs, bMs, outMs, confidence] */
+export type SyncKnot = readonly [number, number, number, number];
 
 export interface EvidenceManifestAsset {
   readonly href: string;
   readonly kind: 'chapters' | 'json' | 'mp4' | 'vtt';
   readonly path?: string;
+  readonly role?: 'after' | 'before';
 }
 
 export interface ViewerReport {
@@ -44,8 +53,15 @@ export interface TranscriptLine {
   readonly text: string;
 }
 
+export type KeyboardAction =
+  | 'back'
+  | 'end'
+  | 'forward'
+  | 'start'
+  | 'toggle-play';
+
 export interface KeyboardShortcut {
-  readonly action: 'back' | 'forward' | 'toggle-play';
+  readonly action: KeyboardAction;
   readonly handled: boolean;
 }
 
@@ -62,6 +78,9 @@ const SHAPE_TEXT: Readonly<Record<string, string>> = {
   rect: 'rectangle highlight',
   underline: 'underline marker',
 };
+
+const SYNC_TOLERANCE_MS = 100;
+const SEEK_STEP_SECONDS = 5;
 
 export function reviewerPresetSections(
   preset: ReviewerPreset,
@@ -88,6 +107,14 @@ export function keyboardShortcutFor(key: string): KeyboardShortcut {
     return { action: 'forward', handled: true };
   }
 
+  if (key === 'Home') {
+    return { action: 'start', handled: true };
+  }
+
+  if (key === 'End') {
+    return { action: 'end', handled: true };
+  }
+
   return { action: 'toggle-play', handled: false };
 }
 
@@ -97,6 +124,71 @@ export function shouldReduceMotion(query = '(prefers-reduced-motion: reduce)'):
     readonly matchMedia?: (query: string) => MediaQueryList;
   }).matchMedia;
   return matcher?.(query).matches ?? false;
+}
+
+export function mapSyncTime(
+  sourceMs: number,
+  knots: readonly SyncKnot[],
+  from: 'a' | 'b',
+  to: 'a' | 'b',
+): number {
+  if (from === to || knots.length === 0) {
+    return sourceMs;
+  }
+
+  const fromIndex = from === 'a' ? 0 : 1;
+  const toIndex = to === 'a' ? 0 : 1;
+  const sorted = [...knots].sort((left, right) => left[fromIndex] - right[fromIndex]);
+
+  if (sourceMs <= sorted[0]![fromIndex]) {
+    return sorted[0]![toIndex];
+  }
+
+  const last = sorted[sorted.length - 1]!;
+  if (sourceMs >= last[fromIndex]) {
+    return last[toIndex];
+  }
+
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1]!;
+    const current = sorted[index]!;
+    if (sourceMs > current[fromIndex]) {
+      continue;
+    }
+
+    const span = current[fromIndex] - previous[fromIndex];
+    if (span <= 0) {
+      return current[toIndex];
+    }
+
+    const ratio = (sourceMs - previous[fromIndex]) / span;
+    return previous[toIndex] + ratio * (current[toIndex] - previous[toIndex]);
+  }
+
+  return sourceMs;
+}
+
+export function activeAnnotationIndex(
+  annotations: readonly ViewerAnnotation[],
+  timeSeconds: number,
+): number {
+  const timeMs = timeSeconds * 1000;
+  let match = -1;
+
+  for (let index = 0; index < annotations.length; index += 1) {
+    const range = annotations[index]?.timeRange;
+    if (range === undefined) {
+      continue;
+    }
+
+    const startMs = range.start;
+    const endMs = range.end > 0 ? range.end : range.start + SYNC_TOLERANCE_MS;
+    if (timeMs >= startMs - SYNC_TOLERANCE_MS && timeMs <= endMs + SYNC_TOLERANCE_MS) {
+      match = index;
+    }
+  }
+
+  return match;
 }
 
 export async function mountViewer(root: ParentNode = document): Promise<void> {
@@ -120,17 +212,29 @@ function renderAssets(
   report: ViewerReport,
 ): void {
   const video = root.querySelector<HTMLVideoElement>('[data-repro-video]');
-  const mp4 = assetOfKind(manifest, 'mp4');
+  const videoB = root.querySelector<HTMLVideoElement>('[data-repro-video-b]');
+  const mp4Assets = manifest.assets.filter((asset) => asset.kind === 'mp4');
+  const primary = mp4Assets[0];
+  const secondary = mp4Assets[1];
   const vtt = assetOfKind(manifest, 'vtt');
+  const syncKnots = manifest.compare?.syncMap ?? [];
+  const compareMode = syncKnots.length > 0 || secondary !== undefined;
 
-  if (video !== null && mp4 !== undefined) {
-    video.src = mp4.href;
+  if (video !== null && primary !== undefined) {
+    video.src = primary.href;
     wireKeyboard(video);
+    wirePlayheadSync(root, video, report.annotations ?? []);
+    wireScrubber(root, video, report.chapters ?? []);
   }
 
   if (video !== null && vtt !== undefined) {
     const track = video.querySelector('track');
     track?.setAttribute('src', vtt.href);
+  }
+
+  if (compareMode && video !== null && videoB !== null && secondary !== undefined) {
+    videoB.src = secondary.href;
+    wireComparePlayer(root, video, videoB, syncKnots);
   }
 
   renderList(root, '[data-viewer-chapters]', report.chapters ?? [], chapterNode);
@@ -148,6 +252,7 @@ function renderAssets(
   );
   renderTimeline(root, report);
   wireControls(root);
+  applyReviewerPreset(root, 'developer');
 }
 
 async function loadManifest(): Promise<EvidenceManifest> {
@@ -204,12 +309,20 @@ function emptyAware<T>(
 }
 
 function chapterNode(chapter: ViewerChapter): HTMLElement {
-  return element('article', 'chapter', chapter.title);
+  const node = element('article', 'chapter', chapter.title);
+  if (chapter.timeRange !== undefined) {
+    node.dataset.startMs = String(chapter.timeRange.start);
+  }
+  return node;
 }
 
 function annotationNode(annotation: ViewerAnnotation): HTMLElement {
   const node = element('article', 'annotation', annotationCue(annotation));
   node.dataset.severity = annotation.severity ?? 'info';
+  if (annotation.timeRange !== undefined) {
+    node.dataset.startMs = String(annotation.timeRange.start);
+    node.dataset.endMs = String(annotation.timeRange.end);
+  }
   return node;
 }
 
@@ -234,10 +347,211 @@ function wireControls(root: ParentNode): void {
   theme?.addEventListener('change', () => {
     document.documentElement.dataset.theme = theme.value;
   });
+
+  const preset = root.querySelector<HTMLSelectElement>('[data-viewer-preset]');
+  preset?.addEventListener('change', () => {
+    applyReviewerPreset(root, preset.value as ReviewerPreset);
+  });
+}
+
+function applyReviewerPreset(root: ParentNode, preset: ReviewerPreset): void {
+  const visible = new Set(reviewerPresetSections(preset));
+  const sections = root.querySelectorAll<HTMLElement>('[data-viewer-section]');
+
+  for (const section of Array.from(sections)) {
+    const tokens = (section.dataset.viewerSection ?? '')
+      .split(/\s+/u)
+      .filter((token: string) => token.length > 0);
+    const show = tokens.some((token) => visible.has(token));
+    section.hidden = !show;
+  }
+}
+
+function wirePlayheadSync(
+  root: ParentNode,
+  video: HTMLVideoElement,
+  annotations: readonly ViewerAnnotation[],
+): void {
+  const container = root.querySelector('[data-viewer-annotations]');
+  if (container === null || annotations.length === 0) {
+    return;
+  }
+
+  const nodes = Array.from(container.querySelectorAll<HTMLElement>('.annotation'));
+
+  const sync = (): void => {
+    const index = activeAnnotationIndex(annotations, video.currentTime);
+    for (let nodeIndex = 0; nodeIndex < nodes.length; nodeIndex += 1) {
+      const node = nodes[nodeIndex];
+      if (node === undefined) {
+        continue;
+      }
+      const active = nodeIndex === index;
+      node.dataset.active = active ? 'true' : 'false';
+      if (active) {
+        node.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      }
+    }
+  };
+
+  video.addEventListener('timeupdate', sync);
+  video.addEventListener('seeked', sync);
+}
+
+function wireScrubber(
+  root: ParentNode,
+  video: HTMLVideoElement,
+  chapters: readonly ViewerChapter[],
+): void {
+  const scrubber = root.querySelector<HTMLElement>('[data-viewer-scrubber]');
+  const seek = root.querySelector<HTMLInputElement>('[data-viewer-seek]');
+  const markers = root.querySelector('[data-viewer-markers]');
+
+  if (scrubber === null || seek === null || markers === null) {
+    return;
+  }
+
+  const updateRange = (): void => {
+    if (!Number.isFinite(video.duration) || video.duration <= 0) {
+      return;
+    }
+
+    scrubber.hidden = false;
+    seek.max = String(Math.round(video.duration * 1000));
+    seek.value = String(Math.round(video.currentTime * 1000));
+    renderChapterMarkers(markers, chapters, video.duration);
+  };
+
+  video.addEventListener('loadedmetadata', updateRange);
+  video.addEventListener('durationchange', updateRange);
+
+  video.addEventListener('timeupdate', () => {
+    seek.value = String(Math.round(video.currentTime * 1000));
+  });
+
+  seek.addEventListener('input', () => {
+    video.currentTime = Number.parseInt(seek.value, 10) / 1000;
+  });
+}
+
+function renderChapterMarkers(
+  container: Element,
+  chapters: readonly ViewerChapter[],
+  durationSeconds: number,
+): void {
+  container.replaceChildren();
+
+  if (durationSeconds <= 0) {
+    return;
+  }
+
+  for (const chapter of chapters) {
+    const startMs = chapter.timeRange?.start;
+    if (startMs === undefined) {
+      continue;
+    }
+
+    const marker = document.createElement('span');
+    marker.className = 'scrubber-marker';
+    marker.style.left = `${String((startMs / 1000 / durationSeconds) * 100)}%`;
+    marker.title = chapter.title;
+    marker.setAttribute('aria-label', `Chapter: ${chapter.title}`);
+    container.append(marker);
+  }
+}
+
+function wireComparePlayer(
+  root: ParentNode,
+  videoA: HTMLVideoElement,
+  videoB: HTMLVideoElement,
+  syncKnots: readonly SyncKnot[],
+): void {
+  const toggle = root.querySelector<HTMLElement>('[data-viewer-compare-toggle]');
+  if (toggle === null) {
+    return;
+  }
+
+  toggle.hidden = false;
+  let activeSide: 'a' | 'b' = 'a';
+  let syncing = false;
+
+  const setSide = (side: 'a' | 'b'): void => {
+    activeSide = side;
+    for (const button of Array.from(
+      toggle.querySelectorAll<HTMLButtonElement>('[data-compare-side]'),
+    )) {
+      const pressed = button.dataset.compareSide === side;
+      button.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    }
+
+    if (side === 'a') {
+      videoA.hidden = false;
+      videoA.controls = true;
+      videoB.hidden = true;
+      videoB.controls = false;
+      videoB.pause();
+      return;
+    }
+
+    videoA.hidden = true;
+    videoA.controls = false;
+    videoB.hidden = false;
+    videoB.controls = true;
+    videoA.pause();
+  };
+
+  for (const button of Array.from(
+    toggle.querySelectorAll<HTMLButtonElement>('[data-compare-side]'),
+  )) {
+    button.addEventListener('click', () => {
+      const side = button.dataset.compareSide === 'b' ? 'b' : 'a';
+      setSide(side);
+      const master = side === 'a' ? videoA : videoB;
+      const follower = side === 'a' ? videoB : videoA;
+      const masterMs = master.currentTime * 1000;
+      follower.currentTime =
+        mapSyncTime(masterMs, syncKnots, side, side === 'a' ? 'b' : 'a') / 1000;
+    });
+  }
+
+  const mirrorTime = (master: HTMLVideoElement, from: 'a' | 'b'): void => {
+    if (syncing) {
+      return;
+    }
+    syncing = true;
+    const follower = from === 'a' ? videoB : videoA;
+    const to = from === 'a' ? 'b' : 'a';
+    const masterMs = master.currentTime * 1000;
+    follower.currentTime = mapSyncTime(masterMs, syncKnots, from, to) / 1000;
+    syncing = false;
+  };
+
+  videoA.addEventListener('seeked', () => {
+    if (activeSide === 'a') {
+      mirrorTime(videoA, 'a');
+    }
+  });
+  videoB.addEventListener('seeked', () => {
+    if (activeSide === 'b') {
+      mirrorTime(videoB, 'b');
+    }
+  });
+  videoA.addEventListener('timeupdate', () => {
+    if (activeSide === 'a') {
+      mirrorTime(videoA, 'a');
+    }
+  });
+  videoB.addEventListener('timeupdate', () => {
+    if (activeSide === 'b') {
+      mirrorTime(videoB, 'b');
+    }
+  });
+
+  setSide('a');
 }
 
 function wireKeyboard(video: HTMLVideoElement): void {
-  video.addEventListener('keydown', (event) => {
+  const handler = (event: KeyboardEvent): void => {
     const shortcut = keyboardShortcutFor(event.key);
 
     if (!shortcut.handled) {
@@ -246,6 +560,13 @@ function wireKeyboard(video: HTMLVideoElement): void {
 
     event.preventDefault();
     applyShortcut(video, shortcut);
+  };
+
+  video.addEventListener('keydown', handler);
+  document.addEventListener('keydown', (event) => {
+    if (event.target === video || event.target === document.body) {
+      handler(event);
+    }
   });
 }
 
@@ -254,12 +575,27 @@ function applyShortcut(
   shortcut: KeyboardShortcut,
 ): void {
   if (shortcut.action === 'back') {
-    video.currentTime = Math.max(0, video.currentTime - 5);
+    video.currentTime = Math.max(0, video.currentTime - SEEK_STEP_SECONDS);
     return;
   }
 
   if (shortcut.action === 'forward') {
-    video.currentTime += 5;
+    video.currentTime = Math.min(
+      video.duration || Number.MAX_SAFE_INTEGER,
+      video.currentTime + SEEK_STEP_SECONDS,
+    );
+    return;
+  }
+
+  if (shortcut.action === 'start') {
+    video.currentTime = 0;
+    return;
+  }
+
+  if (shortcut.action === 'end') {
+    if (Number.isFinite(video.duration)) {
+      video.currentTime = video.duration;
+    }
     return;
   }
 

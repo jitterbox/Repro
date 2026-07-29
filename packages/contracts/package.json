@@ -7,19 +7,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./tokens/overlay-theme.tokens.json": "./tokens/overlay-theme.tokens.json",
+    "./schemas/*": "./schemas/*"
   },
   "files": [
     "dist",
-    "schemas"
+    "schemas",
+    "tokens"
   ],
   "scripts": {
+    "build:tokens": "node scripts/build-tokens.mjs",
+    "prebuild": "pnpm run build:tokens",
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "pnpm run build:tokens"
   },
   "dependencies": {
+    "@repro/core": "workspace:*",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "zod": "^4.4.3"

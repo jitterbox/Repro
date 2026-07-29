@@ -8,16 +8,35 @@
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <header class="topbar" data-testid="topbar">
+    <header class="topbar" data-testid="topbar" data-repro-stack="header">
       <h1 data-testid="app-title">ShopLite</h1>
       <div class="topbar-actions">
         <button type="button" data-testid="btn-recalculate">Recalculate</button>
+        <button type="button" data-testid="btn-sort-heavy">Heavy sort</button>
         <button type="button" data-testid="btn-invoice">Invoice preview</button>
         <button type="button" data-testid="btn-help">Help</button>
       </div>
+      <span
+        class="sticky-tip"
+        data-testid="sticky-tip"
+        data-repro-stack="tooltip"
+        hidden
+        >Tip overlaps submenu</span
+      >
     </header>
 
-    <div data-testid="promo-slot" class="promo-slot" aria-live="polite"></div>
+    <div
+      data-testid="promo-slot"
+      class="promo-slot"
+      aria-live="polite"
+      data-repro-roi="promo"
+    ></div>
+    <div
+      data-testid="toast-stack"
+      class="toast-stack"
+      aria-live="polite"
+      data-repro-roi="toast-stack"
+    ></div>
 
     <main class="layout">
       <section class="catalog" data-testid="catalog">
@@ -27,9 +46,20 @@
             type="button"
             class="tiny-menu"
             data-testid="btn-row-menu"
+            data-repro-hit="tiny"
+            data-repro-roi="row-menu"
             aria-label="Row menu"
           >
             ⋯
+          </button>
+          <button
+            type="button"
+            class="tiny-menu tiny-menu-b"
+            data-testid="btn-filter-chip"
+            data-repro-hit="tiny"
+            aria-label="Filter chip"
+          >
+            ·
           </button>
         </div>
 
@@ -67,15 +97,29 @@
         <div
           class="advanced-wrap"
           data-testid="advanced-wrap"
+          data-repro-hidden="host"
           tabindex="0"
         >
           <span class="advanced-label">Hover for advanced pricing</span>
-          <div class="advanced-panel" data-testid="advanced-panel" hidden>
+          <div
+            class="advanced-panel"
+            data-testid="advanced-panel"
+            data-repro-hidden="panel"
+            hidden
+          >
             <p>
               Currency:
               <strong data-testid="advanced-currency">€</strong>
             </p>
           </div>
+        </div>
+        <div
+          class="ghost-note"
+          data-testid="aria-ghost"
+          data-repro-hidden="aria"
+          aria-hidden="true"
+        >
+          Screen-reader-hidden surcharge note
         </div>
       </section>
 
@@ -90,6 +134,17 @@
             name="email"
             autocomplete="off"
             value="canary@example.test"
+          />
+        </label>
+
+        <label class="field" data-testid="field-ssn">
+          <span class="field-label">Tax ID</span>
+          <input
+            data-testid="input-ssn"
+            type="text"
+            name="ssn"
+            autocomplete="off"
+            value="999-00-0001"
           />
         </label>
 
@@ -122,7 +177,12 @@
 
         <div class="save-row" data-testid="save-row">
           <span class="field-label" data-testid="save-label">Persist</span>
-          <button type="button" class="save" data-testid="btn-save">
+          <button
+            type="button"
+            class="save"
+            data-testid="btn-save"
+            data-repro-roi="save"
+          >
             Save
           </button>
         </div>

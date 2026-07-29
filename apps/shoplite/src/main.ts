@@ -1,4 +1,8 @@
-import { applyFixtureMode, isBroken, resolveFixtureMode } from './fixture-mode.js';
+import {
+  applyFixtureMode,
+  isDefectActive,
+  resolveFixtureMode,
+} from './fixture-mode.js';
 
 applyFixtureMode(resolveFixtureMode());
 
@@ -27,12 +31,15 @@ function toast(message: string): void {
 
 function setCurrencyGlyph(): void {
   const el = $('advanced-currency');
-  el.textContent = isBroken() ? '€' : '$';
+  const globalBroken =
+    document.documentElement.dataset.reproFixture === 'broken' &&
+    document.documentElement.dataset.reproDefect === undefined;
+  el.textContent = globalBroken ? '€' : '$';
 }
 
 function injectPromoBanner(): void {
   const slot = $('promo-slot');
-  if (!isBroken()) {
+  if (!isDefectActive('BUG-1009')) {
     const reserved = document.createElement('div');
     reserved.className = 'promo-banner';
     reserved.dataset.testid = 'promo-banner';
@@ -93,7 +100,7 @@ function wireMenus(): void {
 
 function wireSaveErrors(): void {
   $('btn-save').addEventListener('click', () => {
-    if (!isBroken()) {
+    if (!isDefectActive('BUG-1008')) {
       toast('Saved');
       return;
     }
@@ -109,7 +116,7 @@ function wireSaveErrors(): void {
 
 function wireRecalculateFreeze(): void {
   $('btn-recalculate').addEventListener('click', () => {
-    if (!isBroken()) {
+    if (!isDefectActive('BUG-1010')) {
       toast('Totals recalculated');
       return;
     }
@@ -122,6 +129,54 @@ function wireRecalculateFreeze(): void {
   });
 }
 
+function wireHeavySortFreeze(): void {
+  $('btn-sort-heavy').addEventListener('click', () => {
+    if (!isDefectActive('BUG-1016')) {
+      toast('Sorted');
+      return;
+    }
+    const end = performance.now() + 900;
+    while (performance.now() < end) {
+      // Second long-task freeze for design-language coverage.
+    }
+    toast('Heavy sort finished');
+  });
+}
+
+function injectToastStackCls(): void {
+  if (!isDefectActive('BUG-1015')) {
+    return;
+  }
+  const stack = $('toast-stack');
+  window.setTimeout(() => {
+    const item = document.createElement('div');
+    item.className = 'stack-toast';
+    item.dataset.testid = 'stack-toast';
+    item.textContent = 'Inventory sync pushed layout';
+    stack.append(item);
+  }, 500);
+}
+
+function wireStickyTipStack(): void {
+  const tip = $('sticky-tip');
+  $('btn-actions').addEventListener('click', () => {
+    if (!isDefectActive('BUG-1015') && !isDefectActive('BUG-1004')) {
+      tip.hidden = true;
+      return;
+    }
+    tip.hidden = false;
+  });
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) {
+      return;
+    }
+    if (!$('actions-menu').contains(target) && target !== $('btn-actions')) {
+      tip.hidden = true;
+    }
+  });
+}
+
 function wireContextMenu(): void {
   const menu = $('context-menu');
   for (const row of document.querySelectorAll('.sku')) {
@@ -129,7 +184,7 @@ function wireContextMenu(): void {
       event.preventDefault();
       const sku = (row as HTMLElement).dataset.sku ?? 'alpha';
       // Broken: always target alpha regardless of row.
-      state.contextTarget = isBroken() ? 'alpha' : sku;
+      state.contextTarget = isDefectActive('BUG-1006') ? 'alpha' : sku;
       menu.hidden = false;
       menu.style.left = `${String(event.clientX)}px`;
       menu.style.top = `${String(event.clientY)}px`;
@@ -161,7 +216,7 @@ function wireDragReorder(): void {
         return;
       }
       dragEl.classList.remove('dragging');
-      if (isBroken()) {
+      if (isDefectActive('BUG-1007')) {
         dragEl.style.setProperty('--drag-offset-current', '8px');
       } else {
         dragEl.style.removeProperty('--drag-offset-current');
@@ -205,7 +260,7 @@ function wireModalTrap(): void {
   });
 
   dialog.addEventListener('keydown', (event) => {
-    if (event.key !== 'Tab' || !isBroken()) {
+    if (event.key !== 'Tab' || !isDefectActive('BUG-1013')) {
       return;
     }
     // Broken: Tab from B jumps to A forever (skips Close).
@@ -215,7 +270,7 @@ function wireModalTrap(): void {
     }
   });
 
-  if (!isBroken()) {
+  if (!isDefectActive('BUG-1013')) {
     dialog.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         dialog.close();
@@ -226,9 +281,10 @@ function wireModalTrap(): void {
 
 function wireInvoicePopup(): void {
   $('btn-invoice').addEventListener('click', () => {
-    const total = isBroken() ? '999.00' : '84.50';
+    const broken = isDefectActive('BUG-1014');
+    const total = broken ? '999.00' : '84.50';
     const html = `<!doctype html><html data-repro-fixture="${
-      isBroken() ? 'broken' : 'fixed'
+      broken ? 'broken' : 'fixed'
     }"><head><title>Invoice</title></head><body>
       <h1 data-testid="invoice-title">Invoice preview</h1>
       <p>Cart total: <strong data-testid="invoice-total">${total}</strong></p>
@@ -241,7 +297,7 @@ function wireInvoicePopup(): void {
 
 function wireAdvancedPanel(): void {
   const panel = $('advanced-panel');
-  if (!isBroken()) {
+  if (!isDefectActive('BUG-1005')) {
     panel.hidden = false;
   }
   setCurrencyGlyph();
@@ -260,12 +316,15 @@ function wireRowSelect(): void {
 wireMenus();
 wireSaveErrors();
 wireRecalculateFreeze();
+wireHeavySortFreeze();
 wireContextMenu();
 wireDragReorder();
 wireModalTrap();
 wireInvoicePopup();
 wireAdvancedPanel();
 wireRowSelect();
+wireStickyTipStack();
 injectPromoBanner();
+injectToastStackCls();
 
 document.documentElement.dataset.reproReady = '1';

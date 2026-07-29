@@ -1,11 +1,12 @@
 {
-  "schemaVersion": "1.0.0",
+  "id": "evt-42",
+  "schemaVersion": 1,
   "runId": "550e8400-e29b-41d4-a716-446655440000",
   "pageId": "page-main",
   "seq": 42,
-  "tMono": 1234.567,
-  "tSource": 987654321.123,
-  "type": "pointer",
+  "t_mono": 1234.567,
+  "t_epoch": 987654321.123,
+  "kind": "pointer:click",
   "payload": {
     "x": 120,
     "y": 340,

@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://repro.dev/schemas/annotation.v2.schema.json",
+  "title": "ReproAnnotationV2",
+  "description": "Additive superset of annotation.schema.json. Every v1 property is retained; all v2 properties are optional so the planner can emit both bounds and anchor for one release.",
+  "type": "object",
+  "required": [
+    "id",
+    "component",
+    "severity"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "component": {
+      "type": "string",
+      "enum": [
+        "target-ring",
+        "leader",
+        "plate",
+        "callout",
+        "step-badge",
+        "progress-rail",
+        "chapter",
+        "console-toast",
+        "pause-badge",
+        "speed-chip",
+        "click-ripple",
+        "cursor-path",
+        "keystroke-pill",
+        "layout-shift-pair",
+        "hit-target-guide",
+        "hidden-ghost",
+        "stacking-labels",
+        "roi-magnifier",
+        "freeze-banner",
+        "vitals-hud",
+        "redaction",
+        "outcome-pair",
+        "slate",
+        "delta-caption"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "action",
+        "assertion",
+        "warning",
+        "info",
+        "measurement",
+        "redaction",
+        "callout",
+        "highlight",
+        "cursor",
+        "keystroke",
+        "console",
+        "step",
+        "chapter",
+        "diff",
+        "freeze",
+        "spec"
+      ]
+    },
+    "feature": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "warn",
+        "high",
+        "critical"
+      ]
+    },
+    "beatId": {
+      "type": "string"
+    },
+    "outTimeRange": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeRange": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "anchor": {
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string"
+        },
+        "pageId": {
+          "type": "string"
+        },
+        "bbox": {
+          "type": "object",
+          "required": [
+            "x",
+            "y",
+            "w",
+            "h"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "w": {
+              "type": "number"
+            },
+            "h": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "track": {
+          "type": "string",
+          "enum": [
+            "static",
+            "sticky",
+            "path"
+          ],
+          "default": "static"
+        },
+        "pad": {
+          "type": "number",
+          "default": 6
+        },
+        "evidenceRef": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "placement": {
+      "type": "object",
+      "properties": {
+        "prefer": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "center"
+          ],
+          "default": "auto"
+        },
+        "slot": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "tl",
+            "tr",
+            "bl",
+            "br",
+            "bottom-band",
+            "top-band"
+          ],
+          "default": "auto"
+        },
+        "leader": {
+          "type": "string",
+          "enum": [
+            "never",
+            "ifDisplaced",
+            "always"
+          ],
+          "default": "ifDisplaced"
+        },
+        "avoid": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "collisionPolicy": {
+          "type": "string",
+          "enum": [
+            "avoid",
+            "overlap",
+            "truncate"
+          ],
+          "default": "avoid"
+        }
+      },
+      "additionalProperties": false
+    },
+    "plate": {
+      "type": "object",
+      "properties": {
+        "kicker": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "measurement": {
+          "type": "string"
+        },
+        "maxChars": {
+          "type": "integer",
+          "default": 42
+        }
+      },
+      "additionalProperties": false
+    },
+    "shape": {
+      "type": "string",
+      "enum": [
+        "rect",
+        "ellipse",
+        "underline",
+        "arrow",
+        "line",
+        "badge",
+        "none"
+      ]
+    },
+    "lineStyle": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "dashed",
+        "dotted"
+      ]
+    },
+    "motion": {
+      "type": "object",
+      "properties": {
+        "in": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "ms": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "out": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string"
+            },
+            "ms": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "renderer": {
+      "type": "string",
+      "enum": [
+        "ass",
+        "compositor"
+      ],
+      "default": "ass"
+    },
+    "priority": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reviewState": {
+      "type": "string",
+      "enum": [
+        "open",
+        "resolved",
+        "dismissed",
+        "verified"
+      ]
+    },
+    "icon": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "target": {
+      "type": "object"
+    },
+    "bounds": {
+      "type": "object"
+    }
+  }
+}

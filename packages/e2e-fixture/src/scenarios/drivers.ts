@@ -10,7 +10,15 @@ export async function driveMenuExport(session: CaptureSession): Promise<void> {
   await page.click('[data-testid="chk-terms"]');
   await session.showChapter('Open Actions');
   await page.click('[data-testid="btn-actions"]');
+  await session.emitElementCue('editorial.stacking', '[data-testid="menu-actions"]', {
+    zIndex: 50,
+    label: 'Actions menu',
+  });
   await page.click('[data-testid="btn-export"]');
+  await session.emitElementCue('editorial.stacking', '[data-testid="menu-export"]', {
+    zIndex: 20,
+    label: 'Export submenu (losing)',
+  });
   await page.waitForTimeout(400);
   await page.click('[data-testid="btn-export-csv"]').catch(() => undefined);
   await page.waitForTimeout(300);
@@ -28,26 +36,86 @@ export async function driveConsoleSave(session: CaptureSession): Promise<void> {
 export async function driveTiming(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await page.waitForTimeout(900);
+  await session.emitSemantic('editorial.pause', { holdMs: 1400 });
+  await page.waitForTimeout(200);
   await session.showChapter('Recalculate freeze');
   await page.click('[data-testid="btn-recalculate"]');
+  await session.emitSemantic('editorial.freeze', { durationMs: 1200 });
+  await page.waitForTimeout(400);
+}
+
+export async function driveHeavySort(session: CaptureSession): Promise<void> {
+  const page = session.page;
+  await waitReady(page);
+  await session.emitSemantic('editorial.pause', { holdMs: 1000 });
+  await session.showChapter('Heavy sort freeze');
+  await page.click('[data-testid="btn-sort-heavy"]');
+  await session.emitSemantic('editorial.freeze', { durationMs: 900 });
   await page.waitForTimeout(400);
 }
 
 export async function driveCls(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
+  await session.emitSemantic('editorial.slowmo', { factor: 4 });
   await session.showChapter('Wait for promo CLS');
   await page.waitForSelector('[data-testid="promo-banner"]', {
     timeout: 3_000,
   });
+  await session.emitElementCue('editorial.zoom', '[data-testid="promo-slot"]', {
+    magnification: 2.5,
+  });
   await page.waitForTimeout(600);
+}
+
+export async function driveToastStack(session: CaptureSession): Promise<void> {
+  const page = session.page;
+  await waitReady(page);
+  await session.showChapter('Wait for toast CLS');
+  await page.waitForSelector('[data-testid="stack-toast"]', { timeout: 3_000 });
+  await session.emitElementCue(
+    'editorial.hidden',
+    '[data-testid="aria-ghost"]',
+    { label: 'aria-hidden surcharge' },
+  );
+  await session.showChapter('Open Actions stacking');
+  await page.click('[data-testid="chk-terms"]');
+  await page.click('[data-testid="btn-actions"]');
+  await session.emitElementCue('editorial.stacking', '[data-testid="sticky-tip"]', {
+    zIndex: 15,
+    label: 'Sticky tip',
+  });
+  await page.click('[data-testid="btn-export"]');
+  await session.emitElementCue('editorial.stacking', '[data-testid="menu-export"]', {
+    zIndex: 10,
+    label: 'Export under tip',
+  });
+  await page.waitForTimeout(500);
+}
+
+export async function driveBadgeFlicker(
+  session: CaptureSession,
+): Promise<void> {
+  const page = session.page;
+  await waitReady(page);
+  await session.emitSemantic('editorial.pause', { holdMs: 1400 });
+  await session.emitSemantic('editorial.slowmo', { factor: 4 });
+  await session.showChapter('Watch badge flicker');
+  await page.locator('[data-testid="status-badge"]').waitFor({
+    state: 'visible',
+  });
+  await page.waitForTimeout(1_200);
 }
 
 export async function driveHoverHidden(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
   await session.showChapter('Reveal advanced pricing');
+  await session.emitElementCue(
+    'editorial.hidden',
+    '[data-testid="advanced-panel"]',
+    { label: 'Hover-only panel' },
+  );
   await page.hover('[data-testid="advanced-wrap"]');
   await page.waitForTimeout(500);
 }
@@ -65,10 +133,31 @@ export async function drivePointer(session: CaptureSession): Promise<void> {
   await page.waitForTimeout(400);
 }
 
+export async function driveDragOffset(session: CaptureSession): Promise<void> {
+  const page = session.page;
+  await waitReady(page);
+  await session.showChapter('Drag Gamma residual');
+  await session.emitElementCue('editorial.zoom', '[data-testid="sku-gamma"]', {
+    magnification: 2.5,
+  });
+  const handle = page.locator('[data-testid="drag-handle-gamma"]');
+  const target = page.locator('[data-testid="sku-alpha"]');
+  await handle.dragTo(target);
+  await page.waitForTimeout(500);
+}
+
 export async function driveA11y(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
   await session.showChapter('Tiny hit target');
+  await session.emitElementCue(
+    'editorial.hit-target',
+    '[data-testid="btn-row-menu"]',
+    { label: '8×8 hit target' },
+  );
+  await session.emitElementCue('editorial.zoom', '[data-testid="btn-row-menu"]', {
+    magnification: 2.5,
+  });
   await page.click('[data-testid="btn-row-menu"]').catch(() => undefined);
   await session.showChapter('Keyboard trap');
   await page.click('[data-testid="btn-help"]');
@@ -76,6 +165,27 @@ export async function driveA11y(session: CaptureSession): Promise<void> {
   await page.keyboard.press('Tab');
   await page.keyboard.press('Tab');
   await page.waitForTimeout(300);
+}
+
+export async function driveHitTarget(session: CaptureSession): Promise<void> {
+  const page = session.page;
+  await waitReady(page);
+  await session.showChapter('Inspect tiny menu');
+  await session.emitElementCue(
+    'editorial.hit-target',
+    '[data-testid="btn-row-menu"]',
+    { label: 'Row menu 8×8' },
+  );
+  await session.emitElementCue(
+    'editorial.hit-target',
+    '[data-testid="btn-filter-chip"]',
+    { label: 'Filter chip 8×8' },
+  );
+  await session.emitElementCue('editorial.zoom', '[data-testid="btn-row-menu"]', {
+    magnification: 2.5,
+  });
+  await page.click('[data-testid="btn-row-menu"]').catch(() => undefined);
+  await page.waitForTimeout(400);
 }
 
 export async function drivePopup(session: CaptureSession): Promise<void> {
@@ -98,6 +208,9 @@ export async function driveRedaction(session: CaptureSession): Promise<void> {
   await session.showChapter('Focus PII field');
   await page.click('[data-testid="input-email"]');
   await page.keyboard.type('secret');
+  await session.showChapter('Focus Tax ID');
+  await page.click('[data-testid="input-ssn"]');
+  await page.keyboard.type('x');
   await page.waitForTimeout(300);
 }
 
@@ -116,9 +229,15 @@ export async function driveDemo(session: CaptureSession): Promise<void> {
 export async function driveGeometry(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await session.showChapter('Inspect Save alignment');
-  await page.locator('[data-testid="btn-save"]').scrollIntoViewIfNeeded();
+  await session.showChapter('Inspect Save alignment', 'save-step');
+  const save = page.locator('[data-testid="btn-save"]');
+  await save.scrollIntoViewIfNeeded();
+  await session.captureAnchor(page, 'btn-save', 'before');
+  await session.emitElementCue('editorial.zoom', '[data-testid="btn-save"]', {
+    magnification: 2.5,
+  });
   await page.waitForTimeout(600);
+  await session.captureAnchor(page, 'btn-save', 'after');
 }
 
 export async function driveContrast(session: CaptureSession): Promise<void> {

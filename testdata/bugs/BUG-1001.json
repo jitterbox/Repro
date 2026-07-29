@@ -52,8 +52,22 @@
       "deviceScaleFactor": 1
     },
     "metadata": {
-      "specTitle": "BUG-1001",
-      "bugId": "BUG-1001"
+      "bugId": "BUG-1001",
+      "title": "Save button misaligned 12px left of settings column",
+      "System.Title": "Save button misaligned 12px left of settings column",
+      "expected": "Save button aligns with settings column",
+      "actual": "Save button is 12px left of settings column",
+      "annotationHints": [
+        {
+          "target": "btn-save",
+          "shape": "rect",
+          "label": "Δx = -12px vs label column",
+          "x": 980,
+          "y": 420,
+          "width": 96,
+          "height": 36
+        }
+      ]
     }
   }
 }
