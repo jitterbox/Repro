@@ -1,3 +1,4 @@
+import { withFileLock } from '@repro/core';
 import { shareReportSchema, type ShareReport } from '@repro/contracts';
 import { createPresidioLikeRedactor } from '@repro/core/redactor';
 import { createHash, randomUUID } from 'node:crypto';
@@ -9,13 +10,17 @@ import {
   readFile,
   rename,
   rm,
-  open,
   writeFile,
 } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 
 import { writeJson } from './io.js';
+import {
+  packageCacheKey,
+  reusablePackage,
+  recordPackageCache,
+} from './package-cache.js';
 
 export type EvidenceAssetKind = 'chapters' | 'json' | 'mp4' | 'vtt' | 'png';
 
@@ -53,6 +58,7 @@ export interface PackageCommandResult {
   readonly manifest: EvidenceManifest;
   readonly manifestPath: string;
   readonly viewerPath: string;
+  readonly cacheHit: boolean;
 }
 
 export async function packageCommand(
@@ -64,58 +70,70 @@ export async function packageCommand(
   const staging = `${options.outDir}.tmp-${randomUUID()}`;
   const backup = `${options.outDir}.previous-${randomUUID()}`;
   const lockPath = `${options.outDir}.lock`;
-  const lock = await open(lockPath, 'wx');
-  let previous = false;
-  let published = false;
-  try {
-    const assets = [
-      ...(await copyEvidenceAssets(
-        staging,
-        options.assets ?? [],
-        options.privacyPatterns ?? [],
-      )),
-    ];
-    if (options.report) {
-      const report = shareReportSchema.parse(options.report);
-      assertShareableReport(report, options.privacyPatterns ?? []);
-      await writeJson(join(staging, 'report.json'), report);
-      assets.push({
-        kind: 'json',
-        path: 'report.json',
-        href: 'report.json',
-        sha256: hashBytes(await readFile(join(staging, 'report.json'))),
-      });
-    }
-    const manifest = {
-      ...evidenceManifest(assets),
-      ...(options.compare ? { compare: options.compare } : {}),
-    };
-    await cp(viewerDir, join(staging, 'viewer'), { recursive: true });
-    await writeJson(join(staging, 'evidence-manifest.json'), manifest);
+  return withFileLock(lockPath, async () => {
+    let previous = false;
+    let published = false;
     try {
-      await rename(options.outDir, backup);
-      previous = true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const key = await packageCacheKey(options, viewerDir);
+      const cached = await reusablePackage(options.outDir, key);
+      if (cached)
+        return {
+          manifest: cached,
+          manifestPath: join(options.outDir, 'evidence-manifest.json'),
+          viewerPath: join(options.outDir, 'viewer'),
+          cacheHit: true,
+        };
+      const assets = [
+        ...(await copyEvidenceAssets(
+          staging,
+          options.assets ?? [],
+          options.privacyPatterns ?? [],
+        )),
+      ];
+      if (options.report) {
+        const report = shareReportSchema.parse(options.report);
+        assertShareableReport(report, options.privacyPatterns ?? []);
+        await writeJson(join(staging, 'report.json'), report);
+        assets.push({
+          kind: 'json',
+          path: 'report.json',
+          href: 'report.json',
+          sha256: hashBytes(await readFile(join(staging, 'report.json'))),
+        });
+      }
+      const manifest = {
+        ...evidenceManifest(assets),
+        ...(options.compare ? { compare: options.compare } : {}),
+      };
+      await cp(viewerDir, join(staging, 'viewer'), { recursive: true });
+      await writeJson(join(staging, 'evidence-manifest.json'), manifest);
+      // A source or viewer changed while snapshotting: publish audited bytes but do not cache them.
+      if (key && key === (await packageCacheKey(options, viewerDir)))
+        await recordPackageCache(staging, key);
+      try {
+        await rename(options.outDir, backup);
+        previous = true;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+      try {
+        await rename(staging, options.outDir);
+        published = true;
+      } catch (error) {
+        if (previous) await rename(backup, options.outDir);
+        throw error;
+      }
+      return {
+        manifest,
+        manifestPath: join(options.outDir, 'evidence-manifest.json'),
+        viewerPath: join(options.outDir, 'viewer'),
+        cacheHit: false,
+      };
+    } finally {
+      await rm(staging, { recursive: true, force: true });
+      if (published) await rm(backup, { recursive: true, force: true });
     }
-    try {
-      await rename(staging, options.outDir);
-      published = true;
-    } catch (error) {
-      if (previous) await rename(backup, options.outDir);
-      throw error;
-    }
-    return {
-      manifest,
-      manifestPath: join(options.outDir, 'evidence-manifest.json'),
-      viewerPath: join(options.outDir, 'viewer'),
-    };
-  } finally {
-    await rm(staging, { recursive: true, force: true });
-    if (published) await rm(backup, { recursive: true, force: true });
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
+  });
 }
 
 function evidenceManifest(
@@ -143,7 +161,7 @@ async function copyEvidenceAssets(
     // Snapshot first: audits and publication operate on the same private copy.
     const bytes = await readFile(asset.path);
     const hash = hashBytes(bytes);
-    const href = `assets/${hash.slice(0, 16)}-${asset.path.split('/').at(-1) ?? 'asset'}`;
+    const href = `assets/${hash.slice(0, 16)}-${basename(asset.path)}`;
     const destination = join(outDir, href);
     if (verified.has(`${asset.kind}:${href}`)) {
       copiedAssets.push({

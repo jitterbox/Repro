@@ -13,3 +13,4 @@ export * from './lock.js';
 export * from './mask-regions.js';
 
 export { enumerateFonts, type FontManifestEntry } from './fonts.js';
+export { mapBounded } from './workers.js';

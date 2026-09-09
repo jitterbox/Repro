@@ -1,3 +1,4 @@
+import { withFrameAnalysis } from '../analysis.js';
 import { normalizeQualityResult, type QualityResult } from '@repro/contracts';
 import { readComposition, readPlan, readTimeline } from './plan-io.js';
 import { checkBottomBand } from './bottom-band.js';
@@ -46,7 +47,14 @@ export interface RunDeterministicGatesInput {
   readonly frameHeight?: number;
 }
 
-export async function runDeterministicGates(
+export async function runDeterministicGates(input: RunDeterministicGatesInput) {
+  const { result, analysis } = await withFrameAnalysis(() =>
+    evaluateGates(input),
+  );
+  return { ...result, analysis };
+}
+
+async function evaluateGates(
   input: RunDeterministicGatesInput,
 ): Promise<{ pass: boolean; results: QualityResult[] }> {
   const context = await loadGateContext(input);

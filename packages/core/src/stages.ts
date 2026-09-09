@@ -1,4 +1,5 @@
-import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { withFileLock } from './lock.js';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -64,50 +65,32 @@ export async function writeStageAtomic(
   const stagePath = stageDir(input.rootDir, input.manifest);
 
   await mkdir(dirname(stagePath), { recursive: true });
-  // Serialize the final verification/publication across processes. A crashed
-  // writer leaves an explicit lock error instead of reusing incomplete output.
-  const lockPath = `${stagePath}.lock`;
-  const deadline = Date.now() + 10_000;
-  let lock;
-  while (!lock) {
+  return withFileLock(`${stagePath}.lock`, async () => {
+    const tmpPath = `${stagePath}.tmp-${randomUUID()}`;
     try {
-      lock = await open(lockPath, 'wx');
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-      if (Date.now() >= deadline)
-        throw new Error(`Stage publication locked: ${lockPath}`);
-      await new Promise((resolve) => setTimeout(resolve, 25));
+      if (await readVerifiedManifest(stagePath)) return stagePath;
+      const artifactHashes: Record<string, string> = {};
+      for (const artifact of input.manifest.artifacts)
+        artifactHashes[resolve(artifact)] = contentAddress(
+          await readFile(artifact),
+        );
+      const manifest = {
+        ...input.manifest,
+        artifacts: input.manifest.artifacts.map((a) => resolve(a)),
+        artifactHashes,
+      };
+      await mkdir(tmpPath, { recursive: true });
+      await writeManifest(tmpPath, manifest);
+      // Only an invalid generation is removed, while holding the publication lock.
+      await rm(stagePath, { recursive: true, force: true });
+      await rename(tmpPath, stagePath);
+      if (!(await readVerifiedManifest(stagePath)))
+        throw new Error('Stage artifacts changed during publication');
+      return stagePath;
+    } finally {
+      await rm(tmpPath, { recursive: true, force: true });
     }
-  }
-  const tmpPath = `${stagePath}.tmp-${randomUUID()}`;
-  try {
-    await lock.writeFile(
-      JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }),
-    );
-    if (await readVerifiedManifest(stagePath)) return stagePath;
-    const artifactHashes: Record<string, string> = {};
-    for (const artifact of input.manifest.artifacts)
-      artifactHashes[resolve(artifact)] = contentAddress(
-        await readFile(artifact),
-      );
-    const manifest = {
-      ...input.manifest,
-      artifacts: input.manifest.artifacts.map((a) => resolve(a)),
-      artifactHashes,
-    };
-    await mkdir(tmpPath, { recursive: true });
-    await writeManifest(tmpPath, manifest);
-    // Only an invalid generation is removed, while holding the publication lock.
-    await rm(stagePath, { recursive: true, force: true });
-    await rename(tmpPath, stagePath);
-    if (!(await readVerifiedManifest(stagePath)))
-      throw new Error('Stage artifacts changed during publication');
-    return stagePath;
-  } finally {
-    await rm(tmpPath, { recursive: true, force: true });
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
+  });
 }
 
 export async function resumeFromLastVerified(

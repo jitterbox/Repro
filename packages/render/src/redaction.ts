@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { mapBounded, runProcess as executeProcess } from '@repro/core';
 import { spawn } from 'node:child_process';
 import {
   access,
@@ -181,6 +182,12 @@ export async function enforceOcrAudit(input: {
 
 /** Every extracted output frame is OCR'd; identical pixels share a result. */
 export class TesseractOcrAdapter implements OcrAdapter {
+  constructor(readonly workers = Number(process.env.REPRO_OCR_WORKERS ?? 2)) {
+    if (!Number.isSafeInteger(workers) || workers < 1 || workers > 8)
+      throw new RangeError(
+        'REPRO_OCR_WORKERS must be an integer between 1 and 8',
+      );
+  }
   async scan(input: OcrAdapterInput): Promise<OcrAdapterResult> {
     const version = await runProcess({
       command: 'tesseract',
@@ -188,38 +195,39 @@ export class TesseractOcrAdapter implements OcrAdapter {
     });
     if (!version.ok || !input.framePaths.length)
       return { audited: false, hits: [] };
-    const cache = new Map<string, readonly OcrHit[]>();
-    const hits: OcrHit[] = [];
+    const uniqueFrames = new Map<string, string>();
     for (const path of input.framePaths) {
       const hash = createHash('sha256')
         .update(await readFile(path))
         .digest('hex');
-      let found = cache.get(hash);
-      if (!found) {
+      if (!uniqueFrames.has(hash)) uniqueFrames.set(hash, path);
+    }
+    // Deduplicate before scheduling: duplicate frames cannot start duplicate OCR jobs.
+    const results = await mapBounded(
+      [...uniqueFrames.values()],
+      this.workers,
+      async (path) => {
         const texts: string[] = [];
-        // Sparse text can miss light text on dark caption bars. Automatic layout
-        // and sparse layout complement each other; both must complete.
+        // Both layouts are mandatory, including when another worker reports a hit.
         for (const mode of ['3', '11']) {
           const result = await runProcess({
             command: 'tesseract',
             args: [path, 'stdout', '--psm', mode],
             env: { ...process.env, OMP_THREAD_LIMIT: '1' },
           });
-          if (!result.ok) return { audited: false, hits };
+          if (!result.ok)
+            throw new GateError('A required frame OCR worker failed', []);
           texts.push(result.output);
         }
-        found = uniqueHits(
-          texts.flatMap((text) => [
-            ...hitsFromText(text),
-            ...(input.patterns ?? [])
-              .filter((pattern) => text.includes(pattern))
-              .map((text) => ({ text, confidence: 1 })),
-          ]),
-        );
-        cache.set(hash, found);
-      }
-      hits.push(...found);
-    }
+        return texts.flatMap((text) => [
+          ...hitsFromText(text),
+          ...(input.patterns ?? [])
+            .filter((pattern) => text.includes(pattern))
+            .map((text) => ({ text, confidence: 1 })),
+        ]);
+      },
+    );
+    const hits = results.flat();
     return {
       audited: true,
       source: 'frame-ocr',
@@ -555,6 +563,18 @@ function commandEnv(input: OcrAdapterInput): NodeJS.ProcessEnv {
 }
 
 function runProcess(input: RunProcessInput): Promise<ProcessResult> {
+  if (!input.shell)
+    return executeProcess(
+      input.command,
+      input.args ?? [],
+      input.env ? { env: input.env } : {},
+    ).then(
+      (output) => ({ ok: true, output }),
+      (error: unknown) => ({
+        ok: false,
+        output: error instanceof Error ? error.message : String(error),
+      }),
+    );
   return new Promise((resolve) => {
     const child = spawn(input.command, input.args ?? [], {
       env: input.env,

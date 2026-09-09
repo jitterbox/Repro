@@ -1,12 +1,11 @@
-import { execFile } from 'node:child_process';
-import { readdir, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { promisify } from 'node:util';
-
-const execFileAsync = promisify(execFile);
+import { sharedAnalysis, sharedFrame, imageIdentity } from './analysis.js';
+import { runProcess } from '@repro/core';
+import { tmpdir } from 'node:os';
+import { readdir, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { join, extname } from 'node:path';
 
 export async function probeDurationMs(videoPath: string): Promise<number> {
-  const { stdout } = await execFileAsync('ffprobe', [
+  const stdout = await runProcess('ffprobe', [
     '-v',
     'error',
     '-show_entries',
@@ -28,19 +27,29 @@ export async function extractFrameAt(
   outPath: string,
 ): Promise<string> {
   const timeSec = (timeMs / 1000).toFixed(3);
-  await execFileAsync('ffmpeg', [
-    '-y',
-    '-ss',
-    timeSec,
-    '-i',
-    videoPath,
-    '-frames:v',
-    '1',
-    '-q:v',
-    '2',
+  return sharedFrame(
+    JSON.stringify([
+      'frame',
+      await imageIdentity(videoPath),
+      timeSec,
+      extname(outPath),
+    ]),
     outPath,
-  ]);
-  return outPath;
+    async () => {
+      await runProcess('ffmpeg', [
+        '-y',
+        '-ss',
+        timeSec,
+        '-i',
+        videoPath,
+        '-frames:v',
+        '1',
+        '-q:v',
+        '2',
+        outPath,
+      ]);
+    },
+  );
 }
 
 export async function extractContactSheet(
@@ -50,7 +59,7 @@ export async function extractContactSheet(
 ): Promise<string[]> {
   await mkdir(outDir, { recursive: true });
   const pattern = join(outDir, 'frame-%04d.jpg');
-  await execFileAsync('ffmpeg', [
+  await runProcess('ffmpeg', [
     '-y',
     '-i',
     videoPath,
@@ -83,13 +92,31 @@ export interface LumaStats {
 
 /** Decode gray pixels and return mean plus percentile luminances. */
 export async function lumaStats(imagePath: string): Promise<LumaStats> {
-  const { stdout } = await execFileAsync(
-    'ffmpeg',
-    ['-i', imagePath, '-f', 'rawvideo', '-pix_fmt', 'gray', '-'],
-    { encoding: 'buffer', maxBuffer: 16 * 1024 * 1024 },
+  return sharedAnalysis(`luma:${await imageIdentity(imagePath)}`, () =>
+    decodeLumaStats(imagePath),
   );
+}
 
-  const buffer = stdout as Buffer;
+async function decodeLumaStats(imagePath: string): Promise<LumaStats> {
+  const directory = await mkdtemp(join(tmpdir(), 'repro-luma-'));
+  let buffer: Buffer;
+  try {
+    const raw = join(directory, 'pixels.raw');
+    await runProcess('ffmpeg', [
+      '-v',
+      'error',
+      '-i',
+      imagePath,
+      '-f',
+      'rawvideo',
+      '-pix_fmt',
+      'gray',
+      raw,
+    ]);
+    buffer = await readFile(raw);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
   if (buffer.length === 0) {
     return { mean: 0, p10: 0, p90: 0, samples: 0 };
   }
@@ -126,27 +153,41 @@ export async function extractCroppedFrameAt(input: {
   const h = Math.max(1, Math.round(input.height));
   const x = Math.max(0, Math.round(input.x));
   const y = Math.max(0, Math.round(input.y));
-  await execFileAsync('ffmpeg', [
-    '-y',
-    '-ss',
-    timeSec,
-    '-i',
-    input.videoPath,
-    '-vf',
-    `crop=${String(w)}:${String(h)}:${String(x)}:${String(y)}`,
-    '-frames:v',
-    '1',
-    '-q:v',
-    '2',
+  return sharedFrame(
+    JSON.stringify([
+      'crop',
+      await imageIdentity(input.videoPath),
+      timeSec,
+      w,
+      h,
+      x,
+      y,
+      extname(input.outPath),
+    ]),
     input.outPath,
-  ]);
-  return input.outPath;
+    async () => {
+      await runProcess('ffmpeg', [
+        '-y',
+        '-ss',
+        timeSec,
+        '-i',
+        input.videoPath,
+        '-vf',
+        `crop=${String(w)}:${String(h)}:${String(x)}:${String(y)}`,
+        '-frames:v',
+        '1',
+        '-q:v',
+        '2',
+        input.outPath,
+      ]);
+    },
+  );
 }
 
 export async function probeVideoSize(
   videoPath: string,
 ): Promise<{ readonly width: number; readonly height: number }> {
-  const { stdout } = await execFileAsync('ffprobe', [
+  const stdout = await runProcess('ffprobe', [
     '-v',
     'error',
     '-select_streams',
