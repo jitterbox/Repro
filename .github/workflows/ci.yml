@@ -24,7 +24,9 @@ jobs:
       - name: Lint (blocking)
         run: pnpm lint
       - name: Contracts, pipeline, privacy and compatibility tests
-        run: node node_modules/vitest/vitest.mjs run packages/contracts packages/core packages/capture packages/plan packages/render packages/compare packages/evaluation packages/cli packages/pipeline packages/alm packages/viewer packages/mcp packages/playwright/src
+        run: >-
+          node node_modules/vitest/vitest.mjs run packages/contracts packages/core packages/capture packages/plan packages/render packages/compare packages/evaluation packages/cli packages/pipeline packages/alm packages/viewer packages/mcp packages/playwright/src
+          --exclude '**/compare-encode.test.ts' --exclude '**/voiceover.test.ts'
       - name: Builds and tests leave tracked sources unchanged
         run: git diff --exit-code
 
@@ -69,6 +71,8 @@ jobs:
           mkdir -p .repro/ci
           node packages/cli/dist/bin.js doctor > .repro/ci/doctor.json
           dpkg-query -W ffmpeg tesseract-ocr fonts-liberation > .repro/ci/system-versions.txt
+      - name: Synthetic media encoding and silence fallback
+        run: node node_modules/vitest/vitest.mjs run packages/render/src/compare-encode.test.ts packages/render/src/voiceover.test.ts
       - name: Public CLI before/after proof with real pixels and strict OCR
         run: node scripts/e2e/public-workflow.mjs
       - name: Verified export reuse and missing OCR rejection
