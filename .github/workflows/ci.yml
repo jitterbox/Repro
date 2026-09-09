@@ -75,6 +75,8 @@ jobs:
         run: node node_modules/vitest/vitest.mjs run packages/render/src/compare-encode.test.ts packages/render/src/voiceover.test.ts
       - name: Public CLI before/after proof with real pixels and strict OCR
         run: node scripts/e2e/public-workflow.mjs
+      - name: Record annotation-only timing with captured-pixel verification
+        run: node scripts/e2e/annotation-benchmark.mjs
       - name: Verified export reuse and missing OCR rejection
         run: node scripts/e2e/export-cache.mjs
       - name: Audited Jira and ADO delivery against loopback protocol fixtures

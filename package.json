@@ -31,6 +31,7 @@
     "test:observations": "node scripts/e2e/observations.mjs",
     "test:watch-server": "node scripts/e2e/watch-server.mjs",
     "test:export-cache": "node scripts/e2e/export-cache.mjs",
+    "test:annotation-benchmark": "node scripts/e2e/annotation-benchmark.mjs",
     "test:delivery": "node scripts/e2e/delivery.mjs",
     "release:pack": "node scripts/release.mjs"
   },

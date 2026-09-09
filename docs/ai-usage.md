@@ -748,3 +748,17 @@ the bundle into an unrelated consumer directory and checking its tarball hashes.
 Use the managed server command's own normal rebuild/watch mode. Editing
 `server.json` requires restarting the watch session to change that process's
 launch configuration.
+
+Measure annotation iteration with `pnpm test:annotation-benchmark <run-directory>`
+after building and installing Tesseract. Without a run argument it uses the public
+workflow's after-run. The benchmark copies the capture, performs one warmup and
+seven different title edits through `repro render`, verifies the captured bytes
+remain unchanged, and OCR-checks each resulting checkpoint title. Timings cover
+the complete CLI render call; copying, OCR verification and export are excluded.
+Reports retain all samples, the median, input hashes, implementation digests,
+font hashes and machine/tool identity under `.repro/annotation-benchmark`.
+`REPRO_BENCHMARK_CLI` can select an independently built comparison version and
+`REPRO_BENCHMARK_OUT` selects the report directory. Run both versions on the same
+machine and capture to compare annotation work. A current measurement does not
+reconstruct the missing historical Phase 1 median; the report explicitly leaves
+the 50% improvement gate unassessed without an approved comparable baseline.
