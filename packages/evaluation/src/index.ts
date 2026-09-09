@@ -112,12 +112,12 @@ export {
 } from './review/cue-frames.js';
 export type { CueSample, ReviewStoryboardFrame } from './review/cue-frames.js';
 
-export { evaluateCoverage, loadCoverageMatrix } from './coverage/matrix.js';
+export { evaluateCoverage, loadCoverageMatrix } from './fixture-coverage/matrix.js';
 export type {
   CoverageMatrix,
   CoverageReport,
   CoverageRow,
-} from './coverage/matrix.js';
+} from './fixture-coverage/matrix.js';
 
 export function buildQualityReport(input: QualityReportInput): QualityReport {
   const metrics = input.metrics;

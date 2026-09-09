@@ -29,7 +29,9 @@ jobs:
         run: git diff --exit-code
 
   windows-processes:
-    runs-on: windows-latest
+    # pnpm 9 bundles node-gyp 10, which cannot discover VS 2026 on windows-latest.
+    # Keep this compatibility gate on the VS 2022 image rather than a moving alias.
+    runs-on: windows-2022
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
