@@ -32,7 +32,10 @@ describe('feature annotation emitters', () => {
     const result = emitFeatureAnnotations({
       config: stepped,
       events: [
-        event('ch-1', 'step.chapter', { title: 'Inspect Save', stepId: 'save' }),
+        event('ch-1', 'step.chapter', {
+          title: 'Inspect Save',
+          stepId: 'save',
+        }),
         event('ch-2', 'step.chapter', { title: 'Confirm', stepId: 'confirm' }),
         event('ptr-1', 'probe.pointer:path', {
           button: 0,
@@ -49,8 +52,8 @@ describe('feature annotation emitters', () => {
       (item) => item.component === 'step-badge',
     );
     expect(badges.map((item) => item.label)).toEqual([
-      'STEP 1 / 2',
-      'STEP 2 / 2',
+      'STEP 1 / 2 Inspect Save',
+      'STEP 2 / 2 Confirm',
     ]);
     expect(
       result.annotations.some((item) => item.component === 'progress-rail'),

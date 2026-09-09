@@ -209,7 +209,7 @@ evidence.
 | `zoom`             | ROI zoom callouts                                          | Sub-pixel / small-control bugs   |
 | `redaction`        | PII masking pipeline                                       | Auth, PII, payments              |
 | `vitalsHud`        | CLS/LCP/INP HUD                                            | Perf / jank                      |
-| `voiceover`        | Kokoro narration + VTT (audio drives segment length)       | Demos, stakeholder reviews       |
+| `voiceover`        | VTT narration plan; audible CLI narration unavailable       | Demos, stakeholder reviews       |
 | `freezeDetect`     | LoAF / rAF freeze badges                                   | Main-thread hangs                |
 | `a11yOverlay`      | A11y issue overlays                                        | Axe/ARIA failures                |
 | `hiddenElements`   | Hidden / `aria-hidden` callouts                            | Invisible interactive controls   |
@@ -375,7 +375,9 @@ Warnings: redaction enabled without `strict` on protected captures.
 
 ### E. Demo / release walkthrough
 
-1. `mode: "demo"`, `profile: "controlled"`, `voiceover: true`.
+The current CLI writes narration captions only; it does not synthesize or mux audible speech. Do not use silence-mock as evidence of narration.
+
+1. `mode: "demo"`, `profile: "controlled"`, `voiceover: true` for caption planning.
 2. Do **not** set `preserveRealTiming`.
 3. Narration document drives VTT + transcript; video pads to audio.
 

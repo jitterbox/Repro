@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width"
+  /><title>Repro evidence review</title>
+  <style>
+    body {
+      font: 16px system-ui;
+      margin: 0;
+      background: #101721;
+      color: #e6edf3;
+    }
+    main {
+      padding: 24px;
+      max-width: 1600px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 8px;
+    }
+    p {
+      max-width: 100ch;
+      color: #b9c8d6;
+    }
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      padding: 9px;
+      border: 1px solid #64768c;
+      border-radius: 4px;
+      background: #172535;
+      color: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    a {
+      color: #92c5ff;
+    }
+    a:focus,
+    button:focus,
+    input:focus,
+    textarea:focus {
+      outline: 3px solid #e4c76b;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th,
+    td {
+      text-align: left;
+      padding: 14px;
+      border-bottom: 1px solid #354456;
+      vertical-align: top;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      background: #172535;
+    }
+    td:first-child {
+      white-space: nowrap;
+    }
+    small {
+      display: block;
+      color: #b9c8d6;
+      margin-top: 6px;
+    }
+    .passed {
+      color: #83e7b1;
+    }
+    .failed {
+      color: #ff9c9c;
+    }
+    .not-run,
+    .unsupported {
+      color: #e4c76b;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    textarea {
+      width: 95%;
+      min-width: 180px;
+      min-height: 70px;
+    }
+    details {
+      max-width: 450px;
+    }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+    }
+    nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #summary {
+      font-weight: 600;
+    }
+    .scroll {
+      overflow-x: auto;
+    }
+    img {
+      max-width: 320px;
+      display: block;
+      margin-top: 10px;
+    }
+    dialog {
+      background: #101721;
+      color: #e6edf3;
+      width: 90vw;
+      border: 1px solid #64768c;
+    }
+    dialog video,
+    dialog img {
+      max-width: 100%;
+      width: 100%;
+    }
+  </style>
+  <main>
+    <h1>Repro evidence review</h1>
+    <p>
+      Review the actual output, then leave feedback against its test ID. A
+      passing browser outcome is distinct from a pixel, timing, or
+      feature-selection check. Synthetic diagnostic render tests exercise
+      presentation; they do not establish a browser defect.
+    </p>
+    <p id="summary" role="status">Loading results…</p>
+    <nav>
+      <input
+        id="filter"
+        aria-label="Filter by test ID, feature or strategy"
+        placeholder="Test ID, feature, strategy…"
+      /><select id="status" aria-label="Status">
+        <option value="">All statuses</option>
+        <option>passed</option>
+        <option>failed</option>
+        <option>not-run</option>
+        <option>unsupported</option></select
+      ><button id="refresh">Refresh results</button
+      ><button id="download">Download feedback JSON</button>
+    </nav>
+    <p id="coverage"></p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Test ID / result</th>
+            <th>Scenario / context</th>
+            <th>Checks & evidence level</th>
+            <th>Outputs</th>
+            <th>Your feedback</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+  <script type="module">
+    let rows = [];
+    const feedback = JSON.parse(
+      localStorage.getItem('repro-review-feedback-v1') || '{}',
+    );
+    const el = (tag, text) => {
+      const e = document.createElement(tag);
+      if (text !== undefined) e.textContent = text;
+      return e;
+    };
+    function draw() {
+      const filter = document.querySelector('#filter').value.toLowerCase(),
+        status = document.querySelector('#status').value,
+        body = document.querySelector('tbody');
+      body.replaceChildren();
+      for (const r of rows.filter(
+        (r) =>
+          (!status || r.status === status) &&
+          JSON.stringify([r.id, r.title, r.features, r.strategies])
+            .toLowerCase()
+            .includes(filter),
+      )) {
+        const tr = el('tr');
+        tr.id = r.id;
+        const id = el('td');
+        id.append(el('strong', r.id), el('small', r.status));
+        id.className = r.status;
+        const scenario = el('td');
+        scenario.append(
+          el('strong', r.title),
+          el(
+            'small',
+            `Features: ${(r.features || []).join(', ') || 'See checks'}`,
+          ),
+          el(
+            'small',
+            `${(r.strategies || []).join(', ')} · ${r.theme || 'shared theme'}`,
+          ),
+        );
+        const checks = el('td');
+        checks.append(
+          el('strong', r.level),
+          el('p', (r.checks || []).join('; ')),
+        );
+        if (r.error) {
+          const d = el('details');
+          d.append(el('summary', 'Failure details'), el('pre', r.error));
+          checks.append(d);
+        }
+        const outputs = el('td'),
+          links = el('div');
+        links.className = 'links';
+        for (const a of r.artifacts || []) {
+          const link = el('a', a.label);
+          link.href = a.url;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          links.append(link);
+        }
+        outputs.append(links);
+        const note = el('td'),
+          input = el('textarea');
+        input.setAttribute('aria-label', `Feedback for ${r.id}`);
+        input.placeholder = 'What needs changing? Include the frame or time.';
+        input.value = feedback[r.id]?.text || '';
+        input.oninput = () => {
+          feedback[r.id] = {
+            text: input.value,
+            updatedAt: new Date().toISOString(),
+          };
+          localStorage.setItem(
+            'repro-review-feedback-v1',
+            JSON.stringify(feedback),
+          );
+        };
+        note.append(input);
+        tr.append(id, scenario, checks, outputs, note);
+        body.append(tr);
+      }
+    }
+    async function refresh() {
+      try {
+        const data = await (await fetch('/results.json')).json();
+        rows = data.rows;
+        document.querySelector('#summary').textContent =
+          `${rows.filter((r) => r.status === 'passed').length} passed · ${rows.filter((r) => r.status === 'failed').length} failed · ${rows.filter((r) => r.status === 'not-run').length} not run · ${rows.filter((r) => r.status === 'unsupported').length} unsupported. Updated ${data.generatedAt}`;
+        document.querySelector('#coverage').textContent = data.coverage;
+        draw();
+      } catch (e) {
+        document.querySelector('#summary').textContent = String(e);
+      }
+    }
+    document.querySelector('#filter').oninput = draw;
+    document.querySelector('#status').onchange = draw;
+    document.querySelector('#refresh').onclick = refresh;
+    document.querySelector('#download').onclick = () => {
+      const a = el('a');
+      a.href = URL.createObjectURL(
+        new Blob([JSON.stringify({ schemaVersion: 1, feedback }, null, 2)], {
+          type: 'application/json',
+        }),
+      );
+      a.download = 'repro-review-feedback.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    await refresh();
+  </script>
+</html>

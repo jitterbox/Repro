@@ -51,13 +51,23 @@ function OutcomePlate({
           fontSize: 11,
           fontWeight: 700,
           letterSpacing: '0.1em',
-          color: accent,
+          color: 'var(--repro-label-fg)',
           marginBottom: 6,
         }}
       >
         {label}
       </div>
-      <div style={{ fontSize: 18, fontWeight: 500 }}>{text}</div>
+      <div
+        style={{
+          fontSize: 18,
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {text}
+      </div>
     </div>
   );
 }

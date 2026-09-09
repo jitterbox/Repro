@@ -77,7 +77,12 @@ export function Slate(props: SlateProps) {
               fontSize: 'var(--repro-slate-title-size)',
               fontWeight: 600,
               lineHeight: 1.15,
-              maxWidth: 960,
+              maxWidth: 'min(960px, 100%)',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             {props.title}
@@ -181,7 +186,8 @@ function PaneChip({
   side: 'before' | 'after';
   pane?: { runId?: string; build?: string; label?: string };
 }) {
-  const accent = side === 'before' ? color('repro-before') : color('repro-after');
+  const accent =
+    side === 'before' ? color('repro-before') : color('repro-after');
   return (
     <div style={{ flex: 1 }}>
       <div style={{ height: 4, background: accent, marginBottom: 8 }} />

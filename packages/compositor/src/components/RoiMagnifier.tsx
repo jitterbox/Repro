@@ -57,7 +57,7 @@ function MagnifierPip({
     height: rect.h,
     border: `2px solid ${color('repro-info')}`,
     borderRadius: 4,
-    background: color('repro-slate-bg'),
+    background: 'transparent',
     boxSizing: 'border-box',
     overflow: 'hidden',
   };
@@ -79,20 +79,6 @@ function MagnifierPip({
         }}
       >
         {label ?? `${factor}×`}
-      </div>
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 13,
-          color: 'var(--repro-meta)',
-          fontFamily: 'var(--repro-font-mono)',
-        }}
-      >
-        ROI {factor}×
       </div>
     </div>
   );

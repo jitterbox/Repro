@@ -59,6 +59,7 @@ export interface VitalsHudProps {
   lcp?: number;
   inp?: number;
   slot?: 'tl' | 'tr' | 'bl' | 'br';
+  summary?: string;
 }
 
 export interface OutcomePairProps {
@@ -93,7 +94,7 @@ export interface DeltaCaptionProps {
     'geometry' | 'color' | 'typography' | 'content' | 'visibility' | 'flow';
 }
 
-export type CardSpec =
+type CardContent =
   | { kind: 'slate'; props: SlateProps; id: string }
   | { kind: 'console-toast'; props: ConsoleToastProps; id: string }
   | { kind: 'roi-magnifier'; props: RoiMagnifierProps; id: string }
@@ -102,6 +103,11 @@ export type CardSpec =
   | { kind: 'compare-chrome'; props: CompareChromeProps; id: string }
   | { kind: 'freeze-banner'; props: FreezeBannerProps; id: string }
   | { kind: 'delta-caption'; props: DeltaCaptionProps; id: string };
+
+export type CardSpec = CardContent & {
+  placement?: { x: number; y: number; width: number; height: number };
+  viewport?: ViewportSpec;
+};
 
 export interface RenderResult {
   id: string;

@@ -18,16 +18,21 @@ it('serializes asynchronous owners and releases ownership after failure', async 
         order.push(2);
       }),
       withFileLock(path, () => {
-        order.push(3); return Promise.resolve();
+        order.push(3);
+        return Promise.resolve();
       }),
     ]);
-    expect(order).toEqual([1, 2, 3]);
+    // Acquisition order is scheduler-dependent; critical sections must never interleave.
+    expect([
+      [1, 2, 3],
+      [3, 1, 2],
+    ]).toContainEqual(order);
     await expect(
       withFileLock(path, () => Promise.reject(new Error('failed'))),
     ).rejects.toThrow('failed');
-    await expect(withFileLock(path, () => Promise.resolve('recovered'))).resolves.toBe(
-      'recovered',
-    );
+    await expect(
+      withFileLock(path, () => Promise.resolve('recovered')),
+    ).resolves.toBe('recovered');
     await writeFile(path, 'legacy sentinel');
     await expect(withFileLock(path, () => Promise.resolve(1))).rejects.toThrow(
       'Legacy writer lock',
@@ -52,17 +57,19 @@ it('recovers an OS-owned lock after an abruptly terminated writer', async () => 
   try {
     await new Promise<void>((resolve, reject) => {
       child.once('error', reject);
-      child.stdout.once('data', () => { resolve(); });
+      child.stdout.once('data', () => {
+        resolve();
+      });
     });
-    await expect(withFileLock(path, () => Promise.resolve('unsafe'), 30)).rejects.toThrow(
-      'another writer',
-    );
+    await expect(
+      withFileLock(path, () => Promise.resolve('unsafe'), 30),
+    ).rejects.toThrow('another writer');
     const exited = new Promise((resolve) => child.once('exit', resolve));
     child.kill('SIGKILL');
     await exited;
-    await expect(withFileLock(path, () => Promise.resolve('recovered'))).resolves.toBe(
-      'recovered',
-    );
+    await expect(
+      withFileLock(path, () => Promise.resolve('recovered')),
+    ).resolves.toBe('recovered');
   } finally {
     child.kill();
     await rm(root, { recursive: true, force: true });

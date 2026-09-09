@@ -21,6 +21,7 @@ const DSF = overlayTheme.viewport.deviceScaleFactor;
 const require = createRequire(import.meta.url);
 let sharedBrowser: Browser | undefined;
 let sharedPage: Page | undefined;
+let sharedScale: number = DSF;
 // One reusable page is a bounded worker. A second caller must not replace its DOM.
 let pending: Promise<void> = Promise.resolve();
 function serialized<T>(work: () => Promise<T>): Promise<T> {
@@ -38,9 +39,16 @@ export function cardCacheKey(
   return digest(
     Buffer.from(
       JSON.stringify({
+        // Hash the markup actually loaded in this process, even if a watch build replaces files.
+        html: htmlForCard(card),
         kind: card.kind,
         props: card.props,
-        viewport: { width: W, height: H, scale: DSF },
+        viewport: card.viewport ?? {
+          width: W,
+          height: H,
+          deviceScaleFactor: DSF,
+        },
+        placement: card.placement,
         theme: overlayTheme,
         css: themeCss,
         renderer: implementationDigest(import.meta.url),
@@ -61,7 +69,12 @@ export async function closeCompositor(): Promise<void> {
     }
   });
 }
-async function getSharedPage(): Promise<Page> {
+async function getSharedPage(scale: number = DSF): Promise<Page> {
+  if (sharedPage && sharedScale !== scale) {
+    await sharedPage.close();
+    sharedPage = undefined;
+  }
+  sharedScale = scale;
   if (!sharedBrowser?.isConnected()) {
     sharedBrowser = await chromium.launch();
     sharedPage = undefined;
@@ -69,19 +82,53 @@ async function getSharedPage(): Promise<Page> {
   if (!sharedPage || sharedPage.isClosed())
     sharedPage = await sharedBrowser.newPage({
       viewport: { width: W, height: H },
-      deviceScaleFactor: DSF,
+      deviceScaleFactor: scale,
     });
   return sharedPage;
 }
-function buildPageHtml(markup: string): string {
+function buildPageHtml(markup: string, card: CardSpec): string {
+  const width = card.viewport?.width ?? W,
+    height = card.viewport?.height ?? H;
+  const p = card.kind === 'roi-magnifier' ? undefined : card.placement;
+  const placement = p
+    ? `#root>[data-component]{width:${width}px!important;height:${height}px!important;background:transparent!important}#root>[data-component]>:first-child{position:absolute!important;left:${p.x}px!important;top:${p.y}px!important;right:auto!important;bottom:auto!important;transform:none!important;width:${p.width}px!important;height:${p.height}px!important;max-width:${p.width}px!important;max-height:${p.height}px!important;box-sizing:border-box!important;overflow:hidden!important;clip-path:inset(0)!important}#root>[data-component]>:first-child *{min-width:0;max-width:100%;box-sizing:border-box}#root>[data-component]>:first-child span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`
+    : '';
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${themeCss}
-html,body{margin:0;padding:0;width:${W}px;height:${H}px;overflow:hidden;background:transparent;}
-#root{width:${W}px;height:${H}px;position:relative;}</style></head><body><div id="root">${markup}</div></body></html>`;
+html,body{margin:0;padding:0;width:${width}px;height:${height}px;overflow:hidden;background:transparent;}
+#root{width:${width}px;height:${height}px;position:relative;}#root>[data-component]{width:${width}px!important;height:${height}px!important}${placement}</style></head><body><div id="root">${markup}</div></body></html>`;
 }
+function htmlForCard(card: CardSpec): string {
+  return buildPageHtml(
+    renderToStaticMarkup(
+      React.createElement(CardView, {
+        card:
+          card.kind === 'roi-magnifier' && card.placement
+            ? {
+                ...card,
+                props: {
+                  ...card.props,
+                  pipRect: {
+                    x: card.placement.x,
+                    y: card.placement.y,
+                    w: card.placement.width,
+                    h: card.placement.height,
+                  },
+                },
+              }
+            : card,
+      }),
+    ),
+    card,
+  );
+}
+
 function digest(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
-async function cacheHit(path: string): Promise<boolean> {
+async function cacheHit(path: string, card: CardSpec): Promise<boolean> {
+  const width = card.viewport?.width ?? W,
+    height = card.viewport?.height ?? H,
+    scale = card.viewport?.deviceScaleFactor ?? DSF;
   try {
     const [bytes, receipt] = await Promise.all([
       readFile(path),
@@ -91,8 +138,8 @@ async function cacheHit(path: string): Promise<boolean> {
     return (
       parsed.sha256 === digest(bytes) &&
       bytes.subarray(1, 4).toString() === 'PNG' &&
-      bytes.readUInt32BE(16) === W * DSF &&
-      bytes.readUInt32BE(20) === H * DSF
+      bytes.readUInt32BE(16) === width * scale &&
+      bytes.readUInt32BE(20) === height * scale
     );
   } catch {
     return false;
@@ -106,17 +153,16 @@ async function renderOneCard(
   const key = cardCacheKey(card, environment),
     cacheDir = join(outDir, '.cache'),
     cachePath = join(cacheDir, `${key}.png`);
-  if (!(await cacheHit(cachePath))) {
+  if (!(await cacheHit(cachePath, card))) {
     await mkdir(cacheDir, { recursive: true });
     await withFileLock(`${cachePath}.lock`, async () => {
-      if (await cacheHit(cachePath)) return;
-      const page = await getSharedPage();
-      await page.setContent(
-        buildPageHtml(
-          renderToStaticMarkup(React.createElement(CardView, { card })),
-        ),
-        { waitUntil: 'load' },
-      );
+      if (await cacheHit(cachePath, card)) return;
+      const page = await getSharedPage(card.viewport?.deviceScaleFactor ?? DSF);
+      await page.setViewportSize({
+        width: card.viewport?.width ?? W,
+        height: card.viewport?.height ?? H,
+      });
+      await page.setContent(htmlForCard(card), { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready.then(() => undefined));
       const bytes = await page.screenshot({
         omitBackground: true,
@@ -138,7 +184,12 @@ async function renderOneCard(
       }
     });
   }
-  return { id: card.id, path: cachePath, width: W, height: H };
+  return {
+    id: card.id,
+    path: cachePath,
+    width: card.viewport?.width ?? W,
+    height: card.viewport?.height ?? H,
+  };
 }
 export async function renderCards(input: {
   cards: CardSpec[];

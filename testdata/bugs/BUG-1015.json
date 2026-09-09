@@ -4,11 +4,15 @@
   "System.State": "Active",
   "System.Title": "Toast stack push causes CLS and sticky tip under submenu",
   "System.Description": "<p>Inventory toast injects without reserved height; sticky tip loses stacking to Actions submenu.</p>",
-  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken&amp;bug=BUG-1015</li><li>Wait for inventory toast</li><li>Open Actions → Export and observe tip under submenu</li></ol></div>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken&amp;bug=BUG-1015</li><li>Wait for inventory toast</li><li>Open Actions \u2192 Export and observe tip under submenu</li></ol></div>",
   "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr></table>",
   "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
   "Custom.Severity": "high",
-  "Custom.Tags": ["cls", "stacking", "hidden"],
+  "Custom.Tags": [
+    "cls",
+    "stacking",
+    "hidden"
+  ],
   "Custom.Selectors": {
     "toast": "stack-toast",
     "tip": "sticky-tip",
@@ -44,5 +48,10 @@
       "expected": "Reserved toast height; tip above menus",
       "actual": "Layout shift and tip under submenu"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "geometry",
+    "strategyAcceptanceTest": "STR-02",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

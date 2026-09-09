@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -145,3 +146,105 @@ function requireValue<T>(value: T | null | undefined): T {
     throw new Error('Required evidence value is missing');
   return value;
 }
+
+it('MIX-PIXEL: compositor pixels obey planner placement at 1x and 2x, including long text', async () => {
+  const outDir = await mkdtemp(join(tmpdir(), 'repro-placement-'));
+  try {
+    for (const scale of [1, 2]) {
+      const placement = { x: 80, y: 100, width: 350, height: 60 };
+      const cards: CardSpec[] = [
+        {
+          id: 'console',
+          kind: 'console-toast',
+          props: {
+            level: 'error',
+            message: 'WWWW '.repeat(100),
+            timestamp: '00:01',
+          },
+          placement,
+        },
+        {
+          id: 'vitals',
+          kind: 'vitals-hud',
+          props: { summary: 'CLS 0.12; INP 350 ms' },
+          placement,
+        },
+      ];
+      const rendered = await renderCards({
+        cards: cards.map((card) => ({
+          ...card,
+          viewport: { width: 800, height: 600, deviceScaleFactor: scale },
+        })),
+        outDir,
+      });
+      for (const entry of rendered) {
+        const bytes = execFileSync(
+          'ffmpeg',
+          [
+            '-v',
+            'error',
+            '-i',
+            entry.path,
+            '-f',
+            'rawvideo',
+            '-pix_fmt',
+            'rgba',
+            'pipe:1',
+          ],
+          { maxBuffer: 16 * 1024 * 1024 },
+        );
+        expect(bytes.length).toBe(800 * 600 * scale * scale * 4);
+        let painted = 0,
+          outside = 0;
+        for (let y = 0; y < 600 * scale; y++)
+          for (let x = 0; x < 800 * scale; x++) {
+            if ((bytes[(y * 800 * scale + x) * 4 + 3] ?? 0) < 16) continue;
+            painted++;
+            if (
+              x < placement.x * scale ||
+              x >= (placement.x + placement.width) * scale ||
+              y < placement.y * scale ||
+              y >= (placement.y + placement.height) * scale
+            )
+              outside++;
+          }
+        expect(painted).toBeGreaterThan(1000 * scale * scale);
+        expect(outside).toBe(0);
+      }
+    }
+  } finally {
+    await closeCompositor();
+    await rm(outDir, { recursive: true, force: true });
+  }
+}, 30000);
+
+it('TEXT-OUTCOME: long expected and actual text remain separately visible', async () => {
+  const outDir = await mkdtemp(join(tmpdir(), 'repro-outcome-text-'));
+  try {
+    const [result] = await renderCards({
+      outDir,
+      cards: [
+        {
+          id: 'long-outcome',
+          kind: 'outcome-pair',
+          props: {
+            expected: 'EXPECTED DETAIL ' + 'W'.repeat(500),
+            actual: 'ACTUAL DETAIL ' + 'i'.repeat(500),
+          },
+          placement: { x: 24, y: 24, width: 520, height: 190 },
+        },
+      ],
+    });
+    if (!result) throw new Error('Missing outcome card');
+    const text = execFileSync(
+      'tesseract',
+      [result.path, 'stdout', '--psm', '6'],
+      { encoding: 'utf8' },
+    );
+    expect(text).toContain('EXPECTED');
+    expect(text).toContain('ACTUAL');
+  } finally {
+    await closeCompositor();
+    await rm(outDir, { recursive: true, force: true });
+  }
+}, 30000);

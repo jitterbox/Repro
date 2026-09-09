@@ -159,44 +159,32 @@ function aggregateCursorPath(
   if (moves.length === 0) {
     return [];
   }
-  const first = requireValue(moves[0]);
-  const last = requireValue(moves[moves.length - 1]);
-  const points = moves.flatMap((event) => {
+  const samples = moves.flatMap((event) => {
     const point = pointFromPayload(event);
-    return point === null ? [] : [point];
+    return point ? [{ event, point }] : [];
   });
-  const target =
-    rectFromPayload(last) ??
-    pointRectFromPayload(last) ??
-    (points[0] === undefined
-      ? null
-      : {
-          x: points[0].x - 8,
-          y: points[0].y - 8,
-          width: 16,
-          height: 16,
-        });
-  const start = first.t_mono;
-  const end = Math.max(last.t_mono + 400, start + 400);
-  return [
-    baseAnnotation({
+  return samples.map((sample, index) => {
+    const previous = samples[Math.max(0, index - 1)] ?? sample;
+    const base = baseAnnotation({
       feature: 'cursor',
-      id: `cursor-path-${first.id}`,
-      label: 'Cursor path',
+      id: `cursor-path-${sample.event.id}`,
+      label: 'Measured pointer trail',
       priority: 10,
-      target,
-      timeRange: { start, end },
-      x: target?.x ?? overlayTheme.safeZones.inset,
-      y: target?.y ?? overlayTheme.safeZones.inset,
-      width: 120,
-      height: 28,
+      target: null,
+      timeRange: { start: sample.event.t_mono, end: sample.event.t_mono + 400 },
+      x: Math.min(previous.point.x, sample.point.x),
+      y: Math.min(previous.point.y, sample.point.y),
+      width: Math.max(1, Math.abs(previous.point.x - sample.point.x)),
+      height: Math.max(1, Math.abs(previous.point.y - sample.point.y)),
       component: 'cursor-path',
       renderer: 'ass',
-      severity: 'info',
-      kicker: 'PATH',
-      plateLabel: `${String(points.length)} samples`,
-    }),
-  ];
+    });
+    return {
+      ...base,
+      collisionPolicy: 'overlay' as const,
+      cursorSegment: { from: previous.point, to: sample.point },
+    };
+  });
 }
 
 function clickAnnotations(event: EventRecord): readonly AnnotationBox[] {
@@ -382,7 +370,8 @@ function outcomePairAnnotations(
       timeRange: { start, end: start + holdMs },
       x: 24,
       y: input.viewport.height - overlayTheme.safeZones.bottomBand - 80,
-      width: Math.min(420, input.viewport.width - 48),
+      width: Math.min(520, input.viewport.width - 48),
+      height: 190,
       component: 'outcome-pair',
       renderer: 'compositor',
       severity: 'critical',
@@ -606,7 +595,7 @@ function stepBadgeAnnotations(
   stepIndex: number,
   stepTotal: number,
 ): readonly AnnotationBox[] {
-  const label = `STEP ${String(stepIndex)} / ${String(stepTotal)}`;
+  const label = `STEP ${String(stepIndex)} / ${String(stepTotal)} ${eventLabel(event, 'Inspect')}`;
   const holdMs = overlayTheme.holdsMs.chapter.typical;
   return [
     annotation(event, 'steps', label, null, 40, undefined, {
@@ -859,7 +848,7 @@ function vitalsAnnotations(event: EventRecord): readonly AnnotationBox[] {
     annotation(
       event,
       'vitalsHud',
-      eventLabel(event, 'Vitals'),
+      `${String(stringValue(objectPayload(event), 'name') ?? event.kind.split(':').at(-1))}: ${String(numberValue(objectPayload(event), 'value') ?? 'not measured')}`,
       null,
       30,
       undefined,
@@ -1053,8 +1042,23 @@ function annotation(
       label.length * overlayTheme.holdsMs.callout.perChar,
     );
   const fontSize = overlayTheme.type.calloutLabel.size;
-  const width = Math.max(120, measureTextWidth({ fontSize, text: label }) + 32);
-  const height = options.measurement === undefined ? 44 : 62;
+  const width =
+    options.component === 'roi-magnifier'
+      ? 320
+      : options.component === 'console-toast'
+        ? 420
+        : options.component === 'vitals-hud'
+          ? 260
+          : Math.max(
+              120,
+              measureTextWidth({ fontSize, text: label.slice(0, 42) }) + 64,
+            );
+  const height =
+    options.component === 'roi-magnifier'
+      ? 200
+      : options.measurement === undefined
+        ? 44
+        : 62;
 
   return baseAnnotation({
     feature,

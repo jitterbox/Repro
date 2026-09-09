@@ -9,7 +9,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_ROOT = join(HERE, '../../../.repro/fixture-videos');
 
 describe('design-language coverage ledger', () => {
-  it('requires ≥2 encoded Overlay Kit instances and all compare layouts', async () => {
+  it('requires ≥2 planned Overlay Kit instances and compare output files (not pixel verification)', async () => {
     const report = await evaluateCoverage({ fixtureRoot: FIXTURE_ROOT });
     const missingOverlay = report.overlay.filter((row) => !row.pass);
     const missingCompare = report.compare.filter((row) => !row.pass);

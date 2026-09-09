@@ -413,6 +413,8 @@ async function renderCompositorLayers(input: {
   }
 
   const environment = environmentFromEvents(input.events);
+  if (wantsSlate && environment === null)
+    throw new Error('Slate requires captured environment provenance');
   const cards: CardSpec[] = [];
   let slateCardId: string | undefined;
 
@@ -436,6 +438,7 @@ async function renderCompositorLayers(input: {
         cards.push({
           id: 'slate',
           kind: 'slate',
+          viewport: input.plan.viewport,
           props: {
             schemaVersion: slate.schemaVersion,
             mode,
@@ -469,15 +472,19 @@ async function renderCompositorLayers(input: {
           },
         });
       }
-    } catch {
-      // Fail closed for filing is handled by gates; local annotate continues.
+    } catch (error) {
+      throw new Error('Required slate could not be rendered', { cause: error });
     }
   }
 
   for (const annotation of compositorAnnotations) {
     const card = cardFromAnnotation(annotation);
     if (card !== undefined) {
-      cards.push(card);
+      cards.push({
+        ...card,
+        placement: annotation.bounds,
+        viewport: input.plan.viewport,
+      });
     }
   }
 
@@ -511,8 +518,6 @@ async function renderCompositorLayers(input: {
       overlays,
       ...(slatePath === undefined ? {} : { slatePath }),
     };
-  } catch {
-    return { overlays: [] };
   } finally {
     await closeCompositor();
   }
@@ -547,7 +552,10 @@ function cardFromAnnotation(
     return {
       id: annotation.id,
       kind: 'vitals-hud',
-      props: { slot: 'tr' },
+      props: {
+        slot: 'tr',
+        summary: annotation.plate?.label ?? annotation.label,
+      },
     };
   }
   if (component === 'roi-magnifier' && annotation.anchor?.bbox !== undefined) {

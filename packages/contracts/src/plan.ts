@@ -68,6 +68,7 @@ export const annotationBoxSchema = AnnotationSchema.extend({
   plate: annotationPlateSchema.optional(),
   bounds: rectSchema,
   leaderLine: leaderLineSchema.optional(),
+  cursorSegment: leaderLineSchema.optional(),
 }).readonly();
 export const chapterSchema = z
   .strictObject({

@@ -22,7 +22,7 @@
     {
       "target": "btn-save",
       "shape": "rect",
-      "label": "Δx = -12px vs label column"
+      "label": "\u0394x = -12px vs label column"
     },
     {
       "target": "save-label",
@@ -61,7 +61,7 @@
         {
           "target": "btn-save",
           "shape": "rect",
-          "label": "Δx = -12px vs label column",
+          "label": "\u0394x = -12px vs label column",
           "x": 980,
           "y": 420,
           "width": 96,
@@ -69,5 +69,10 @@
         }
       ]
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "geometry",
+    "strategyAcceptanceTest": "STR-02",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

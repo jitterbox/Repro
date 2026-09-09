@@ -1,0 +1,37 @@
+{
+  "id": "BUG-1019",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Simultaneous diagnostic cards overlap the action proof",
+  "System.Description": "<p>Evidence lab fixture. Presentation stress cases are synthetic diagnostics and must not be described as browser measurements.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<ol><li>Run pnpm test:review-matrix after pnpm build</li><li>Run pnpm review:matrix and open MIX-01 and MIX-02</li><li>Inspect simultaneous diagnostic plates and their target outlines</li></ol>",
+  "Custom.Tags": [
+    "a11y",
+    "stacking"
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "features": {
+      "steps": true,
+      "a11yOverlay": true,
+      "vitalsHud": true,
+      "hitTargets": true
+    }
+  },
+  "Custom.Evaluation": {
+    "testIds": [
+      "MIX-01",
+      "MIX-02",
+      "MIX-03",
+      "MIX-04"
+    ],
+    "evidenceLevel": "synthetic diagnostic render stress"
+  }
+}

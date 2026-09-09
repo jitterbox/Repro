@@ -112,6 +112,17 @@ function mapAnnotations(
   captureDurationMs: number,
 ): readonly AnnotationBox[] {
   return annotations.map((annotation) => {
+    if (annotation.component === 'outcome-pair') {
+      const bed = timeline.beats.find((beat) => beat.id === 'outcome-bed');
+      if (bed)
+        return {
+          ...annotation,
+          outTimeRange: {
+            start: bed.outStartMs,
+            end: bed.outStartMs + bed.outDurationMs,
+          },
+        };
+    }
     if (annotation.component === 'slate') {
       const hold = Math.max(
         1,

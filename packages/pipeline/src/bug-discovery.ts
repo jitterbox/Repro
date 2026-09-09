@@ -76,7 +76,7 @@ export function discoveryGuide() {
       guidance: ['steps', 'specCard'].includes(id)
         ? 'Use descriptive identity and meaningful steps; record steps even when badges are disabled.'
         : id === 'voiceover'
-          ? 'Optional presentation only; not a proof requirement and incompatible with preserved real timing.'
+          ? 'Caption planning is implemented; the CLI does not synthesize or mux audible narration. Treat speech as unavailable, never count silence-mock as narration proof. Incompatible with preserved real timing.'
           : ['slowmo', 'pauses', 'zoom'].includes(id)
             ? 'Optional presentation treatment after inspection. Preserve original timing/context; do not change execution to make evidence easier to see.'
             : 'Enable only to answer a selected question. Validate config conflicts; inspect actual output rather than assuming a flag guarantees a burned-in overlay.',

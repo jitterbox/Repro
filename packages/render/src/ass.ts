@@ -1,3 +1,4 @@
+import { fitOverlayText } from './text-fit.js';
 import {
   assStyleTable,
   burnInFont,
@@ -20,7 +21,22 @@ export function generateAss(input: GenerateAssInput): string {
     ...input.plan.annotations.flatMap((annotation) =>
       annotationEvents(annotation, theme),
     ),
-    ...input.plan.chapters.map(chapterEvent),
+    ...input.plan.chapters
+      .filter(
+        (chapter) =>
+          !input.plan.annotations.some(
+            (a) =>
+              a.component === 'step-badge' &&
+              a.id === `steps-${chapter.id.replace(/^chapter-/, '')}`,
+          ),
+      )
+      .map((chapter) =>
+        chapterEvent(
+          chapter,
+          input.plan.viewport.width,
+          input.plan.viewport.height,
+        ),
+      ),
   ];
 
   return [
@@ -69,14 +85,23 @@ function annotationEvents(
     case 'click-ripple':
       return clickRippleEvents(annotation);
     case 'cursor-path':
-      return shapeAndLabelEvents(annotation, theme);
+      return annotation.cursorSegment
+        ? [
+            dialogue(
+              5,
+              outputRange(annotation),
+              'Leader',
+              `{\\pos(0,0)${fadeTags(theme)}\\p1}m ${annotation.cursorSegment.from.x} ${annotation.cursorSegment.from.y} l ${annotation.cursorSegment.to.x} ${annotation.cursorSegment.to.y}`,
+            ),
+          ]
+        : [];
     case 'keystroke-pill':
-      return keystrokeEvents(annotation, theme);
+      return badgeEvents(annotation, theme);
     case 'layout-shift-pair':
     case 'hit-target-guide':
     case 'hidden-ghost':
     case 'stacking-labels':
-      return shapeAndLabelEvents(annotation, theme);
+      return plateEvents(annotation, theme);
     case 'progress-rail':
       return [];
     case 'chapter':
@@ -105,7 +130,12 @@ function plateEvents(
   const measurement = annotation.plate?.measurement;
   const maxChars =
     annotation.plate?.maxChars ?? theme.type.calloutLabel.maxChars;
-  const clipped = truncate(label, maxChars);
+  const clipped = fitOverlayText(
+    label,
+    Math.max(0, w - 24),
+    theme.type.calloutLabel.size,
+    maxChars,
+  );
 
   const events = [
     dialogue(
@@ -197,15 +227,25 @@ function badgeEvents(
   const fade = fadeTags(theme);
   const x = Math.round(annotation.bounds.x);
   const y = Math.round(annotation.bounds.y);
-  const label = annotation.plate?.label ?? annotation.label;
+  const label = fitOverlayText(
+    annotation.plate?.label ?? annotation.label,
+    annotation.bounds.width - 16,
+    annotation.fontSize ?? theme.type.badge.size,
+  );
   const component = annotation.component ?? inferComponent(annotation);
   const style = component === 'speed-chip' ? 'Meta' : 'Badge';
   return [
     dialogue(
+      3,
+      outputRange(annotation),
+      'Panel',
+      `{\\pos(${x},${y})${fade}\\p1}${rectPath({ x: 0, y: 0, width: annotation.bounds.width, height: annotation.bounds.height })}`,
+    ),
+    dialogue(
       4,
       outputRange(annotation),
       style,
-      `{\\pos(${String(x)},${String(y)})${annotation.fontSize ? `\\fs${annotation.fontSize}` : ''}${fade}}${escapeAss(label)}`,
+      `{\\pos(${String(x + 8)},${String(y + 4)})${annotation.fontSize ? `\\fs${annotation.fontSize}` : ''}${fade}}${escapeAss(label)}`,
     ),
   ];
 }
@@ -233,23 +273,6 @@ function clickRippleEvents(annotation: AnnotationBox): readonly string[] {
       outputRange(annotation),
       style,
       `{\\pos(${String(cx)},${String(cy)})${fade}\\p1}${path}`,
-    ),
-  ];
-}
-
-function keystrokeEvents(
-  annotation: AnnotationBox,
-  theme: ReturnType<typeof getOverlayTheme>,
-): readonly string[] {
-  const fade = fadeTags(theme);
-  const x = Math.round(annotation.bounds.x);
-  const y = Math.round(annotation.bounds.y);
-  return [
-    dialogue(
-      4,
-      outputRange(annotation),
-      'Badge',
-      `{\\pos(${String(x)},${String(y)})${fade}}${escapeAss(annotation.label)}`,
     ),
   ];
 }
@@ -284,7 +307,7 @@ function shapeAndLabelEvents(
       2,
       range,
       'Plate',
-      `{\\pos(${String(x)},${String(y)})${fade}}${escapeAss(annotation.label)}`,
+      `{\\pos(${String(x)},${String(y)})${fade}}${escapeAss(fitOverlayText(annotation.label, annotation.bounds.width - 24, theme.type.calloutLabel.size))}`,
     ),
   );
 
@@ -333,10 +356,10 @@ function leaderLineEvents(annotation: AnnotationBox): readonly string[] {
   ];
 }
 
-function chapterEvent(chapter: Chapter): string {
+function chapterEvent(chapter: Chapter, width: number, height: number): string {
   const theme = getOverlayTheme();
   const fade = fadeTags(theme);
-  const text = `{\\an2\\pos(640,680)${fade}}${escapeAss(chapter.title)}`;
+  const text = `{\\an2\\pos(${Math.round(width / 2)},${height - 40})${fade}}${escapeAss(fitOverlayText(chapter.title, width - 48, 22))}`;
   return dialogue(
     3,
     chapter.outTimeRange ?? chapter.timeRange,
@@ -588,13 +611,6 @@ function ellipsePath(rx: number, ry: number): string {
     `${String(rX)} ${String(-rY)} ${String(rX)} 0 b ${String(rX)} ` +
     `${String(rY)} ${String(-rX)} ${String(rY)} ${String(-rX)} 0`
   );
-}
-
-function truncate(text: string, maxChars: number): string {
-  if (text.length <= maxChars) {
-    return text;
-  }
-  return `${text.slice(0, Math.max(0, maxChars - 1))}…`;
 }
 
 function assTime(ms: number): string {

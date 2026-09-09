@@ -20,7 +20,7 @@
     {
       "target": "sku-gamma",
       "shape": "rect",
-      "label": "Δy = +8px after drop"
+      "label": "\u0394y = +8px after drop"
     }
   ],
   "Custom.ReproConfig": {
@@ -42,5 +42,10 @@
       "specTitle": "BUG-1007",
       "bugId": "BUG-1007"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "geometry",
+    "strategyAcceptanceTest": "STR-02",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

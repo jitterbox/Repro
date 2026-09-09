@@ -8,7 +8,10 @@
   "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr></table>",
   "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
   "Custom.Severity": "high",
-  "Custom.Tags": ["freeze", "timing"],
+  "Custom.Tags": [
+    "freeze",
+    "timing"
+  ],
   "Custom.Selectors": {
     "sort": "btn-sort-heavy"
   },
@@ -41,5 +44,10 @@
       "expected": "Sort yields to UI",
       "actual": "Main thread blocked ~900ms"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "performance",
+    "strategyAcceptanceTest": "STR-06",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

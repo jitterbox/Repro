@@ -60,12 +60,12 @@ describe('bug discovery', () => {
         expect(FeatureFlagsSchema.keyof().options).toContain(flag);
     }
   });
-  it('covers the 16 real ticket reports without importing their fabricated geometry or instructions', () => {
+  it('covers the 19 fixture ticket reports without importing their fabricated geometry or instructions', () => {
     const directory = resolve('testdata/bugs');
     const files = readdirSync(directory).filter((f) =>
       /^BUG-\d+\.json$/.test(f),
     );
-    expect(files).toHaveLength(16);
+    expect(files).toHaveLength(19);
     for (const file of files) {
       const ticket = JSON.parse(
         readFileSync(resolve(directory, file), 'utf8'),

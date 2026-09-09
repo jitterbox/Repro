@@ -50,5 +50,10 @@
       "specTitle": "BUG-1013",
       "bugId": "BUG-1013"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "keyboard",
+    "strategyAcceptanceTest": "STR-08",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

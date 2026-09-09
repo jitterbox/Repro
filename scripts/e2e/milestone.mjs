@@ -51,6 +51,9 @@ const jobs = [
   ],
   ['transient', 'transient', { REPRO_TRANSIENT_OUT: join(root, 'transient') }],
   ['discovery', 'discovery', { REPRO_DISCOVERY_OUT: join(root, 'discovery') }],
+  ['strategy-matrix', 'strategy-matrix', {}],
+  ['overlay-matrix', 'overlay-matrix', {}],
+  ['voiceover-matrix', 'voiceover-matrix', {}],
   ['recipes', 'recipes', { REPRO_RECIPES_OUT: join(root, 'recipes') }],
   [
     'review',

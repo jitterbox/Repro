@@ -1,0 +1,35 @@
+{
+  "id": "BUG-1018",
+  "System.WorkItemType": "Bug",
+  "System.State": "Active",
+  "System.Title": "Long international result text escapes its fixed-width result panel",
+  "System.Description": "<p>Evidence lab fixture. Presentation stress cases are synthetic diagnostics and must not be described as browser measurements.</p>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<ol><li>Open ShopLite ?lab=1&amp;case=text&amp;fixture=broken&amp;text=long</li><li>Click Run check</li><li>Inspect the result and evidence output</li></ol>",
+  "Custom.Tags": [
+    "text",
+    "geometry"
+  ],
+  "Custom.ReproConfig": {
+    "mode": "repro",
+    "profile": "faithful",
+    "surfaceCapture": "page",
+    "viewport": {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    },
+    "features": {
+      "steps": true,
+      "a11yOverlay": true
+    }
+  },
+  "Custom.Evaluation": {
+    "testIds": [
+      "TXT-01",
+      "MIX-02",
+      "MIX-04",
+      "MIX-08"
+    ],
+    "evidenceLevel": "browser outcome plus synthetic diagnostic render stress"
+  }
+}

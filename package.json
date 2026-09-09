@@ -34,7 +34,12 @@
     "test:annotation-benchmark": "node scripts/e2e/annotation-benchmark.mjs",
     "test:delivery": "node scripts/e2e/delivery.mjs",
     "release:pack": "node scripts/release.mjs",
-    "test:discovery": "node scripts/e2e/discovery.mjs"
+    "test:discovery": "node scripts/e2e/discovery.mjs",
+    "test:strategy-matrix": "node scripts/e2e/strategy-matrix.mjs",
+    "review:matrix": "node scripts/e2e/review-matrix-server.mjs",
+    "test:overlay-matrix": "node scripts/e2e/overlay-matrix.mjs",
+    "test:voiceover-matrix": "node scripts/e2e/voiceover-matrix.mjs",
+    "test:review-matrix": "pnpm test:strategy-matrix && pnpm test:overlay-matrix && pnpm test:voiceover-matrix && node scripts/e2e/verify-review-matrix.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

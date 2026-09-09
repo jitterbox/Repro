@@ -1,3 +1,4 @@
+import { installEvidenceLab } from './evidence-lab.js';
 import {
   applyFixtureMode,
   isDefectActive,
@@ -313,18 +314,22 @@ function wireRowSelect(): void {
   }
 }
 
-wireMenus();
-wireSaveErrors();
-wireRecalculateFreeze();
-wireHeavySortFreeze();
-wireContextMenu();
-wireDragReorder();
-wireModalTrap();
-wireInvoicePopup();
-wireAdvancedPanel();
-wireRowSelect();
-wireStickyTipStack();
-injectPromoBanner();
-injectToastStackCls();
+if (new URLSearchParams(location.search).has('lab')) {
+  installEvidenceLab();
+} else {
+  wireMenus();
+  wireSaveErrors();
+  wireRecalculateFreeze();
+  wireHeavySortFreeze();
+  wireContextMenu();
+  wireDragReorder();
+  wireModalTrap();
+  wireInvoicePopup();
+  wireAdvancedPanel();
+  wireRowSelect();
+  wireStickyTipStack();
+  injectPromoBanner();
+  injectToastStackCls();
 
-document.documentElement.dataset.reproReady = '1';
+  document.documentElement.dataset.reproReady = '1';
+}

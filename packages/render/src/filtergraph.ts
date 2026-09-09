@@ -110,6 +110,39 @@ export function buildFilterGraph(input: BuildFilterGraphInput): FilterGraph {
     current = next;
   }
 
+  // Magnify the redacted, retimed application pixels before drawing diagnostic chrome.
+  for (const annotation of input.plan.annotations.filter(
+    (a) => a.component === 'roi-magnifier',
+  )) {
+    const src = annotation.anchor?.bbox;
+    if (
+      !src ||
+      src.w <= 0 ||
+      src.h <= 0 ||
+      src.x < 0 ||
+      src.y < 0 ||
+      src.x + src.w > input.plan.viewport.width ||
+      src.y + src.h > input.plan.viewport.height
+    )
+      throw new Error(`Invalid measured magnifier source: ${annotation.id}`);
+    const p = annotation.bounds,
+      range = annotation.outTimeRange ?? annotation.timeRange;
+    const base = `[roiBase${labelIndex}]`,
+      crop = `[roiCrop${labelIndex}]`,
+      pip = `[roiPip${labelIndex}]`,
+      next = label(labelIndex++);
+    const w = Math.floor(p.width),
+      h = Math.floor(p.height);
+    chains.push(`${current}split=2${base}${crop}`);
+    chains.push(
+      `${crop}crop=${Math.floor(src.w)}:${Math.floor(src.h)}:${Math.floor(src.x)}:${Math.floor(src.y)},scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black${pip}`,
+    );
+    chains.push(
+      `${base}${pip}overlay=x=${Math.round(p.x)}:y=${Math.round(p.y)}:enable='gte(t,${range.start / 1000})*lt(t,${range.end / 1000})'${next}`,
+    );
+    current = next;
+  }
+
   const assLabel = label(labelIndex);
   labelIndex += 1;
   chains.push(`${current}ass=${quote(input.assPath)}${assLabel}`);

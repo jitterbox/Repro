@@ -404,6 +404,51 @@
               "to"
             ],
             "additionalProperties": false
+          },
+          "cursorSegment": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "from": {
+                "readOnly": true,
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "to": {
+                "readOnly": true,
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

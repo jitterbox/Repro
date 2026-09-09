@@ -77,6 +77,12 @@ jobs:
         run: node scripts/e2e/public-workflow.mjs
       - name: Source-referenced discovery to actual before/after proof
         run: node scripts/e2e/discovery.mjs
+      - name: Strategy and balanced visual-overlay review matrix
+        run: |
+          node scripts/e2e/strategy-matrix.mjs
+          node scripts/e2e/overlay-matrix.mjs
+          node scripts/e2e/voiceover-matrix.mjs
+          node scripts/e2e/verify-review-matrix.mjs
       - name: Record annotation-only timing with captured-pixel verification
         run: node scripts/e2e/annotation-benchmark.mjs
       - name: Verified export reuse and missing OCR rejection
@@ -126,6 +132,7 @@ jobs:
           include-hidden-files: true
           path: |
             .repro/ci
+            .repro/review-matrix
             .repro/discovery
             .repro/delivery
             .repro/export-cache

@@ -106,7 +106,7 @@
     },
     {
       "id": "BUG-1011",
-      "title": "Row overflow menu hit target is 8×8",
+      "title": "Row overflow menu hit target is 8\u00d78",
       "severity": "medium",
       "tags": [
         "a11y",
@@ -164,6 +164,35 @@
         "timing"
       ],
       "path": "testdata/bugs/BUG-1016.json"
+    },
+    {
+      "id": "BUG-1017",
+      "title": "Save accepts an invalid network response",
+      "severity": "medium",
+      "tags": [
+        "network"
+      ],
+      "path": "testdata/bugs/BUG-1017.json"
+    },
+    {
+      "id": "BUG-1018",
+      "title": "Long international result text escapes its fixed-width result panel",
+      "severity": "medium",
+      "tags": [
+        "text",
+        "geometry"
+      ],
+      "path": "testdata/bugs/BUG-1018.json"
+    },
+    {
+      "id": "BUG-1019",
+      "title": "Simultaneous diagnostic cards overlap the action proof",
+      "severity": "medium",
+      "tags": [
+        "a11y",
+        "stacking"
+      ],
+      "path": "testdata/bugs/BUG-1019.json"
     }
   ]
 }

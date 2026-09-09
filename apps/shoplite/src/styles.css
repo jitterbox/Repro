@@ -18,7 +18,7 @@
   --hit-size: 28px;
   --promo-reserve: 48px;
   --currency-glyph: '$';
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 html[data-repro-fixture='broken']:not([data-repro-defect]) {
@@ -183,8 +183,7 @@ body {
   border-radius: 999px;
   background: #e7f0ff;
   color: var(--accent);
-  animation: badge-fade var(--badge-duration) ease-in-out
-    var(--badge-iteration);
+  animation: badge-fade var(--badge-duration) ease-in-out var(--badge-iteration);
 }
 
 @keyframes badge-fade {
@@ -234,8 +233,12 @@ html[data-repro-defect='BUG-1005'] .advanced-panel {
   pointer-events: none;
 }
 
-html[data-repro-fixture='broken']:not([data-repro-defect]) .advanced-wrap:hover .advanced-panel,
-html[data-repro-fixture='broken']:not([data-repro-defect]) .advanced-wrap:focus-within .advanced-panel,
+html[data-repro-fixture='broken']:not([data-repro-defect])
+  .advanced-wrap:hover
+  .advanced-panel,
+html[data-repro-fixture='broken']:not([data-repro-defect])
+  .advanced-wrap:focus-within
+  .advanced-panel,
 html[data-repro-defect='BUG-1005'] .advanced-wrap:hover .advanced-panel,
 html[data-repro-defect='BUG-1005'] .advanced-wrap:focus-within .advanced-panel {
   opacity: 1;
@@ -429,4 +432,68 @@ html[data-repro-fixture='broken']:not([data-repro-defect]) .menu.level-2 {
 
 button {
   cursor: pointer;
+}
+
+/* Evidence lab isolates failures behind an explicit user trigger. */
+.evidence-lab {
+  font: 16px system-ui;
+  padding: 28px;
+  color: #18212b;
+  background: #f5f6f8;
+  min-height: 100vh;
+}
+.evidence-lab h1 {
+  font-size: 26px;
+  margin: 0 0 12px;
+}
+.lab-stage {
+  margin: 65px auto;
+  padding: 32px;
+  width: 650px;
+  background: white;
+  border: 1px solid #788392;
+}
+.lab-action {
+  display: inline-block;
+  position: relative;
+}
+.lab-stage button {
+  padding: 12px 18px;
+  margin: 0 12px 18px 0;
+}
+[data-testid='lab-interceptor'].active {
+  position: absolute;
+  inset: 0 12px 18px 0;
+  opacity: 0;
+  z-index: 3;
+}
+[data-testid='lab-reference'] {
+  border-left: 2px solid #596778;
+  padding: 8px;
+}
+[data-testid='lab-result'] {
+  box-sizing: border-box;
+  width: 480px;
+  min-height: 70px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #dcebea;
+  overflow-wrap: anywhere;
+}
+.lab-stage label {
+  display: block;
+  margin-top: 18px;
+}
+.lab-stage input {
+  margin-left: 12px;
+}
+html[data-lab-theme='dark'] .evidence-lab {
+  color: #eef2f6;
+  background: #111821;
+}
+html[data-lab-theme='dark'] .lab-stage {
+  background: #242e39;
+}
+html[data-lab-theme='dark'] [data-testid='lab-result'] {
+  background: #304a48;
 }

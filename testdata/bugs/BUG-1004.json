@@ -58,5 +58,10 @@
       "specTitle": "BUG-1004",
       "bugId": "BUG-1004"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "interaction",
+    "strategyAcceptanceTest": "STR-01",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

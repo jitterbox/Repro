@@ -17,10 +17,7 @@ const slotStyle = (
     color: 'var(--repro-label-fg)',
     fontVariantNumeric: 'tabular-nums',
   };
-  const corners: Record<
-    NonNullable<VitalsHudProps['slot']>,
-    CSSProperties
-  > = {
+  const corners: Record<NonNullable<VitalsHudProps['slot']>, CSSProperties> = {
     tl: { top: inset, left: inset },
     tr: { top: inset, right: inset },
     bl: { bottom: inset, left: inset },
@@ -55,6 +52,9 @@ export function VitalsHud(props: VitalsHudProps) {
           VITALS
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
+          {items.length === 0 && props.summary ? (
+            <span>{props.summary}</span>
+          ) : null}
           {items.map((item) => (
             <span key={item}>{item}</span>
           ))}

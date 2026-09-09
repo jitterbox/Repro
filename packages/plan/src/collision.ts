@@ -92,28 +92,15 @@ function placeOne(
   if (
     annotation.component === 'slate' ||
     annotation.component === 'progress-rail' ||
-    annotation.component === 'step-badge'
+    annotation.collisionPolicy === 'overlay'
   ) {
-    // Persistent chrome slots — never displace into arbitrary corners.
-    if (annotation.component === 'step-badge') {
-      const inset = overlayTheme.safeZones.inset;
-      return {
-        ...annotation,
-        bounds: {
-          ...annotation.bounds,
-          x: inset,
-          y: inset,
-        },
-      };
-    }
-    return annotation;
-  }
-
-  if (annotation.collisionPolicy === 'overlay') {
     return withPlacement(annotation, annotation.bounds, undefined, false);
   }
 
-  const candidates = placementCandidates(annotation, viewport, padding);
+  const candidates = [
+    ...placementCandidates(annotation, viewport, padding),
+    ...gridCandidates(annotation, viewport, padding),
+  ];
   const open = candidates.find((rect) =>
     isAcceptable(rect, annotation, occupied, padding, viewport, true),
   );
@@ -142,8 +129,9 @@ function placeOne(
     return null;
   }
 
-  const clamped = clampRect(annotation.bounds, viewport);
-  return withPlacement(annotation, clamped, undefined, false);
+  throw new Error(
+    `No collision-free placement for ${annotation.id}; reduce simultaneous callouts or use a separate diagnostic beat`,
+  );
 }
 
 function isAcceptable(
@@ -254,7 +242,10 @@ function placementCandidates(
 ): readonly Rect[] {
   const target = targetRect(annotation);
   const inset = overlayTheme.safeZones.inset;
-  const bottom = overlayTheme.safeZones.bottomBand;
+  const bottom = Math.min(
+    overlayTheme.safeZones.bottomBand,
+    viewport.height * 0.15,
+  );
 
   if (isBottomBand(annotation)) {
     return [
@@ -296,6 +287,26 @@ function placementCandidates(
   ]
     .map((rect) => clampRect(rect, viewport))
     .filter((rect) => rect.y + rect.height <= viewport.height - bottom);
+}
+
+function gridCandidates(
+  annotation: AnnotationBox,
+  viewport: Viewport,
+  padding: number,
+): Rect[] {
+  const inset = overlayTheme.safeZones.inset;
+  const { width, height } = annotation.bounds;
+  const candidates: Rect[] = [];
+  for (
+    let y = inset;
+    y + height <= viewport.height - inset;
+    y += height + padding * 2
+  ) {
+    for (const x of [inset, viewport.width - width - inset]) {
+      if (x >= inset) candidates.push({ x, y, width, height });
+    }
+  }
+  return candidates;
 }
 
 function hasCollision(

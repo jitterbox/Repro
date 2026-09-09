@@ -4,7 +4,7 @@
   "System.State": "Active",
   "System.Title": "Advanced pricing panel hover-only with wrong currency",
   "System.Description": "<p>Advanced pricing panel hover-only with wrong currency</p><p>References <code>testdata/specs/AC-catalog-layout.md#acceptance-criteria</code> and <code>testdata/specs/mockup.tokens.json</code>.</p>",
-  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Note Advanced pricing region appears empty</li><li>Hover the advanced wrap to reveal panel</li><li>Observe currency glyph is € instead of $</li></ol></div>",
+  "Microsoft.VSTS.TCM.ReproSteps": "<div><ol><li>Open ShopLite ?fixture=broken</li><li>Note Advanced pricing region appears empty</li><li>Hover the advanced wrap to reveal panel</li><li>Observe currency glyph is \u20ac instead of $</li></ol></div>",
   "Microsoft.VSTS.TCM.SystemInfo": "<table><tr><th>App</th><td>ShopLite fixture</td></tr><tr><th>Fixture</th><td>broken</td></tr></table>",
   "Custom.AcceptanceCriteriaRef": "testdata/specs/AC-catalog-layout.md#acceptance-criteria",
   "Custom.Severity": "medium",
@@ -48,5 +48,10 @@
       "specTitle": "BUG-1005",
       "bugId": "BUG-1005"
     }
+  },
+  "Custom.Evaluation": {
+    "strategy": "appearance",
+    "strategyAcceptanceTest": "STR-03",
+    "note": "Shared strategy acceptance complements the original bug-specific fixture; it does not prove this individual bug is fixed."
   }
 }

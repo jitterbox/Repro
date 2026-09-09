@@ -467,7 +467,11 @@ export class EvidenceRecorder {
     if (!this.spec.checkpoints.some((cp) => cp.id === checkpoint))
       throw new Error(`Unknown checkpoint ${checkpoint}`);
     const pageId = await this.session.ready(page);
-    const results = await new AxeBuilder({ page }).analyze();
+    // The default upstream aggregator opens a scratch page in the capture context.
+    // Use its public in-page mode so diagnostics cannot become false popup evidence.
+    const results = await new AxeBuilder({ page })
+      .setLegacyMode(true)
+      .analyze();
     this.observations.push({
       id: newObservationId(),
       checkpoint,
@@ -476,6 +480,11 @@ export class EvidenceRecorder {
       timeMs: this.session.clock.nowMono(),
       status: 'passed',
       data: {
+        engineMode: 'axe-in-page',
+        incomplete: results.incomplete.map((v) => ({
+          id: v.id,
+          count: v.nodes.length,
+        })),
         violations: results.violations.map((v) => ({
           id: v.id,
           impact: v.impact ?? null,

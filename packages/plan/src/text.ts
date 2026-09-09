@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import opentype from 'opentype.js';
 
 export interface MeasureTextInput {
@@ -37,7 +38,10 @@ function getFont(fontPath: string | undefined): opentype.Font | null {
   }
 
   try {
-    const font = opentype.loadSync(fontPath);
+    const bytes = readFileSync(fontPath);
+    const font = opentype.parse(
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+    );
     fontCache.set(fontPath, font);
     return font;
   } catch {

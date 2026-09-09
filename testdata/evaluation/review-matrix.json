@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "features": {
+    "a11yOverlay": [
+      "MIX-01",
+      "MIX-02"
+    ],
+    "vitalsHud": [
+      "MIX-01",
+      "MIX-02"
+    ],
+    "hitTargets": [
+      "MIX-01",
+      "MIX-02"
+    ],
+    "consoleOverlay": [
+      "MIX-03",
+      "MIX-04"
+    ],
+    "freezeDetect": [
+      "MIX-03",
+      "MIX-04"
+    ],
+    "pauses": [
+      "MIX-03",
+      "MIX-04"
+    ],
+    "hiddenElements": [
+      "MIX-05",
+      "MIX-06"
+    ],
+    "stackingContexts": [
+      "MIX-05",
+      "MIX-06"
+    ],
+    "layoutShiftViz": [
+      "MIX-05",
+      "MIX-06"
+    ],
+    "zoom": [
+      "MIX-05",
+      "MIX-06"
+    ],
+    "cursor": [
+      "MIX-07",
+      "MIX-08"
+    ],
+    "clickViz": [
+      "MIX-07",
+      "MIX-08"
+    ],
+    "keystrokes": [
+      "MIX-07",
+      "MIX-08"
+    ],
+    "slowmo": [
+      "MIX-07",
+      "MIX-08"
+    ],
+    "specCard": [
+      "MIX-07",
+      "MIX-08"
+    ],
+    "steps": [
+      "MIX-01",
+      "MIX-02",
+      "MIX-03",
+      "MIX-04",
+      "MIX-07",
+      "MIX-08"
+    ],
+    "redaction": [
+      "MIX-01",
+      "MIX-02",
+      "MIX-03",
+      "MIX-04",
+      "MIX-05",
+      "MIX-06",
+      "MIX-07",
+      "MIX-08"
+    ],
+    "voiceover": [
+      "VO-01"
+    ]
+  },
+  "minimumRenderCases": 2,
+  "exceptions": {
+    "voiceover": "One caption-path test plus an explicit audible-speech unsupported result; silence is not narration proof."
+  },
+  "strategies": {
+    "interaction": "STR-01",
+    "geometry": "STR-02",
+    "appearance": "STR-03",
+    "transient": "STR-04",
+    "console": "STR-05",
+    "performance": "STR-06",
+    "accessibility": "STR-07",
+    "keyboard": "STR-08",
+    "multipage": "STR-09",
+    "privacy": "STR-10",
+    "network": "STR-11",
+    "native": "STR-12"
+  },
+  "knobs": {
+    "profiles": [
+      "STR-02",
+      "STR-04"
+    ],
+    "light-dark": [
+      "MIX-01",
+      "MIX-02"
+    ],
+    "short-long-text": [
+      "MIX-01",
+      "MIX-02"
+    ],
+    "device-scale": [
+      "PIX-01"
+    ],
+    "original-presentation-timing": [
+      "TIME-01"
+    ],
+    "all-comparison-layouts": [
+      "LEGACY-01"
+    ],
+    "context-selection": [
+      "SEL-01"
+    ],
+    "privacy-negative-controls": [
+      "PRIV-01"
+    ]
+  }
+}

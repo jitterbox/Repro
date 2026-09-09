@@ -57,7 +57,7 @@ describe('collision placement', () => {
     const placed = placeAnnotations({
       annotations,
       padding: 0,
-      viewport: { ...viewport, height: 40, width: 120 },
+      viewport: { ...viewport, height: 80, width: 120 },
     });
 
     expect(placed.map((item) => item.id)).toContain('high');
@@ -116,3 +116,44 @@ it('ends callout leaders outside measured targets instead of crossing their text
     expect(intersects(point, target)).toBe(false);
   }
 });
+
+it('fails explicitly when a required cue cannot fit rather than silently overlapping', () => {
+  expect(() =>
+    placeAnnotations({
+      viewport,
+      regionsOfInterest: [{ x: 0, y: 0, width: 320, height: 240 }],
+      annotations: [box('required', { x: 100, y: 100, width: 20, height: 20 })],
+    }),
+  ).toThrow('No collision-free placement');
+});
+it('places simultaneous diagnostics and steps without overlapping plates', () => {
+  const annotations = [
+    'step-badge',
+    'vitals-hud',
+    'callout',
+    'hit-target-guide',
+    'console-toast',
+  ].map(
+    (component, index) =>
+      ({
+        ...box(`mix-${index}`, { x: 500, y: 300, width: 60, height: 40 }),
+        component,
+        bounds: { x: 0, y: 0, width: 240, height: 44 },
+      }) as AnnotationBox,
+  );
+  const placed = placeAnnotations({
+    viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
+    annotations,
+  });
+  expect(placed).toHaveLength(5);
+  for (let i = 0; i < placed.length; i++)
+    for (let j = i + 1; j < placed.length; j++)
+      expect(
+        intersects(requireBox(placed[i]).bounds, requireBox(placed[j]).bounds),
+      ).toBe(false);
+});
+
+function requireBox(value: AnnotationBox | undefined): AnnotationBox {
+  if (!value) throw new Error('Missing annotation');
+  return value;
+}
