@@ -1,0 +1,12 @@
+{
+  "claim": "The intended Checkout click fails before the fix and opens Checkout after it",
+  "expected": "The Checkout heading appears after the intended click",
+  "concerns": [{
+    "kind": "interaction",
+    "rationale": "The natural pointer action fails to reach its expected state; sample the target before the action and compare actual event recipients, without assuming the suspected overlay is responsible.",
+    "sourceRefs": ["steps.2", "actual", "description"]
+  }],
+  "triggerStep": 2,
+  "targets": [{"id": "target", "description": "Intended Checkout control", "role": "affected"}],
+  "uncertainties": ["The suspected overlay must be confirmed from measured hit testing and actual event recipients."]
+}

@@ -12,4 +12,11 @@ export * from './delivery.js';
 export { scenarioSourceIdentity } from './source-identity.js';
 export * from './migrate.js';
 
-export { startScenarioServer, watchScenarioWithServer, watchServerSchema, type WatchServerOptions } from './server.js';
+export {
+  startScenarioServer,
+  watchScenarioWithServer,
+  watchServerSchema,
+  type WatchServerOptions,
+} from './server.js';
+
+export * from './bug-discovery.js';

@@ -224,3 +224,38 @@ All three published interaction, geometry and transient recipes also pass before
 and after at `/tmp/repro-quality-recipes/acceptance.json` with the new highlight
 specifications. Recipes retain explicit measured outcomes and transient frame
 selection; no assertion healing or LLM execution was introduced.
+
+## Bug understanding and evidence selection
+
+Added `repro discovery-guide --json` and `repro discover bug.json --assessment
+assessment.json`, backed by shared pipeline services and independent Zod input
+contracts/JSON Schemas. The guide reviews all current capabilities and all 18
+configuration features through 12 editorial strategy cards. Reports remain
+explicitly provisional: ticket tags suggest candidates, agent assessments cite
+reported source fields, and only executed observations/assertions can verify a
+claim. Ticket geometry, selectors and embedded configuration are not copied into
+proof or executed as instructions.
+
+The assessment selects meaningful trigger steps, action/affected/reference
+targets, required diagnostic observations and short descriptive highlights.
+Transient drafts require explicit event/frame selection; timing proof excludes
+intrusive hit-test screenshots and separates controlled geometry and pointer
+diagnostic passes. Appearance/disappearance drafts use visibility instead of
+requiring absent bounds. Native-surface claims emit no page-proof draft. Every
+capability has an explicit decision with details available through `describe`;
+unknown facts and real locator/assertion work remain visible obligations.
+
+CLI, MCP, generated discovery resources and all four Repro skills use the same
+workflow. `discovery.spec.ts` demonstrates the boundary: an agent-authored
+assessment supplies intent; application-specific code supplies real locators,
+measured pointer coordinates and designated assertions. This does not claim an
+LLM-free natural-language-to-test compiler or semantic verification of an agent's
+reasoning. The 16-ticket corpus tests normalization and candidate coverage, not
+16 automatically implemented browser scenarios.
+
+Validation: repository build, typecheck and lint pass; **223 fast tests across 89
+files** pass. Focused source-reference, schema and MCP tests pass after final
+input-hardening changes. `/tmp/repro-discovery-final/acceptance.json` records the
+public CLI discovery → validation → actual Chromium before/after captures →
+frame inspection → rendered outcome OCR → comparison handoff. CI and the
+milestone runner now execute `test:discovery` and retain its artifacts.

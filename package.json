@@ -33,7 +33,8 @@
     "test:export-cache": "node scripts/e2e/export-cache.mjs",
     "test:annotation-benchmark": "node scripts/e2e/annotation-benchmark.mjs",
     "test:delivery": "node scripts/e2e/delivery.mjs",
-    "release:pack": "node scripts/release.mjs"
+    "release:pack": "node scripts/release.mjs",
+    "test:discovery": "node scripts/e2e/discovery.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

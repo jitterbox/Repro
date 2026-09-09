@@ -40,6 +40,63 @@ Visual language, overlay theming, viewer UI, and Claude Design prompts:
 
 ---
 
+## Source-referenced bug discovery
+
+Start with `repro discovery-guide --json` to review 12 editorial strategies, the
+complete capability registry and every supported configuration feature. Then run
+`repro discover bug.json`. Input can be a normalized brief (`title`, `description`,
+`expected`, `actual`, `steps`, `tags`, optional `id`) or an ADO-shaped ticket.
+ADO selector hints, annotation coordinates and configuration are not executed or
+used as measured proof. Only explicit tags propose candidates; untagged prose
+requires agent interpretation rather than a hidden keyword classifier.
+
+The report exposes `sourceFacts`, each with a reference such as `actual` or
+`steps.2`. An agent reads these facts and the relevant strategy cards, explores
+the real application and commits an assessment:
+
+```json
+{
+  "claim": "The intended Checkout click fails to open Checkout",
+  "expected": "The Checkout heading appears after the click",
+  "concerns": [{
+    "kind": "interaction",
+    "rationale": "The natural click does not reach the expected state",
+    "sourceRefs": ["actual", "steps.2"]
+  }],
+  "triggerStep": 2,
+  "targets": [{"id": "target", "description": "Intended Checkout control", "role": "affected"}],
+  "uncertainties": ["The suspected overlay needs measured confirmation"]
+}
+```
+
+Run `repro discover bug.json --assessment assessment.json`. It rejects unknown
+source references and invalid trigger/target identities, explains selected tool
+choices and non-selection, separates timing/geometry passes, and returns an
+`evidenceDraft`. It does not verify the semantics of the agent's interpretation.
+A draft requires real locator bindings, ordinary setup checks, designated outcome
+assertions, privacy selectors and actual pixel inspection. Add relevant diagnostic
+and context checkpoints before treating it as complete. Do not export a discovery
+report as audited proof.
+
+For `transient` concerns, no draft is emitted until the assessment includes
+`transientFrame` with an observed event `kind`, optional `match`, `offsetMs` and
+optional `maxOffsetMs`. This generates an event-linked checkpoint and a segment
+on the trigger step; wrap the real interval with `repro.segment`. A native-surface
+assessment produces an unsupported result with no page-proof draft.
+
+MCP exposes the same `discover` service and resources `repro://discovery-guide`,
+`repro://bug-brief-schema`, and `repro://discovery-assessment-schema`. Build output
+also publishes these documents under `@repro/contracts/dist/discovery`. No hosted
+model is required: reasoning belongs to the discovery agent; validation and
+committed execution remain deterministic.
+
+The reviewed example under `packages/playwright/examples/discovery-*` and
+`discovery.spec.ts` is exercised by `pnpm test:discovery`: public CLI discovery →
+validation → real before/after capture → frame inspection → rendered outcome OCR →
+comparison. All 16 existing tickets additionally exercise normalization and
+candidate coverage; this is not a claim that 16 new executable scenarios were
+automatically generated.
+
 ## Turn a bug into an understandable reproduction
 
 The agent makes editorial decisions during discovery; the committed scenario

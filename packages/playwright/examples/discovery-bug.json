@@ -1,0 +1,9 @@
+{
+  "id": "checkout-interaction",
+  "title": "Checkout ignores the intended click",
+  "description": "The cart opens normally but clicking Checkout leaves the cart visible. An invisible overlay is suspected, not yet verified.",
+  "expected": "The Checkout heading appears after the click",
+  "actual": "The cart remains visible",
+  "steps": ["Open the cart", "Click the center of Checkout"],
+  "tags": ["functional", "hit-target"]
+}

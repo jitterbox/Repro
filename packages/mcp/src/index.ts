@@ -3,6 +3,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
 import {
+  discoverBug,
+  discoveryGuide,
   capabilities,
   describeCapability,
   recipes,
@@ -17,6 +19,8 @@ import {
   renderEvidence,
 } from '@repro/pipeline';
 import {
+  bugBriefJsonSchema,
+  discoveryAssessmentJsonSchema,
   evidenceJsonSchema,
   runJsonSchema,
   configJsonSchema,
@@ -32,6 +36,14 @@ const json = (value: unknown) => ({
 });
 export function createReproMcpServer() {
   const server = new McpServer({ name: 'repro', version: '0.1.0' });
+  server.registerTool(
+    'discover',
+    {
+      description: describeCapability('discover').description,
+      inputSchema: { bug: z.unknown(), assessment: z.unknown().optional() },
+    },
+    ({ bug, assessment }) => json(discoverBug(bug, assessment)),
+  );
   server.registerTool(
     'capabilities',
     {
@@ -156,6 +168,9 @@ export function createReproMcpServer() {
   for (const [name, value] of Object.entries({
     capabilities,
     recipes,
+    'discovery-guide': discoveryGuide(),
+    'bug-brief-schema': bugBriefJsonSchema,
+    'discovery-assessment-schema': discoveryAssessmentJsonSchema,
     'evidence-schema': evidenceJsonSchema,
     'run-schema': runJsonSchema,
     'config-schema': configJsonSchema,

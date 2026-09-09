@@ -75,6 +75,8 @@ jobs:
         run: node node_modules/vitest/vitest.mjs run packages/render/src/compare-encode.test.ts packages/render/src/voiceover.test.ts
       - name: Public CLI before/after proof with real pixels and strict OCR
         run: node scripts/e2e/public-workflow.mjs
+      - name: Source-referenced discovery to actual before/after proof
+        run: node scripts/e2e/discovery.mjs
       - name: Record annotation-only timing with captured-pixel verification
         run: node scripts/e2e/annotation-benchmark.mjs
       - name: Verified export reuse and missing OCR rejection
@@ -124,6 +126,7 @@ jobs:
           include-hidden-files: true
           path: |
             .repro/ci
+            .repro/discovery
             .repro/delivery
             .repro/export-cache
             .repro/observations

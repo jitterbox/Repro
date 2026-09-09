@@ -36,6 +36,9 @@ it('discovers authoritative guidance and forwards revised presentations and pair
     const resources = await client.listResources();
     expect(resources.resources.map((resource) => resource.uri)).toEqual(
       expect.arrayContaining([
+        'repro://discovery-guide',
+        'repro://bug-brief-schema',
+        'repro://discovery-assessment-schema',
         'repro://config-schema',
         'repro://plan-schema',
         'repro://timeline-schema',
@@ -45,6 +48,16 @@ it('discovers authoritative guidance and forwards revised presentations and pair
         'repro://share-report-schema',
       ]),
     );
+    const discovery = await client.callTool({
+      name: 'discover',
+      arguments: {
+        bug: { title: 'A button does nothing', steps: ['Click the button'] },
+      },
+    });
+    expect(discovery.isError).not.toBe(true);
+    expect(JSON.stringify(discovery.content)).toContain('needs-assessment');
+    const guide = await client.readResource({ uri: 'repro://discovery-guide' });
+    expect(JSON.stringify(guide.contents)).toContain('hit-test');
     const recipes = await client.callTool({ name: 'recipes', arguments: {} });
     expect(recipes.isError).not.toBe(true);
     await client.callTool({

@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import {
+  bugBriefJsonSchema,
+  discoveryAssessmentJsonSchema,
   capabilities,
   evidenceJsonSchema,
   runJsonSchema,
@@ -8,12 +10,15 @@ import {
   timelineJsonSchema,
   planJsonSchema,
 } from '../packages/contracts/dist/index.js';
-import { recipes } from '../packages/pipeline/dist/index.js';
+import { recipes, discoveryGuide } from '../packages/pipeline/dist/index.js';
 const output = 'packages/contracts/dist/discovery';
 await mkdir(output, { recursive: true });
 for (const [name, data] of Object.entries({
   capabilities,
   recipes,
+  'discovery-guide': discoveryGuide(),
+  'bug-brief.schema': bugBriefJsonSchema,
+  'discovery-assessment.schema': discoveryAssessmentJsonSchema,
   'evidence.schema': evidenceJsonSchema,
   'run.schema': runJsonSchema,
   'config.schema': configJsonSchema,

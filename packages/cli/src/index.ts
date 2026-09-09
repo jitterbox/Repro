@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import {
+  discoverBug,
+  discoveryGuide,
   capabilities,
   describeCapability,
   recipes,
@@ -53,6 +55,23 @@ export function createReproProgram(writer: Writer = console.log): Command {
     .description('Repro AI capture, annotation, and evidence CLI')
     .version(REPRO_CLI_VERSION);
 
+  program
+    .command('discovery-guide')
+    .option('--json')
+    .action(() => {
+      writer(JSON.stringify(discoveryGuide(), null, 2));
+    });
+  program
+    .command('discover <file>')
+    .option('--assessment <file>', 'Source-referenced agent interpretation')
+    .option('--json')
+    .action(async (file: string, options: { assessment?: string }) => {
+      const bug: unknown = JSON.parse(await readFile(file, 'utf8'));
+      const assessment: unknown = options.assessment
+        ? JSON.parse(await readFile(options.assessment, 'utf8'))
+        : undefined;
+      writer(JSON.stringify(discoverBug(bug, assessment), null, 2));
+    });
   program
     .command('render <run>')
     .option(

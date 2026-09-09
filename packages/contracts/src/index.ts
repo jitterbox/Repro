@@ -57,3 +57,5 @@ export * from './quality.js';
 export * from './sync-time.js';
 
 export * from './watch.js';
+
+export * from './bug-discovery.js';

@@ -50,6 +50,7 @@ const jobs = [
     { REPRO_OBSERVATIONS_OUT: join(root, 'observations') },
   ],
   ['transient', 'transient', { REPRO_TRANSIENT_OUT: join(root, 'transient') }],
+  ['discovery', 'discovery', { REPRO_DISCOVERY_OUT: join(root, 'discovery') }],
   ['recipes', 'recipes', { REPRO_RECIPES_OUT: join(root, 'recipes') }],
   [
     'review',
