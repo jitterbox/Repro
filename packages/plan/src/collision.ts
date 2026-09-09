@@ -331,14 +331,34 @@ function withPlacement(
     return { ...annotation, bounds };
   }
 
+  const measured = targetRect(annotation);
+  if (measured === null) return { ...annotation, bounds };
   return {
     ...annotation,
     bounds,
     leaderLine: {
-      from: rectCenter(bounds),
-      to: target,
+      from: boundaryToward(bounds, target),
+      // Keep the arrow tip outside the six-pixel target ring and its stroke.
+      to: boundaryToward(
+        expandRect(measured, (annotation.anchor?.pad ?? 6) + 2),
+        rectCenter(bounds),
+      ),
     },
   };
+}
+
+/** Intersect a center-to-point ray with the rectangle edge. */
+function boundaryToward(rect: Rect, point: Point): Point {
+  const center = rectCenter(rect);
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  const scale = Math.min(
+    dx === 0 ? Infinity : rect.width / (2 * Math.abs(dx)),
+    dy === 0 ? Infinity : rect.height / (2 * Math.abs(dy)),
+  );
+  return Number.isFinite(scale)
+    ? { x: center.x + dx * scale, y: center.y + dy * scale }
+    : center;
 }
 
 function targetCenter(annotation: AnnotationBox): Point | undefined {

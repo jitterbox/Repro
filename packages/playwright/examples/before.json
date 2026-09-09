@@ -40,7 +40,13 @@
       "targets": ["target"],
       "required": true,
       "observations": ["screenshot", "bounds", "assertion", "hit-test"],
-      "timing": "stable"
+      "timing": "stable",
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Intended Checkout control"
+        }
+      ]
     }
   ],
   "outputs": ["png", "mp4", "review"],

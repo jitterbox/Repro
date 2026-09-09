@@ -1,3 +1,4 @@
+import { intersects } from '@repro/plan';
 import { expect, it } from 'vitest';
 import { validateEvidence } from '@repro/contracts';
 import type { Observation } from '@repro/contracts';
@@ -76,4 +77,132 @@ it('uses one title, numbered step and outcome definition across capture and rend
   expect(
     original.cues.find((c) => c.component === 'slate')?.accessibilityText,
   ).toBe('Checkout opens — After');
+});
+
+it('seats selected callouts outside measured targets and ties every cue to the correct page', () => {
+  const focused = validateEvidence({
+    ...spec,
+    targets: [{ id: 'button', description: 'Intended control' }],
+    checkpoints: [
+      {
+        ...spec.checkpoints[0],
+        targets: ['button'],
+        observations: ['screenshot', 'bounds'],
+        highlights: [{ target: 'button', label: 'Intended Checkout control' }],
+      },
+    ],
+  });
+  const image: Observation = {
+    id: 'image',
+    checkpoint: 'result',
+    kind: 'screenshot',
+    status: 'passed',
+    pageId: 'cart',
+    timeMs: 500,
+    endMs: 510,
+  };
+  const bounds: Observation = {
+    id: 'bounds',
+    checkpoint: 'result',
+    kind: 'bounds',
+    status: 'passed',
+    pageId: 'cart',
+    target: 'button',
+    timeMs: 490,
+    endMs: 520,
+    bounds: { x: 520, y: 300, width: 140, height: 40 },
+  };
+  const run = {
+    steps: [
+      { id: 'trigger', index: 1, title: 'Click', startMs: 0, endMs: 900 },
+    ],
+    durationMs: 1000,
+    observations: [image, bounds],
+    scenarioOutcome: 'inconclusive' as const,
+  };
+  const compile = (observations = run.observations) =>
+    compileEvidencePresentation(
+      focused,
+      { ...run, observations },
+      { width: 1280, height: 720, deviceScaleFactor: 1 },
+      0,
+    );
+  const result = compile();
+  const callout = result.annotations.find((a) => a.component === 'callout');
+  if (!callout || !bounds.bounds) throw new Error('Missing measured callout');
+  expect(callout.label).toBe('Intended Checkout control');
+  expect(callout.anchor).toMatchObject({
+    evidenceRef: 'bounds',
+    pageId: 'cart',
+  });
+  expect(intersects(callout.bounds, bounds.bounds)).toBe(false);
+  expect(
+    result.cues.find((c) => c.component === 'callout')?.accessibilityText,
+  ).toBe(callout.label);
+  expect(() => compile([{ ...image, pageId: 'popup' }, bounds])).toThrow(
+    'aligned measured',
+  );
+  expect(() => compile([image, { ...image, id: 'duplicate' }, bounds])).toThrow(
+    'aligned measured',
+  );
+  expect(() => compile([image, { ...bounds, endMs: 499 }])).toThrow(
+    'aligned measured',
+  );
+  expect(() =>
+    compile([image, { ...bounds, status: 'failed', bounds: null }]),
+  ).toThrow('aligned measured');
+  expect(() =>
+    compile([
+      image,
+      { ...bounds, bounds: { x: 0, y: 0, width: 1280, height: 720 } },
+    ]),
+  ).toThrow('No unobstructed space');
+  const repeated = validateEvidence({
+    ...focused,
+    checkpoints: [
+      focused.checkpoints[0],
+      { ...focused.checkpoints[0], id: 'later' },
+    ],
+  });
+  const repeatedResult = compileEvidencePresentation(
+    repeated,
+    {
+      ...run,
+      durationMs: 2000,
+      observations: [
+        ...run.observations,
+        {
+          ...image,
+          id: 'later-image',
+          checkpoint: 'later',
+          timeMs: 1500,
+          endMs: 1510,
+        },
+        {
+          ...bounds,
+          id: 'later-bounds',
+          checkpoint: 'later',
+          timeMs: 1490,
+          endMs: 1520,
+        },
+      ],
+    },
+    { width: 1280, height: 720, deviceScaleFactor: 1 },
+    0,
+  );
+  expect(
+    repeatedResult.annotations.filter((a) => a.component === 'callout'),
+  ).toHaveLength(2);
+  const unadorned = validateEvidence({
+    ...focused,
+    checkpoints: [{ ...focused.checkpoints[0], highlights: [] }],
+  });
+  expect(
+    compileEvidencePresentation(
+      unadorned,
+      run,
+      { width: 1280, height: 720, deviceScaleFactor: 1 },
+      0,
+    ).annotations.some((a) => a.component === 'target-ring'),
+  ).toBe(false);
 });

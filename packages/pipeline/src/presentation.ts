@@ -1,3 +1,4 @@
+import { screenshotForBounds } from './checkpoint-geometry.js';
 import { readFile, mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -180,12 +181,7 @@ async function renderEvidenceLocked(
     );
     const measuredIds = new Set(
       run.observations
-        .filter(
-          (o) =>
-            o.checkpoint === cp.checkpoint &&
-            o.kind === 'bounds' &&
-            o.status === 'passed',
-        )
+        .filter((o) => screenshotForBounds(o, run.observations)?.id === cp.id)
         .map((o) => o.id),
     );
     const hasOutcome = run.observations.some(
@@ -202,6 +198,8 @@ async function renderEvidenceLocked(
         annotation.id === 'title' ||
         annotation.id === definition?.step ||
         measuredIds.has(annotation.id) ||
+        (annotation.anchor?.evidenceRef !== undefined &&
+          measuredIds.has(annotation.anchor.evidenceRef)) ||
         (hasOutcome && annotation.id === 'outcome'),
     );
     const path = join(outputDir, `${cp.checkpoint}.png`);

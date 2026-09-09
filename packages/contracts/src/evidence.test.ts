@@ -157,3 +157,55 @@ it('allows presentation revisions while preserving committed proof and privacy',
     ]).map((result) => result.status),
   ).toEqual(['passed', 'failed']);
 });
+
+it('validates focused highlights and permits presentation edits without changing capture requirements', () => {
+  const captured = validateEvidence({
+    ...input,
+    checkpoints: [
+      {
+        ...input.checkpoints[0],
+        observations: ['screenshot', 'bounds', 'assertion'],
+      },
+    ],
+  });
+  const edited = {
+    ...captured,
+    checkpoints: captured.checkpoints.map((cp) => ({
+      ...cp,
+      highlights: [{ target: 'checkout', label: 'Intended Checkout control' }],
+    })),
+  };
+  expect(validatePresentationEdit(captured, validateEvidence(edited))).toEqual(
+    edited,
+  );
+  const validate = new Ajv({ strict: false }).compile(evidenceJsonSchema);
+  expect(validate(edited)).toBe(true);
+  const long = {
+    ...edited,
+    checkpoints: [
+      {
+        ...edited.checkpoints[0],
+        highlights: [{ target: 'checkout', label: 'x'.repeat(65) }],
+      },
+    ],
+  };
+  expect(validate(long)).toBe(false);
+  expect(() => validateEvidence(long)).toThrow();
+  expect(() =>
+    validateEvidence({
+      ...edited,
+      checkpoints: [
+        {
+          ...edited.checkpoints[0],
+          highlights: [{ target: 'invented', label: 'Missing target' }],
+        },
+      ],
+    }),
+  ).toThrow('not a measured target');
+  expect(() =>
+    validateEvidence({
+      ...edited,
+      checkpoints: [{ ...edited.checkpoints[0], observations: ['screenshot'] }],
+    }),
+  ).toThrow('require screenshot and bounds');
+});

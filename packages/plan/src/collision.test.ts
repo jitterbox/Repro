@@ -86,3 +86,33 @@ function box(
     timeRange: { end: 1_000, start: 0 },
   };
 }
+
+it('ends callout leaders outside measured targets instead of crossing their text', () => {
+  const target = { x: 80, y: 80, width: 180, height: 60 };
+  const [placed] = placeAnnotations({
+    viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
+    regionsOfInterest: [{ x: 0, y: 0, width: 1280, height: 68 }, target],
+    annotations: [
+      {
+        ...box('callout', target),
+        component: 'callout',
+        bounds: { x: 0, y: 0, width: 250, height: 42 },
+      },
+    ],
+  });
+  if (!placed?.leaderLine) throw new Error('Expected leader');
+  expect(placed.bounds.x).toBeGreaterThan(target.x + target.width);
+  expect(placed.leaderLine.to.x).toBe(target.x + target.width + 8);
+  expect(placed.leaderLine.from.x).toBe(placed.bounds.x);
+  // Every point on the leader remains outside the original target.
+  for (let t = 0; t <= 1; t += 0.1) {
+    const { from, to } = placed.leaderLine;
+    const point = {
+      x: from.x + (to.x - from.x) * t,
+      y: from.y + (to.y - from.y) * t,
+      width: 1,
+      height: 1,
+    };
+    expect(intersects(point, target)).toBe(false);
+  }
+});

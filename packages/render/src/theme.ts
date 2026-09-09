@@ -7,13 +7,7 @@ import {
 
 import type { OverlayTheme } from '@repro/contracts';
 
-export type Severity =
-  | 'info'
-  | 'low'
-  | 'medium'
-  | 'warn'
-  | 'high'
-  | 'critical';
+export type Severity = 'info' | 'low' | 'medium' | 'warn' | 'high' | 'critical';
 
 export function getOverlayTheme(): OverlayTheme {
   return overlayTheme;
@@ -82,11 +76,54 @@ export function assStyleTable(): readonly string[] {
   const progress = colorAss('repro-progress');
 
   return [
-    boxStyle('Plate', font, overlayTheme.type.calloutLabel.size, labelFg, labelBg, 7),
-    boxStyle('Kicker', font, overlayTheme.type.calloutKicker.size, labelFg, labelBg, 7, 1),
-    boxStyle('Badge', font, overlayTheme.type.badge.size, labelFg, labelBg, 7, 1),
+    // Vector plates use the background fill, not the foreground text color.
+    styleFields({
+      name: 'Panel',
+      font,
+      fontSize: 1,
+      primary: labelBg,
+      back: labelBg,
+      alignment: 7,
+      bold: 0,
+      borderStyle: 1,
+      outline: 0,
+      outlineColour: labelBg,
+    }),
+    boxStyle(
+      'Plate',
+      font,
+      overlayTheme.type.calloutLabel.size,
+      labelFg,
+      labelBg,
+      7,
+    ),
+    boxStyle(
+      'Kicker',
+      font,
+      overlayTheme.type.calloutKicker.size,
+      labelFg,
+      labelBg,
+      7,
+      1,
+    ),
+    boxStyle(
+      'Badge',
+      font,
+      overlayTheme.type.badge.size,
+      labelFg,
+      labelBg,
+      7,
+      1,
+    ),
     boxStyle('Chapter', font, 22, labelFg, colorAss('repro-slate-bg'), 2),
-    boxStyle('Console', mono, overlayTheme.type.console.size, labelFg, labelBg, 2),
+    boxStyle(
+      'Console',
+      mono,
+      overlayTheme.type.console.size,
+      labelFg,
+      labelBg,
+      2,
+    ),
     boxStyle('Meta', font, overlayTheme.type.slateMeta.size, meta, labelBg, 7),
     strokeStyle('RingInfo', info, halo),
     strokeStyle('RingWarn', warn, halo),

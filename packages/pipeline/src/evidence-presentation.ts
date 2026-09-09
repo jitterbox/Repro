@@ -1,4 +1,10 @@
-import { compileTimeline, mapTime, annotationsToVisualCues } from '@repro/plan';
+import { screenshotForBounds } from './checkpoint-geometry.js';
+import {
+  compileTimeline,
+  mapTime,
+  annotationsToVisualCues,
+  placeAnnotations,
+} from '@repro/plan';
 import type { AnnotationBox } from '@repro/plan';
 import { overlayTheme, visualCueSchema } from '@repro/contracts';
 import type { EvidenceSpec, RunManifest } from '@repro/contracts';
@@ -95,17 +101,23 @@ export function compileEvidencePresentation(
   for (const obs of run.observations) {
     if (!obs.bounds || obs.kind !== 'bounds' || obs.status !== 'passed')
       continue;
-    const cp = run.observations.find(
-      (o) =>
-        o.checkpoint === obs.checkpoint &&
-        o.kind === 'screenshot' &&
-        o.status === 'passed',
+    const definition = spec.checkpoints.find(
+      (checkpoint) => checkpoint.id === obs.checkpoint,
     );
+    const highlight = definition?.highlights?.find(
+      (item) => item.target === obs.target,
+    );
+    if (definition?.highlights !== undefined && !highlight) continue;
+    const cp = screenshotForBounds(obs, run.observations);
     if (!cp) continue;
     annotations.push(
       annotation({
         id: obs.id,
-        label: `Measured bounds: ${obs.target ?? 'target'}`,
+        label:
+          highlight?.label ??
+          spec.targets.find((target) => target.id === obs.target)
+            ?.description ??
+          'Measured target',
         feature: 'clickViz',
         component: 'target-ring',
         bounds: obs.bounds,
@@ -121,6 +133,7 @@ export function compileEvidencePresentation(
             h: obs.bounds.height,
           },
           evidenceRef: obs.id,
+          pageId: obs.pageId,
         },
         shape: 'rect',
       }),
@@ -152,6 +165,78 @@ export function compileEvidencePresentation(
       timeRange: { start: outcomeStart, end: outputDuration },
     }),
   );
+  // Author-selected callouts are required presentation evidence. Never invent
+  // geometry, silently discard a requested label, or cover a measured target.
+  for (const checkpoint of spec.checkpoints) {
+    const rings = annotations.filter(
+      (item) =>
+        item.component === 'target-ring' &&
+        run.observations.some(
+          (obs) => obs.id === item.id && obs.checkpoint === checkpoint.id,
+        ),
+    );
+    for (const highlight of checkpoint.highlights ?? []) {
+      const matches = rings.filter((ring) =>
+        run.observations.some(
+          (obs) => obs.id === ring.id && obs.target === highlight.target,
+        ),
+      );
+      const ring = matches[0];
+      if (matches.length !== 1 || !ring)
+        throw new Error(
+          `Highlight ${checkpoint.id}/${highlight.target} needs one aligned measured target and screenshot`,
+        );
+      const candidates = placeAnnotations({
+        viewport,
+        regionsOfInterest: [
+          ...annotations
+            .filter(
+              (item) =>
+                item.id === 'title' ||
+                item.id === 'outcome' ||
+                steps.some((step) => step.id === item.id) ||
+                (item.component === 'callout' &&
+                  rings.some((r) => r.id === item.anchor?.evidenceRef)),
+            )
+            .map((item) => item.bounds),
+          ...run.observations.flatMap((obs) =>
+            obs.checkpoint === checkpoint.id &&
+            obs.pageId === ring.anchor?.pageId &&
+            obs.bounds &&
+            screenshotForBounds(obs, run.observations)
+              ? [obs.bounds]
+              : [],
+          ),
+        ],
+        annotations: [
+          annotation({
+            id: `${ring.id}-callout`,
+            label: highlight.label,
+            component: 'callout',
+            feature: 'clickViz',
+            collisionPolicy: 'hide',
+            anchor: ring.anchor,
+            plate: { label: highlight.label, maxChars: 64 },
+            bounds: {
+              x: 0,
+              y: 0,
+              width: Math.min(
+                viewport.width - 48,
+                Math.max(180, highlight.label.length * 9 + 28),
+              ),
+              height: 42,
+            },
+            timeRange: ring.timeRange,
+          }),
+        ],
+      });
+      if (!candidates.length)
+        throw new Error(
+          `No unobstructed space for highlight ${checkpoint.id}/${highlight.target}; shorten the label or choose fewer highlights`,
+        );
+      annotations.push(...candidates);
+    }
+  }
   const cues = annotations.flatMap((annotation) => {
     const step = steps.find((s) => s.id === annotation.id);
     const common = {

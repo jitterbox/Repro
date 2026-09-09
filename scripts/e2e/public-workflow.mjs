@@ -197,6 +197,42 @@ const stillPath = join(
   revisedManifest.artifacts.find((asset) => asset.kind === 'presentation-image')
     .path,
 );
+// Layout OCR can merge a small callout with its nearby control. Verify its
+// complete text in the actual pixel ROI as well as auditing whole frames below.
+async function verifyCalloutText(imagePath, suffix) {
+  const plan = JSON.parse(
+    await readFile(
+      join(
+        after.directory,
+        revisedManifest.artifacts.find((a) =>
+          a.kind.startsWith('presentation-key:'),
+        ).path,
+      ),
+      'utf8',
+    ),
+  );
+  const callout = plan.annotations.find((a) => a.component === 'callout');
+  assert.ok(
+    callout,
+    'Required callout is missing from the shared presentation',
+  );
+  const { x, y, width, height } = callout.bounds;
+  const crop = join(root, `callout-${suffix}.png`);
+  await execute('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
+    imagePath,
+    '-vf',
+    `crop=${Math.floor(width - 24)}:${Math.floor(height - 12)}:${Math.floor(x + 12)}:${Math.floor(y + 6)},scale=iw*2:ih*2`,
+    '-frames:v',
+    '1',
+    crop,
+  ]);
+  const { stdout } = await execute('tesseract', [crop, 'stdout', '--psm', '7']);
+  assert.match(stdout, /Intended Checkout control/);
+}
 const still = PNG.sync.read(await readFile(stillPath));
 const context = PNG.sync.read(await readFile(frame.context));
 assert.equal(still.width, context.width);
@@ -224,6 +260,7 @@ const { stdout: visibleText } = await execute('tesseract', [
 assert.match(visibleText, /Checkout proof revised/);
 assert.match(visibleText, /After/);
 assert.match(visibleText, /Fix verified/);
+await verifyCalloutText(stillPath, 'still');
 await assert.rejects(
   enforceOcrAudit({
     path: stillPath,
@@ -282,6 +319,7 @@ const { stdout: holdText } = await execute('tesseract', [
 ]);
 assert.match(holdText, /Checkout proof revised/);
 assert.match(holdText, /Fix verified/);
+await verifyCalloutText(heldFrame, 'hold');
 assert.match(holdText, /3\. Verify the Checkout heading/);
 const editedRepeat = await repro(
   'render',

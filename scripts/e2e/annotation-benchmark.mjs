@@ -8,7 +8,14 @@ import {
   enumerateFonts,
   implementationDigest,
 } from '../../packages/core/dist/index.js';
-import { cp, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  writeFile,
+} from 'node:fs/promises';
 import { cpus, platform, release } from 'node:os';
 import { join, resolve } from 'node:path';
 const execute = promisify(execFile);
@@ -53,6 +60,7 @@ const report = {
   completed: false,
   kind: 'annotation-only-cli-edit',
   baseline: null,
+  approvedBaselineCommit: '8f3739a3bf6de029246c260b76bcc65908f83fed',
   attempt,
   cli,
   implementations: Object.fromEntries(
@@ -147,7 +155,8 @@ const values = report.samples
   .sort((a, b) => a - b);
 report.medianMs = values[Math.floor(values.length / 2)];
 report.completed = true;
-report.performanceGate = 'unassessed: requires a comparable approved baseline';
+report.performanceGate =
+  'unassessed: requires a comparable timing measurement of approved baseline 8f3739a';
 await save();
 console.log(
   JSON.stringify({

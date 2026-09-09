@@ -40,6 +40,62 @@ Visual language, overlay theming, viewer UI, and Claude Design prompts:
 
 ---
 
+## Turn a bug into an understandable reproduction
+
+The agent makes editorial decisions during discovery; the committed scenario
+and renderer execute them without an LLM. `repro init` currently creates a
+Checkout example, not a general bug-to-test converter. Adapt it to the actual
+application using `repro recipes --json` and `repro describe render --json`.
+
+1. Read the reported steps and acceptance criteria. Write one falsifiable claim.
+   Separate what the reporter saw, the expected behavior, and any suspected
+   cause. Ticket annotation hints and coordinates are suggestions, not evidence.
+2. Explore the actual application and bind durable locators. Confirm setup and
+   authentication with ordinary assertions. Do not swallow unrelated failures
+   or force-click through an obstruction.
+3. Give the scenario a descriptive title. Keep its identity across Before and
+   After. Create meaningful numbered steps: establish context, perform the
+   trigger, inspect the decisive state, and verify the intended result. Avoid
+   turning every browser API call into a visible step.
+4. Choose the evidence moment. For a stable result, assert the specific state
+   and capture a checkpoint. For a flash, race or animation bug, start a segment
+   before the trigger and select an event-linked frame afterward. Do not wait
+   for stability when instability is the evidence.
+5. Select the few controls a reviewer needs to see: the intended action, affected
+   content, and a reference control if their relationship matters. Capture their
+   measured bounds with the context screenshot; derive crops from those pixels.
+   A hidden-hitbox claim needs `repro.hitTest`, its sampled stack/recipient and an
+   outcome check. A rectangle alone does not prove interception.
+6. Add checkpoint `highlights` with short descriptive labels. These create an
+   outline and an adjacent callout from the same measured observation in both
+   PNGs and video holds. Example within a checkpoint:
+
+   ```json
+   "targets": ["checkout"],
+   "observations": ["screenshot", "bounds", "assertion", "hit-test"],
+   "highlights": [{ "target": "checkout", "label": "Intended Checkout control" }]
+   ```
+
+   Choose at most three highlights per checkpoint. Omit `highlights` for automatic
+   outlines, or use `[]` to leave the image unadorned. Labels identify what to look
+   at; they do not independently verify a diagnosis or a numeric delta. Missing,
+   moving or ambiguous geometry cannot produce an invented outline. Rendering
+   rejects requested callouts when aligned evidence or unobstructed space is
+   unavailable; shorten the label, reduce highlights or capture a better frame.
+7. Run `repro validate-evidence evidence.json`, then the committed scenario.
+   Inspect the actual context image, focused crop and critical video interval
+   using `frame` / `review`. Check that labels are readable, do not cover the
+   defect, and appear at the right moment. Verify designated failure Before and
+   success After before using proof language. Keep unsuccessful attempts.
+8. Iterate with `repro render <run> --evidence edited.json`: titles and checkpoint
+   highlights can change without recapture. Changes to execution, claims,
+   targets, required observations or privacy require a new run. Export only
+   after inspection and the mandatory media audit.
+
+The initial interaction, geometry and transient recipes are executable examples
+against the fixture corpus. Their titles, claims and selectors must be adapted;
+a recipe choice is not itself proof that a reported issue was reproduced.
+
 ## 1. Choose a mode (exactly one)
 
 | Mode      | When to use                                          | Profile                  | Output intent                        |
@@ -455,7 +511,9 @@ pnpm shoplite:dev
 ```
 
 The document element gets `data-repro-fixture="broken|fixed"`. Switching is
-global for the whole app (not per bug) and does not require a rebuild.
+global by default and does not require a rebuild. Add `&bug=BUG-1003` to isolate
+one defect in broken mode; fixed mode disables defects. The selected bug is
+recorded in `data-repro-defect`.
 
 ### Generate coverage videos
 

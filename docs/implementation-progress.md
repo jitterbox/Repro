@@ -166,8 +166,8 @@ capture hash preservation and OCR verification outside the timed render call.
 The current local median is **2.06 s** (`.repro/annotation-benchmark/attempt-k50nhV/benchmark.json`).
 This is a present-day measurement, not a historical Phase 1 median or a claim of
 50% improvement. CI records the same measurements with implementation, font, tool
-and machine identity. Registry destination/authentication and the missing approved
-performance baseline remain required to complete those two gates.
+and machine identity. Registry destination/authentication and a comparable timing
+measurement of the now-approved `8f3739a` baseline remain required for those gates.
 
 The first complete remote media pass reached synchronization and caught a final
 checkpoint inside the last output-frame interval. Its timestamp followed the last
@@ -180,3 +180,47 @@ visual inspection confirm checkpoint 4/4 and both verified outcomes. Fresh
 uneven-delay acceptance and its negative controls pass at
 `/tmp/repro-terminal-sync/acceptance.json`; the two-frame alignment tolerance is
 unchanged. Four deterministic boundary cases cover fractional and exact endpoints.
+
+
+## Output quality priority and approved performance baseline
+
+The user approved milestone commit `8f3739a3bf6de029246c260b76bcc65908f83fed`
+as the replacement performance baseline. It is a completed Phases 1–3 baseline,
+not a historical Phase 1 measurement. Comparable timings still need measurement;
+no 50% improvement is claimed. Output clarity and reliable bug-to-evidence
+execution take priority over optimizing the benchmark.
+
+The first quality increment adds checkpoint-selected descriptive callouts,
+shared still/video geometry association, and explicit failures for missing,
+ambiguous or unplaceable highlight evidence. Labels use the existing collision
+planner and preserve the captured pixels. Presentation-only edits can select
+highlights without changing required capture targets. The AI playbook now
+explains how to turn a ticket into meaningful steps, decisive checkpoints and
+purposeful highlights; the same invocation semantics are available through the
+capability registry, JSON Schema and MCP discovery resources.
+
+General bug understanding still belongs to agent discovery. The starter is an
+editable Checkout example, and this change does not claim autonomous conversion
+of arbitrary tickets into correct executable tests. Broader quality evaluation
+should exercise the existing bug corpus and inspect pixels, outcomes and timing,
+not merely count annotations or successful render commands.
+
+
+Quality validation: build, typecheck and lint pass; **217 fast tests across 88
+files** pass. The real public workflow passes at
+`/tmp/repro-quality-verified/acceptance.json`, including 1/4/12 CSS-pixel changes,
+unchanged target interiors, full callout text in checkpoint PNG and decoded video
+hold pixels, presentation-only reuse, strict OCR export and relocated viewer
+checks. Full-frame OCR privacy auditing remains mandatory; small-label readability
+also uses OCR of the actual callout pixel region.
+
+Actual output inspection caught two existing shared renderer defects: leaders
+crossed target text because they terminated at element centers, and vector plates
+used the foreground text color as their fill. Leaders now terminate outside the
+measured target ring, and panels use the shared background token. The failed
+predecessor outputs remain under `/tmp/repro-quality-public*` for inspection.
+
+All three published interaction, geometry and transient recipes also pass before
+and after at `/tmp/repro-quality-recipes/acceptance.json` with the new highlight
+specifications. Recipes retain explicit measured outcomes and transient frame
+selection; no assertion healing or LLM execution was introduced.

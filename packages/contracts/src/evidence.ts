@@ -57,6 +57,18 @@ export const evidenceSpecSchema = z
           title: text,
           targets: z.array(id).default([]),
           required: z.boolean().default(true),
+          // Omitted preserves automatic outlines; [] intentionally removes them.
+          highlights: z
+            .array(
+              z
+                .object({
+                  target: id,
+                  label: text.max(64),
+                })
+                .strict(),
+            )
+            .max(3)
+            .optional(),
           observations: z
             .array(
               z.enum([
@@ -141,6 +153,23 @@ export function validateEvidence(value: unknown): EvidenceSpec {
   if (!spec.steps.some((s) => s.trigger))
     throw new Error('At least one step must identify the trigger');
   for (const cp of spec.checkpoints) {
+    unique(
+      (cp.highlights ?? []).map((highlight) => highlight.target),
+      `highlight in ${cp.id}`,
+    );
+    for (const highlight of cp.highlights ?? []) {
+      if (!cp.targets.includes(highlight.target))
+        throw new Error(
+          `Highlight ${highlight.target} is not a measured target in ${cp.id}`,
+        );
+      if (
+        !cp.observations.includes('screenshot') ||
+        !cp.observations.includes('bounds')
+      )
+        throw new Error(
+          `Highlights in ${cp.id} require screenshot and bounds observations`,
+        );
+    }
     if (
       cp.frame &&
       (cp.timing !== 'transient' || !cp.observations.includes('screenshot'))
@@ -414,6 +443,7 @@ export function validatePresentationEdit(
     checkpoints: spec.checkpoints.map((checkpoint) => ({
       ...checkpoint,
       title: '',
+      highlights: undefined,
     })),
     presentation: null,
   });

@@ -97,6 +97,15 @@ export const recipes = ['interaction', 'geometry', 'transient'].map((kind) =>
             ? 'Checkout result after the click'
             : 'Completed loading',
         targets: ['target'],
+        highlights: [
+          {
+            target: 'target',
+            label:
+              kind === 'interaction'
+                ? 'Intended Checkout control'
+                : 'Content after loading',
+          },
+        ],
         observations: [
           'screenshot',
           'bounds',

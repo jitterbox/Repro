@@ -111,7 +111,7 @@ function plateEvents(
     dialogue(
       1,
       range,
-      'Plate',
+      'Panel',
       `{\\pos(${String(x)},${String(y)})${fade}\\p1}${platePath}`,
     ),
     dialogue(
