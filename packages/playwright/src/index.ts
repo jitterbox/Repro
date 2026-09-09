@@ -1,5 +1,5 @@
 import { test as base, expect } from '@playwright/test';
-import type { Locator, Page, TestInfo } from '@playwright/test';
+import type { Locator, Page, TestInfo, Response } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 import { readFile, mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
@@ -318,28 +318,24 @@ export class EvidenceRecorder {
         )
       : undefined;
     const afterStack = measured.topDocument
-      ? await locator
-          .page()
-          .evaluate(
-            ({ x, y }) =>
-              document
-                .elementsFromPoint(x, y)
-                .map((node) => ({
-                  tag: node.tagName,
-                  id: node.id,
-                  role: node.getAttribute('role'),
-                  pointerEvents: getComputedStyle(node).pointerEvents,
-                  opacity: getComputedStyle(node).opacity,
-                  zIndex: getComputedStyle(node).zIndex,
-                  bounds: node.getBoundingClientRect().toJSON() as {
-                    x: number;
-                    y: number;
-                    width: number;
-                    height: number;
-                  },
-                })),
-            attempted,
-          )
+      ? await locator.page().evaluate(
+          ({ x, y }) =>
+            document.elementsFromPoint(x, y).map((node) => ({
+              tag: node.tagName,
+              id: node.id,
+              role: node.getAttribute('role'),
+              pointerEvents: getComputedStyle(node).pointerEvents,
+              opacity: getComputedStyle(node).opacity,
+              zIndex: getComputedStyle(node).zIndex,
+              bounds: node.getBoundingClientRect().toJSON() as {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+              },
+            })),
+          attempted,
+        )
       : undefined;
     const frameAligned =
       measured.topDocument &&
@@ -376,6 +372,96 @@ export class EvidenceRecorder {
       },
     });
     return measured;
+  }
+  /** Snapshot presence without waiting, clicking, or inventing absent geometry. */
+  async visibility(checkpoint: string, target: string) {
+    const cp = this.spec.checkpoints.find((c) => c.id === checkpoint);
+    if (!cp?.targets.includes(target))
+      throw new Error(`Checkpoint ${checkpoint} must declare target ${target}`);
+    const locator = this.targets.get(target);
+    if (!locator) throw new Error(`Target ${target} has no locator binding`);
+    const pageId = await this.session.ready(locator.page());
+    const timeMs = this.session.clock.nowMono();
+    const count = await locator.count();
+    const visible = count === 1 ? await locator.isVisible() : false;
+    const countAfter = await locator.count();
+    const measured = count === countAfter && count <= 1;
+    const previous = [...this.observations]
+      .reverse()
+      .find(
+        (o) =>
+          o.kind === 'visibility' &&
+          o.target === target &&
+          o.pageId === pageId &&
+          o.status === 'passed',
+      );
+    const transition =
+      !measured || !previous
+        ? 'unknown'
+        : previous.data?.visible === visible
+          ? 'unchanged'
+          : visible
+            ? 'appeared'
+            : 'disappeared';
+    const observation: Observation = {
+      id: newObservationId(),
+      checkpoint,
+      target,
+      pageId,
+      kind: 'visibility',
+      timeMs,
+      endMs: this.session.clock.nowMono(),
+      status: measured ? 'passed' : 'unsupported',
+      detail: !measured
+        ? 'Target ambiguous or changed while sampling'
+        : count === 0
+          ? 'Target absent'
+          : visible
+            ? 'Target visible'
+            : 'Target attached but hidden',
+      data: {
+        count,
+        countAfter,
+        attached: count > 0,
+        visible: measured ? visible : null,
+        transition,
+        previousObservationId: previous?.id ?? null,
+        semantics:
+          'Playwright visibility; opacity and occlusion are not perceptibility checks',
+      },
+    };
+    this.observations.push(observation);
+    return observation;
+  }
+  /** Record an actual response. Register the Playwright response wait before the trigger. */
+  async network(checkpoint: string, response: Response) {
+    if (!this.spec.checkpoints.some((cp) => cp.id === checkpoint))
+      throw new Error(`Unknown checkpoint ${checkpoint}`);
+    const request = response.request();
+    const page = response.frame().page();
+    const pageId = await this.session.ready(page);
+    const url = new URL(response.url());
+    const observation: Observation = {
+      id: newObservationId(),
+      checkpoint,
+      pageId,
+      kind: 'network',
+      timeMs: this.session.clock.nowMono(),
+      status: 'passed',
+      detail: `Observed HTTP ${response.status()}`,
+      data: {
+        url: `${url.protocol}//${url.host}${url.pathname}`,
+        method: request.method(),
+        status: response.status(),
+        fromServiceWorker: response.fromServiceWorker(),
+        timing: 'host-observation',
+        responseTimeMs: null,
+        semantics:
+          'Observed response, not a success assertion or causal association',
+      },
+    };
+    this.observations.push(observation);
+    return observation;
   }
   async accessibility(checkpoint: string, page: Page = this.session.page) {
     if (!this.spec.checkpoints.some((cp) => cp.id === checkpoint))

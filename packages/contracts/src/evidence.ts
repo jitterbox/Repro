@@ -65,6 +65,7 @@ export const evidenceSpecSchema = z
                 'assertion',
                 'hit-test',
                 'accessibility',
+                'visibility',
                 'network',
               ]),
             )
@@ -170,6 +171,7 @@ export const observationSchema = z.object({
     'assertion',
     'hit-test',
     'accessibility',
+    'visibility',
     'network',
   ]),
   pageId: text,
@@ -360,7 +362,9 @@ export function evidenceRequirements(
   return spec.checkpoints.flatMap((cp) =>
     cp.observations.flatMap((kind) => {
       const targets: (string | undefined)[] =
-        kind === 'bounds' || kind === 'hit-test' ? cp.targets : [undefined];
+        kind === 'bounds' || kind === 'hit-test' || kind === 'visibility'
+          ? cp.targets
+          : [undefined];
       return (targets.length ? targets : [undefined]).map((target) => ({
         checkpoint: cp.id,
         kind,

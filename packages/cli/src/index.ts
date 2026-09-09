@@ -13,7 +13,8 @@ import {
   reviewRun,
   renderEvidence,
   exportEvidence,
-  watchScenario,
+  watchScenarioWithServer,
+  watchServerSchema,
   experimentNative,
   migrateRun,
 } from '@repro/pipeline';
@@ -142,26 +143,63 @@ export function createReproProgram(writer: Writer = console.log): Command {
     .option('--baseline <run>')
     .option('--repeat <count>', 'Capture all attempts', Number)
     .option('--watch', 'Coalesce edits and rerun selected scenario')
+    .option(
+      '--watch-server <path>',
+      'JSON command/args/url for a persistent build server',
+    )
     .option('--verbose', 'Include full manifests and environment provenance')
     .action(
       async (
         spec: string,
         options: Omit<Parameters<typeof runScenario>[0], 'spec'> & {
           watch?: boolean;
+          watchServer?: string;
           verbose?: boolean;
         },
       ) => {
+        if (options.watchServer && !options.watch)
+          throw new Error('--watch-server requires --watch');
         if (options.watch) {
-          const close = watchScenario({ ...options, spec }, (result) => {
-            writer(
-              JSON.stringify(
-                options.verbose ? result : summarizeRunResult(result),
-              ),
+          const server = options.watchServer
+            ? watchServerSchema.parse(
+                JSON.parse(
+                  await (
+                    await import('node:fs/promises')
+                  ).readFile(options.watchServer, 'utf8'),
+                ),
+              )
+            : undefined;
+          const lifecycle = new AbortController();
+          let close: (() => Promise<void>) | undefined;
+          const stop = () => {
+            lifecycle.abort();
+            void close?.();
+          };
+          process.once('SIGINT', stop);
+          process.once('SIGTERM', stop);
+          try {
+            const stopWatch = await watchScenarioWithServer(
+              { ...options, spec, signal: lifecycle.signal },
+              (result) => {
+                writer(
+                  JSON.stringify(
+                    options.verbose ? result : summarizeRunResult(result),
+                  ),
+                );
+              },
+              server,
             );
-          });
-          process.once('SIGINT', () => {
-            void close();
-          });
+            close = async () => {
+              process.removeListener('SIGINT', stop);
+              process.removeListener('SIGTERM', stop);
+              await stopWatch();
+            };
+            if (lifecycle.signal.aborted) await close();
+          } catch (error) {
+            process.removeListener('SIGINT', stop);
+            process.removeListener('SIGTERM', stop);
+            throw error;
+          }
           return;
         }
         const result = await runScenario({ ...options, spec });

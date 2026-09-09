@@ -1,3 +1,4 @@
+import { watchServerSchema } from '@repro/contracts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
@@ -158,6 +159,7 @@ export function createReproMcpServer() {
     'evidence-schema': evidenceJsonSchema,
     'run-schema': runJsonSchema,
     'config-schema': configJsonSchema,
+    'watch-server-schema': z.toJSONSchema(watchServerSchema),
     'compare-composition-schema': compareCompositionJsonSchema,
     'timeline-schema': timelineJsonSchema,
     'plan-schema': planJsonSchema,

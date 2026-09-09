@@ -11,3 +11,5 @@ export * from './experiment.js';
 export * from './delivery.js';
 export { scenarioSourceIdentity } from './source-identity.js';
 export * from './migrate.js';
+
+export { startScenarioServer, watchScenarioWithServer, watchServerSchema, type WatchServerOptions } from './server.js';

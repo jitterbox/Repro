@@ -55,3 +55,5 @@ export * from './plan.js';
 export type * from './visual-cues.js';
 export * from './quality.js';
 export * from './sync-time.js';
+
+export * from './watch.js';
