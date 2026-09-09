@@ -27,7 +27,12 @@
     "test:transient": "node scripts/e2e/transient.mjs",
     "test:recipes": "node scripts/e2e/recipes.mjs",
     "test:har-privacy": "node scripts/e2e/har-privacy.mjs",
-    "test:milestone": "node scripts/e2e/milestone.mjs"
+    "test:milestone": "node scripts/e2e/milestone.mjs",
+    "test:observations": "node scripts/e2e/observations.mjs",
+    "test:watch-server": "node scripts/e2e/watch-server.mjs",
+    "test:export-cache": "node scripts/e2e/export-cache.mjs",
+    "test:delivery": "node scripts/e2e/delivery.mjs",
+    "release:pack": "node scripts/release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",

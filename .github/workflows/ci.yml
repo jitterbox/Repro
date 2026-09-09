@@ -28,6 +28,22 @@ jobs:
       - name: Builds and tests leave tracked sources unchanged
         run: git diff --exit-code
 
+  windows-processes:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@repro/core..." build
+      - name: Process-tree cancellation and crashed-writer lock recovery
+        run: pnpm --filter "@repro/core" test -- src/media.test.ts src/lock.test.ts
+
   browser-media:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -53,6 +69,10 @@ jobs:
           dpkg-query -W ffmpeg tesseract-ocr fonts-liberation > .repro/ci/system-versions.txt
       - name: Public CLI before/after proof with real pixels and strict OCR
         run: node scripts/e2e/public-workflow.mjs
+      - name: Verified export reuse and missing OCR rejection
+        run: node scripts/e2e/export-cache.mjs
+      - name: Audited Jira and ADO delivery against loopback protocol fixtures
+        run: node scripts/e2e/delivery.mjs
       - name: Real browser timing, stationary intervals, and recording ends
         run: |
           node scripts/e2e/capture-timing.mjs
@@ -73,6 +93,8 @@ jobs:
         run: node scripts/e2e/synchronization.mjs
       - name: Browser diagnostics and event-linked transient frames
         run: |
+          node scripts/e2e/observations.mjs
+          node scripts/e2e/watch-server.mjs
           node scripts/e2e/browser-diagnostics.mjs
           node scripts/e2e/transient.mjs
           node scripts/e2e/recipes.mjs
@@ -94,6 +116,10 @@ jobs:
           include-hidden-files: true
           path: |
             .repro/ci
+            .repro/delivery
+            .repro/export-cache
+            .repro/observations
+            .repro/watch-acceptance
             .repro/public-acceptance
             .repro/timing-acceptance
             .repro/timing-trace-acceptance

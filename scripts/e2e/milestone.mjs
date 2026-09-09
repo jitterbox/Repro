@@ -6,6 +6,18 @@ const root = resolve(process.env.REPRO_MILESTONE_OUT ?? '.repro/milestone');
 await mkdir(root, { recursive: true });
 const jobs = [
   ['public', 'public-workflow', { REPRO_ACCEPTANCE_OUT: join(root, 'public') }],
+  [
+    'export-cache',
+    'export-cache',
+    { REPRO_EXPORT_CACHE_OUT: join(root, 'export-cache') },
+    [join(root, 'public/acceptance.json')],
+  ],
+  [
+    'delivery',
+    'delivery',
+    { REPRO_DELIVERY_OUT: join(root, 'delivery') },
+    [join(root, 'public/acceptance.json')],
+  ],
   ['timing', 'capture-timing', { REPRO_TIMING_OUT: join(root, 'timing') }],
   [
     'timing-trace',
@@ -32,6 +44,11 @@ const jobs = [
     'browser-diagnostics',
     { REPRO_BROWSER_DIAGNOSTICS_OUT: join(root, 'diagnostics') },
   ],
+  [
+    'observations',
+    'observations',
+    { REPRO_OBSERVATIONS_OUT: join(root, 'observations') },
+  ],
   ['transient', 'transient', { REPRO_TRANSIENT_OUT: join(root, 'transient') }],
   ['recipes', 'recipes', { REPRO_RECIPES_OUT: join(root, 'recipes') }],
   [
@@ -39,6 +56,11 @@ const jobs = [
     'review',
     { REPRO_REVIEW_OUT: join(root, 'review') },
     [join(root, 'sync/acceptance.json')],
+  ],
+  [
+    'watch-server',
+    'watch-server',
+    { REPRO_WATCH_OUT: join(root, 'watch-server') },
   ],
   ['compositor', null, {}, ['--filter', '@repro/compositor', 'test']],
   ['shoplite', null, {}, ['test:e2e-fixture']],

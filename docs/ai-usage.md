@@ -662,3 +662,89 @@ Comparison video displays scenario steps separately from checkpoint numbers. Eac
 Executable plans, timelines and quality results are defined in `@repro/contracts` using Zod. The existing `plan.schema.json` remains the legacy document format; new executable plans use `executable-plan.schema.json`. Normal builds verify generated schemas without modifying tracked sources. Schema regeneration is explicit: `pnpm --filter @repro/contracts generate:schemas`. `parsePlan` and `parseTimeline` apply semantic timing checks in addition to generated structural constraints. MCP exposes `repro://plan-schema`, `repro://timeline-schema` and `repro://quality-result-schema` on demand.
 
 To materialize current defaults in an older committed run without changing it, use `repro migrate-run older-run --out-dir migrated-run`. The command requires a new directory, verifies every referenced artifact, preserves the original manifest, and publishes the new manifest last. It preserves existing outcomes; unknown identities and missing observations remain unknown. Legacy delivery-only `manifest.json` documents remain supported by their compatibility commands; they cannot acquire committed-scenario proof without recapture.
+
+## Phase 4–5 iteration and observation APIs
+
+`REPRO_OCR_WORKERS=2` is the default (valid range 1–8). Every unique output
+frame still runs both automatic and sparse Tesseract layouts; identical frame
+bytes share the result. A failed worker blocks strict export and active workers
+finish before temporary files are removed. Quality gates share identical frame
+extractions/luminance measurements within one evaluation, with two decoder jobs
+and a bounded result cache. Their result includes analysis cache-hit metrics.
+
+An unchanged `repro export` can now return `cacheHit: true`. Reuse checks input
+bytes, captions/titles/roles, report and synchronization data, privacy patterns,
+viewer files, implementation digests, tool versions and OCR model contents.
+Every output file and audit receipt is verified again. Missing/corrupt/extra
+files invalidate reuse; missing OCR still blocks strict export. A custom
+`REPRO_OCR_COMMAND` disables export reuse. The bundle-local cache record contains
+hashes only and moves with the evidence package.
+
+Publication uses SQLite transaction locks for renders, compositor assets, stages,
+exports and delivery. The OS releases these locks after a writer dies; Repro does
+not guess a lock is stale from elapsed time. Retain adjacent `.lock.sqlite` files
+while writers may be active. Older `.lock` sentinel files require inspection
+before removal. These guarantees require a local filesystem with working SQLite
+locks; do not share a writable capture/cache directory over an unreliable network
+filesystem. See [SQLite locking](https://www.sqlite.org/lockingv3.html).
+
+To keep a build server alive through watch reruns, write `server.json`:
+
+```json
+{
+  "command": "node",
+  "args": ["dev-server.mjs"],
+  "url": "http://127.0.0.1:3000",
+  "startupTimeoutMs": 30000
+}
+```
+
+Then run `repro run scenario.spec.ts --evidence evidence.json --url
+http://127.0.0.1:3000 --watch --watch-server server.json`. Arguments are passed
+directly, without a shell; optional `cwd` selects the command's working directory.
+The URL must be loopback and must not already be serving another process. If the
+Playwright config also declares that web server, set its `reuseExistingServer` to
+`true`. Keep matching controlled timezone/locale/viewport settings in that config.
+Edits cancel the previous browser run while retaining the build server. SIGINT or
+SIGTERM closes the watch session and its owned process tree. An unexpected server
+exit stops watch execution and reports an error. Its schema is also an MCP resource
+at `repro://watch-server-schema`.
+
+`await repro.visibility('checkpoint', 'target')` samples a bound target without a
+wait or interaction. Declare that target in the checkpoint and add `visibility`
+to its required observations. It records absence, attached/hidden state and
+Playwright visibility, with counts and measurement timestamps. Consecutive valid
+samples reference each other and identify appearance/disappearance. Ambiguous
+samples are unsupported. Visibility does not establish opacity, lack of occlusion,
+or continuous stability between samples; use the hit-test recipe for obstruction.
+An absent target is a valid visibility measurement, never invented geometry.
+
+`await repro.network('checkpoint', response)` records an actual Playwright
+Response. Register `page.waitForResponse(...)` before the trigger, then pass its
+result to this method. The observation includes sanitized URL, method, HTTP status
+and service-worker provenance. It excludes query strings, credentials, headers and
+bodies. Its timestamp is the observation time, not an invented arrival timestamp.
+HTTP 503 is valid evidence of a response; a separate assertion determines whether
+that response and the resulting UI satisfy the claim. Transport failures remain
+in passive browser diagnostics. `repro describe visibility --json` and
+`repro describe network --json` expose the same guidance to agents.
+
+Issue delivery snapshots MP4/PNG bytes into a private `.repro/outbox` audit
+workspace, audits that immutable copy and verifies its receipt before sending
+those exact bytes. Remote filenames use content identity rather than local source
+names. Outbox state stays outside portable evidence bundles. Retrying reconciles
+actual issue attachments and verifies downloaded bytes before declaring delivery;
+a local receipt alone cannot establish that a remote attachment still exists.
+
+Build a portable toolchain with `pnpm build` followed by
+`pnpm release:pack .repro/release`. The destination must be new. It contains all
+required Repro tarballs, a package manifest with relative dependency overrides,
+checksums and installation instructions. Move the whole directory, then run
+`pnpm install` inside it. This distribution does not require ownership of the
+`@repro` npm scope and does not publish any package. `pnpm test:clean-install`
+uses this same packer and executes installed CLI/Playwright scenarios after moving
+the bundle into an unrelated consumer directory and checking its tarball hashes.
+
+Use the managed server command's own normal rebuild/watch mode. Editing
+`server.json` requires restarting the watch session to change that process's
+launch configuration.

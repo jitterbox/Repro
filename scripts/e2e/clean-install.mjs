@@ -1,49 +1,20 @@
+import { createHash } from 'node:crypto';
+import { packRelease } from '../release.mjs';
 /** Install packed release artifacts in an unrelated project; never resolve workspace sources. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, rename, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import assert from 'node:assert/strict';
 const exec = promisify(execFile);
 const root = await mkdtemp(join(tmpdir(), 'repro-install-'));
-const tarballs = join(root, 'tarballs');
-await mkdir(tarballs);
-const overrides = {};
-for (const directory of await readdir('packages')) {
-  const pkg = JSON.parse(
-    await readFile(join('packages', directory, 'package.json'), 'utf8'),
-  );
-  if (pkg.private) continue;
-  console.log(`Packing ${pkg.name}`);
-  await exec('pnpm', ['pack', '--pack-destination', tarballs], {
-    cwd: resolve('packages', directory),
-  });
-  overrides[pkg.name] =
-    `file:${join(tarballs, pkg.name.replace('@', '').replace('/', '-') + '-' + pkg.version + '.tgz')}`;
-}
+const release = await packRelease(join(root, 'release'));
 const project = join(root, 'consumer');
-await mkdir(project);
-await writeFile(
-  join(project, 'package.json'),
-  JSON.stringify(
-    {
-      name: 'repro-clean-install-test',
-      packageManager: 'pnpm@9.15.0',
-      private: true,
-      type: 'module',
-      dependencies: {
-        '@repro/cli': overrides['@repro/cli'],
-        '@repro/playwright': overrides['@repro/playwright'],
-        '@repro/mcp': overrides['@repro/mcp'],
-        '@playwright/test': '1.62.0',
-      },
-      pnpm: { overrides },
-    },
-    null,
-    2,
-  ),
-);
+await rename(release.output, project);
+for (const [file, digest] of Object.entries(release.checksums))
+  assert.equal(createHash('sha256').update(await readFile(join(project, file))).digest('hex'), digest);
+assert.ok(Object.values(release.manifest.pnpm.overrides).every(value => value.startsWith('file:./tarballs/')));
 console.log(`Installing packed packages in ${project}`);
 await exec(
   'pnpm',

@@ -55,12 +55,20 @@ The **Phase 1–3 milestone is complete and verified locally**. The full five-ph
 
 ## Work remaining after the Phase 1–3 milestone
 
-The original five-phase scope remains. These Phase 4–5 deliverables are not claimed complete:
+The main remaining implementation items have now been delivered in the Phase 4–5
+continuation below. These acceptance/distribution items remain open:
 
-- Broader appearance/disappearance and request-observation APIs; ancestor-frame interception remains explicitly unsupported. Current main-page pointer diagnostics, measured sample-image presentation, passive request failures and all three committed recipes are implemented.
-- Shared decoded-frame analysis, bounded OCR workers, Windows process-tree cancellation validation, build-process reuse, stale-lock recovery and verified unchanged-export reuse. Strict export currently reaudits all media; the conservative opaque-mask envelope is already bounded by selector/page.
-- Wider distribution and ALM delivery acceptance, including idempotent retry/transfer tests and registry publication. The adapters/outbox, packed-package tests, MCP discovery and deterministic fixture execution are implemented.
-- A measured annotation-edit median against the Phase 1 baseline and the 50% improvement target. Earlier individual timings do not establish that performance claim.
+- Execute the newly added Windows process-tree/lock job on Windows; this host only
+  validates Linux behavior. No broad Windows capture compatibility is claimed.
+- External registry publication awaits a chosen registry/owned namespace. Portable
+  release tarballs and a relocatable installation manifest are available without it.
+- The 50% annotation-iteration improvement target lacks a recorded Phase 1 median.
+  Current unchanged-export benchmarks are reported separately, without substituting
+  them for that historical annotation baseline.
+
+Ancestor-frame interception remains explicitly unsupported as documented. Live ALM
+writes require an authorized issue destination; delivery acceptance uses real HTTP
+and strict OCR against local Jira/ADO protocol fixtures.
 
 Provenance limitations are explicit product behavior: local static imports are hashed; arbitrary runtime file reads are unknown, external dependencies are covered by reported tool versions, and build identity is caller-supplied or unknown. Older unmeasured viewport/font/source identity cannot silently qualify for verified comparison. OCR remains imperfect; strict auditing is not a guarantee that arbitrary unknown secret text is recognized.
 
@@ -97,3 +105,44 @@ Provenance limitations are explicit product behavior: local static imports are h
 - Ordinary checks: `/tmp/repro-checks107/acceptance.json` verifies that a prerequisite screenshot has no fix-proof label, the designated result does, and a caught prerequisite failure remains an unsuccessful run and cannot export. OCR checks actual stills using automatic and sparse text layouts.
 
 Temporary paths are session-local evidence. Committed acceptance scripts reproduce these checks; CI retains their outputs, including timing and fixture recordings.
+
+## Phase 4–5 continuation
+
+Implemented since milestone commit `8f3739a`:
+
+- Two bounded OCR workers (configurable 1–8), mandatory dual-layout scans,
+  deduplication before scheduling, and draining on failure. Shared invocation-local
+  frame extraction/luminance analysis bounds expensive quality decoders to two.
+- Exact unchanged-export reuse verifies the entire bundle, current OCR availability,
+  model contents, policy/input/implementation/tool/viewer identity and audit receipts.
+  Missing, corrupt and extra artifacts invalidate reuse. Cold export still audits
+  private snapshots before atomic publication.
+- SQLite transaction locks replace ad-hoc sentinel ownership for render, compositor,
+  stage, package and delivery publication. Crash recovery and competing asynchronous
+  writers pass; legacy sentinel locks remain explicitly rejected for inspection.
+- Public visibility and response observations, contracts and registry-derived agent
+  guidance. Real before/after scenarios cover absence, appearance, hidden state,
+  ambiguous targets, removal, HTTP 503/200 and sanitized network canaries.
+- Watch mode can own one persistent build server while cancelling/replacing browser
+  runs. Public CLI acceptance verifies the same server PID across two runs, fresh
+  browser localStorage each time, and owned-server shutdown.
+- Immutable audit/upload bytes and a private outbox fix delivery's source-mutation
+  window. Jira/ADO tests reconcile lost responses without duplicate attachments,
+  reject corrupted downloads and recover deleted attachments. No live issues were
+  modified. Registry selection remains a distribution decision.
+- Windows process-tree and lock recovery checks are added to CI. This Linux host
+  has not executed the Windows job.
+
+Local continuation validation passed: build, typecheck, lint, **214 tests in 90 files**,
+**27 ShopLite/media tests**, public observation/watch workflows, real OCR export
+reuse/repair/rejection, real HTTP delivery fixtures, and relocated tarball installation.
+Report: `.repro/phase45-acceptance.json`. The earlier Phase 1–3 acceptance remains
+historical. Cold strict export took **39.94 s**; three verified repeated exports had
+a median of **0.80 s**. Missing-image repair reaudited the media; missing OCR rejected
+export without replacing the valid bundle. The release contains 16 tarballs, relative
+dependency references and checked hashes at `.repro/releases/phase45`, archived as
+`.repro/releases/repro-phase45-toolchain.tgz`. A historical Phase 1 annotation median was not
+recorded, so current export/cache timings do not establish the 50% annotation
+improvement target. Release tarballs passed installation after moving the distribution to an unrelated
+consumer path and verifying every checksum. Remote Windows CI and registry
+publication have not been performed.
