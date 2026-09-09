@@ -1,112 +1,123 @@
-import { createHash } from 'node:crypto';
-import { readFile, stat } from 'node:fs/promises';
-import { mkdtemp } from 'node:fs/promises';
+import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-
-import { extractContactSheet } from '../frames.js';
-
+import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
+import { runProcess } from '@repro/core';
+import { readdir } from 'node:fs/promises';
 import type { GateResult } from '../types/gate.js';
-
 export interface DeterminismGateInput {
   readonly timelinePath?: string | undefined;
   readonly baselineTimelinePath?: string | undefined;
   readonly videoPath?: string | undefined;
   readonly baselineVideoPath?: string | undefined;
 }
-
+export function compareDecodedPng(a: Buffer, b: Buffer) {
+  const left = PNG.sync.read(a),
+    right = PNG.sync.read(b);
+  if (left.width !== right.width || left.height !== right.height)
+    throw new Error('Image dimensions differ');
+  const diff = new PNG({ width: left.width, height: left.height });
+  const changed = pixelmatch(
+    left.data,
+    right.data,
+    diff.data,
+    left.width,
+    left.height,
+    { threshold: 0.1, includeAA: true },
+  );
+  return {
+    changed,
+    total: left.width * left.height,
+    ratio: changed / (left.width * left.height),
+    diff: PNG.sync.write(diff),
+  };
+}
 export async function checkDeterminism(
   input: DeterminismGateInput,
 ): Promise<GateResult> {
   const name = 'determinism';
   const details: Record<string, unknown> = {};
-
   if (input.timelinePath && input.baselineTimelinePath) {
-    const [current, baseline] = await Promise.all([
-      readFile(input.timelinePath),
-      readFile(input.baselineTimelinePath),
-    ]);
-    const timelineIdentical = current.equals(baseline);
-    details.timelineByteIdentical = timelineIdentical;
-    if (!timelineIdentical) {
-      return {
-        name,
-        pass: false,
-        message: 'timeline.json is not byte-identical to baseline',
-        details,
-      };
-    }
-  }
-
-  if (input.videoPath && input.baselineVideoPath) {
-    const phashDistance = await contactSheetDistance(
-      input.videoPath,
-      input.baselineVideoPath,
+    details.timelineByteIdentical = (await readFile(input.timelinePath)).equals(
+      await readFile(input.baselineTimelinePath),
     );
-    details.phashDistance = phashDistance;
-    details.phashStub = true;
-    if (phashDistance > 2) {
+    if (!details.timelineByteIdentical)
       return {
         name,
         pass: false,
-        message: `Contact-sheet hash distance ${phashDistance} exceeds stub threshold 2`,
+        status: 'failed',
+        message: 'Timeline differs from baseline',
         details,
       };
+  }
+  if (input.videoPath && input.baselineVideoPath) {
+    const root = await mkdtemp(join(tmpdir(), 'repro-pixels-'));
+    try {
+      const extract = async (path: string, prefix: string) => {
+        await runProcess('ffmpeg', [
+          '-v',
+          'error',
+          '-y',
+          '-i',
+          path,
+          '-vf',
+          'fps=1',
+          join(root, `${prefix}-%06d.png`),
+        ]);
+        return (await readdir(root)).filter((p) => p.startsWith(prefix)).sort();
+      };
+      const a = await extract(input.videoPath, 'a'),
+        b = await extract(input.baselineVideoPath, 'b');
+      if (!a.length || a.length !== b.length)
+        return {
+          name,
+          pass: false,
+          status: 'failed',
+          message: 'Missing frames or unequal durations',
+        };
+      let maxRatio = 0;
+      for (let i = 0; i < a.length; i++) {
+        const result = compareDecodedPng(
+          await readFile(join(root, requireValue(a[i]))),
+          await readFile(join(root, requireValue(b[i]))),
+        );
+        maxRatio = Math.max(maxRatio, result.ratio);
+      }
+      details.maxChangedPixelRatio = maxRatio;
+      details.sampledFrames = a.length;
+      details.measurement = 'decoded-rgba-pixelmatch';
+      return {
+        name,
+        pass: maxRatio === 0,
+        status: maxRatio === 0 ? 'passed' : 'failed',
+        message:
+          maxRatio === 0 ? 'Decoded frames match' : 'Decoded frames differ',
+        details,
+      };
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   }
-
-  if (!details.timelineByteIdentical && details.phashDistance === undefined) {
+  if (!('timelineByteIdentical' in details))
     return {
       name,
-      pass: true,
-      message: 'Determinism gate skipped without baseline artifacts',
-      details: { skipped: true },
+      pass: false,
+      status: 'skipped',
+      message: 'No baseline evidence supplied',
+      details,
     };
-  }
-
   return {
     name,
     pass: true,
-    message: 'Determinism checks passed',
+    status: 'passed',
+    message: 'Timelines match',
     details,
   };
 }
 
-async function contactSheetDistance(
-  videoPath: string,
-  baselineVideoPath: string,
-): Promise<number> {
-  const [dirA, dirB] = await Promise.all([
-    mkdtemp(join(tmpdir(), 'repro-det-a-')),
-    mkdtemp(join(tmpdir(), 'repro-det-b-')),
-  ]);
-  const [framesA, framesB, statsA, statsB] = await Promise.all([
-    extractContactSheet(videoPath, dirA, 1),
-    extractContactSheet(baselineVideoPath, dirB, 1),
-    stat(videoPath),
-    stat(baselineVideoPath),
-  ]);
-
-  const hashA = createHash('sha256')
-    .update(String(statsA.size))
-    .update(String(statsA.mtimeMs))
-    .update(framesA.join('|'))
-    .digest('hex');
-  const hashB = createHash('sha256')
-    .update(String(statsB.size))
-    .update(String(statsB.mtimeMs))
-    .update(framesB.join('|'))
-    .digest('hex');
-
-  if (hashA === hashB) {
-    return 0;
-  }
-
-  let distance = 0;
-  for (let index = 0; index < hashA.length; index += 8) {
-    if (hashA.slice(index, index + 8) !== hashB.slice(index, index + 8)) {
-      distance += 1;
-    }
-  }
-  return distance;
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

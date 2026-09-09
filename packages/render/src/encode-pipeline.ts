@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
+import { runProcess, h264Profile } from '@repro/core';
 
 import { generateAss } from './ass.js';
 import { buildFilterGraph } from './filtergraph.js';
@@ -15,6 +15,8 @@ export interface TimedCompositorInput {
   readonly endMs: number;
   readonly x?: number;
   readonly y?: number;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 export interface RenderPlanInput {
@@ -35,26 +37,7 @@ export interface RenderPlanResult {
   readonly filterComplex: string;
 }
 
-const BT709_ARGS = [
-  '-c:v',
-  'libx264',
-  '-crf',
-  '18',
-  '-pix_fmt',
-  'yuv420p',
-  '-profile:v',
-  'high',
-  '-color_primaries',
-  'bt709',
-  '-color_trc',
-  'bt709',
-  '-colorspace',
-  'bt709',
-  '-color_range',
-  'tv',
-  '-movflags',
-  '+faststart',
-] as const;
+const BT709_ARGS = h264Profile;
 
 export async function probeMediaDurationMs(
   videoPath: string,
@@ -97,15 +80,15 @@ export async function renderPlan(
   );
 
   const ffmpegPath = input.ffmpegPath ?? 'ffmpeg';
-  const compositorInputs = (input.compositorInputs ?? []).map(normalizeCompositorInput);
+  const compositorInputs = (input.compositorInputs ?? []).map(
+    normalizeCompositorInput,
+  );
   const extraInputs = [
     ...(input.slatePath === undefined ? [] : [input.slatePath]),
     ...compositorInputs.map((entry) => entry.path),
   ];
-  const slateStreamIndex =
-    input.slatePath === undefined ? undefined : 1;
-  const overlayStart =
-    input.slatePath === undefined ? 1 : 2;
+  const slateStreamIndex = input.slatePath === undefined ? undefined : 1;
+  const overlayStart = input.slatePath === undefined ? 1 : 2;
   const overlays = compositorOverlays(compositorInputs, overlayStart);
   const mediaMs = await probeMediaDurationMs(input.video);
   const timeline =
@@ -132,6 +115,7 @@ export async function renderPlan(
       graph.filterComplex,
       graph.videoLabel,
       outputPath,
+      timeline.fps,
     ),
     ffmpegPath,
   });
@@ -171,8 +155,9 @@ function compositorOverlays(
 ): readonly CompositorOverlayInput[] {
   return inputs.map((entry, index) => {
     const startSec = Math.max(0, entry.startMs) / 1_000;
-    const endSec =
-      Number.isFinite(entry.endMs) ? Math.max(startSec, entry.endMs / 1_000) : undefined;
+    const endSec = Number.isFinite(entry.endMs)
+      ? Math.max(startSec, entry.endMs / 1_000)
+      : undefined;
     const enable =
       endSec === undefined
         ? `gte(t,${startSec.toFixed(3)})`
@@ -182,6 +167,8 @@ function compositorOverlays(
       enable,
       ...(entry.x === undefined ? {} : { x: entry.x }),
       ...(entry.y === undefined ? {} : { y: entry.y }),
+      ...(entry.width === undefined ? {} : { width: entry.width }),
+      ...(entry.height === undefined ? {} : { height: entry.height }),
     };
   });
 }
@@ -224,6 +211,7 @@ function ffmpegArgs(
   filterComplex: string,
   videoLabel: string,
   outputPath: string,
+  fps: number,
 ): readonly string[] {
   return [
     '-y',
@@ -236,6 +224,10 @@ function ffmpegArgs(
     videoLabel,
     '-map',
     '0:a?',
+    '-r',
+    String(fps),
+    '-fps_mode',
+    'cfr',
     ...BT709_ARGS,
     '-c:a',
     'copy',
@@ -243,29 +235,11 @@ function ffmpegArgs(
   ];
 }
 
-function runFfmpeg(input: {
+async function runFfmpeg(input: {
   readonly ffmpegPath: string;
   readonly args: readonly string[];
 }): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(input.ffmpegPath, input.args);
-    let stderr = '';
-
-    child.stderr.setEncoding('utf8');
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk;
-    });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      const exitCode = code === null ? 'unknown' : String(code);
-      reject(new Error(`ffmpeg exited with ${exitCode}: ${stderr}`));
-    });
-  });
+  await runProcess(input.ffmpegPath, input.args);
 }
 
 async function videoPreFilters(ffmpegPath: string): Promise<readonly string[]> {
@@ -296,24 +270,68 @@ function runFfmpegOutput(input: {
   readonly ffmpegPath: string;
   readonly args: readonly string[];
 }): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(input.ffmpegPath, input.args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    const chunks: Buffer[] = [];
+  return runProcess(input.ffmpegPath, input.args);
+}
 
-    child.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
-    child.on('error', reject);
-    child.on('close', (code) => {
-      const output = Buffer.concat(chunks).toString('utf8');
-
-      if (code === 0) {
-        resolve(output);
-        return;
-      }
-
-      reject(new Error(output));
-    });
+/** Burn the same cue definitions onto the exact checkpoint PNG, without motion fades. */
+export async function renderCheckpointImage(input: {
+  image: string;
+  plan: ReproPlan;
+  output: string;
+}): Promise<void> {
+  const range = { start: 0, end: 1000 };
+  const plan: ReproPlan = {
+    ...input.plan,
+    annotations: input.plan.annotations.map((annotation) => ({
+      ...annotation,
+      timeRange: range,
+      outTimeRange: range,
+    })),
+    timeline: {
+      schemaVersion: '1.0.0',
+      fps: 30,
+      beats: [
+        {
+          id: 'checkpoint',
+          kind: 'play',
+          source: 'capture',
+          captureStartMs: 0,
+          captureEndMs: 1000,
+          rate: 1,
+          outStartMs: 0,
+          outDurationMs: 1000,
+        },
+      ],
+      timeMap: {
+        kind: 'piecewise-linear',
+        knots: [
+          [0, 0],
+          [1000, 1000],
+        ],
+      },
+      warnings: [],
+    },
+  };
+  const assPath = `${input.output}.ass`;
+  await writeFile(assPath, generateAss({ plan, staticFrame: true }));
+  const graph = buildFilterGraph({ assPath, plan, progressBar: false });
+  await runFfmpeg({
+    ffmpegPath: 'ffmpeg',
+    args: [
+      '-v',
+      'error',
+      '-y',
+      '-loop',
+      '1',
+      '-i',
+      input.image,
+      '-filter_complex',
+      graph.filterComplex,
+      '-map',
+      graph.videoLabel,
+      '-frames:v',
+      '1',
+      input.output,
+    ],
   });
 }

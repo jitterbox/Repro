@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import type { annotationComponentSchema } from './annotation-component.js';
 export const SCHEMA_NAMES = [
   'event',
   'config',
@@ -91,31 +93,7 @@ export interface AnnotationTarget {
   evidenceRef?: string;
 }
 
-export type AnnotationComponent =
-  | 'target-ring'
-  | 'leader'
-  | 'plate'
-  | 'callout'
-  | 'step-badge'
-  | 'progress-rail'
-  | 'chapter'
-  | 'console-toast'
-  | 'pause-badge'
-  | 'speed-chip'
-  | 'click-ripple'
-  | 'cursor-path'
-  | 'keystroke-pill'
-  | 'layout-shift-pair'
-  | 'hit-target-guide'
-  | 'hidden-ghost'
-  | 'stacking-labels'
-  | 'roi-magnifier'
-  | 'freeze-banner'
-  | 'vitals-hud'
-  | 'redaction'
-  | 'outcome-pair'
-  | 'slate'
-  | 'delta-caption';
+export type AnnotationComponent = z.infer<typeof annotationComponentSchema>;
 
 export interface ReproAnnotation {
   id: string;
@@ -128,7 +106,8 @@ export interface ReproAnnotation {
   outTimeRange?: TimeRange;
   target?: AnnotationTarget;
   label?: string;
-  shape?: 'rect' | 'ellipse' | 'underline' | 'arrow' | 'line' | 'badge' | 'none';
+  shape?:
+    'rect' | 'ellipse' | 'underline' | 'arrow' | 'line' | 'badge' | 'none';
   icon?: string;
   lineStyle?: 'solid' | 'dashed' | 'dotted';
   priority?: number;
@@ -156,4 +135,4 @@ export interface ValidationResult {
   errors?: string[];
 }
 
-export const REPRO_CONTRACTS_VERSION = '0.0.0' as const;
+export const REPRO_CONTRACTS_VERSION = '0.1.0' as const;

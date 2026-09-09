@@ -16,9 +16,11 @@ describe('filtergraph builder', () => {
 
     expect(graph.filterComplex).toContain('fps=30');
     expect(graph.filterComplex).toContain('split=');
-    expect(graph.filterComplex).toContain('concat=n=');
+    expect(graph.filterComplex).toContain('interleave=nb_inputs=');
     expect(graph.filterComplex).toContain('loop=loop=');
-    expect(graph.filterComplex).not.toContain('tpad=');
+    // Quantization padding is bounded by each published segment's frame count.
+    expect(graph.filterComplex).toContain('trim=end_frame=30');
+    expect(graph.filterComplex).toContain('trim=end_frame=49');
     expect(graph.filterComplex).toContain("ass='/tmp/overlay.ass'");
     expect(graph.filterComplex).toContain('xfade=transition=fade');
     expect(graph.filterComplex).toContain('[2:v]overlay=x=10:y=20');
@@ -26,9 +28,9 @@ describe('filtergraph builder', () => {
 
     const fpsAt = graph.filterComplex.indexOf('fps=30');
     const assAt = graph.filterComplex.indexOf("ass='/tmp/overlay.ass'");
-    const concatAt = graph.filterComplex.indexOf('concat=');
-    expect(fpsAt).toBeLessThan(concatAt);
-    expect(concatAt).toBeLessThan(assAt);
+    const mergeAt = graph.filterComplex.indexOf('interleave=');
+    expect(fpsAt).toBeLessThan(mergeAt);
+    expect(mergeAt).toBeLessThan(assAt);
   });
 
   it('places pixel redaction before fps normalisation and ASS', () => {
@@ -40,9 +42,8 @@ describe('filtergraph builder', () => {
       },
     });
 
-    expect(graph.filterComplex).toContain('color=c=black:s=1280x720');
-    expect(graph.filterComplex).toContain('maskedmerge');
-    expect(graph.filterComplex.indexOf('maskedmerge')).toBeLessThan(
+    expect(graph.filterComplex).toContain('color=black@1:t=fill');
+    expect(graph.filterComplex.indexOf('color=black@1:t=fill')).toBeLessThan(
       graph.filterComplex.indexOf('fps=30'),
     );
     expect(graph.filterComplex.indexOf('fps=30')).toBeLessThan(

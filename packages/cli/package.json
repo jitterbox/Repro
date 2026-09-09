@@ -1,7 +1,6 @@
 {
   "name": "@repro/cli",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "bin": {
     "repro": "./dist/bin.js"
@@ -9,7 +8,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -22,17 +22,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/alm": "workspace:*",
-    "@repro/capture": "workspace:*",
-    "@repro/compare": "workspace:*",
-    "@repro/compositor": "workspace:*",
-    "@repro/contracts": "workspace:*",
-    "@repro/core": "workspace:*",
-    "@repro/evaluation": "workspace:*",
-    "@repro/plan": "workspace:*",
-    "@repro/render": "workspace:*",
-    "@repro/vault": "workspace:*",
     "commander": "^13.1.0",
-    "zod": "^4.4.3"
+    "zod": "4.4.3",
+    "@repro/pipeline": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

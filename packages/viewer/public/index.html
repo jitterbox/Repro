@@ -31,15 +31,23 @@
           data-viewer-compare-toggle
           hidden
           role="group"
-          aria-label="Compare side"
+          aria-label="Comparison layout"
         >
           <button
             type="button"
-            data-compare-side="a"
+            data-compare-side="both"
             aria-pressed="true"
+            aria-label="Show side by side"
+          >
+            Side by side
+          </button>
+          <button
+            type="button"
+            data-compare-side="a"
+            aria-pressed="false"
             aria-label="Show before side"
           >
-            A
+            Before
           </button>
           <button
             type="button"
@@ -47,14 +55,39 @@
             aria-pressed="false"
             aria-label="Show after side"
           >
-            B
+            After
           </button>
+          <label
+            >View
+            <select data-compare-layout aria-label="Comparison view">
+              <option value="side-by-side">Side by side</option>
+              <option value="onion">Onion</option>
+              <option value="wipe">Wipe</option>
+              <option value="difference">Difference</option>
+              <option value="edge">Edges</option>
+            </select></label
+          >
+          <label
+            ><input type="checkbox" data-compare-independent />Independent
+            presentation timing</label
+          >
         </div>
         <span data-viewer-state aria-live="polite">Loading report...</span>
       </section>
 
       <section class="media" aria-labelledby="media-title">
         <h1 id="media-title">Evidence replay</h1>
+        <p data-compare-timing aria-live="off"></p>
+        <svg width="0" height="0" aria-hidden="true">
+          <filter id="portable-edges">
+            <feColorMatrix type="saturate" values="0" />
+            <feConvolveMatrix
+              order="3"
+              kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1"
+              preserveAlpha="true"
+            />
+          </filter>
+        </svg>
         <div class="video-shell" data-repro-video-shell>
           <video
             controls
@@ -70,7 +103,11 @@
             preload="metadata"
             hidden
             aria-hidden="true"
-          ></video>
+            tabindex="0"
+            aria-label="After evidence video"
+          >
+            <track kind="captions" srclang="en" label="After captions" />
+          </video>
         </div>
         <div
           class="scrubber"
@@ -96,6 +133,8 @@
           aria-label="Timeline chapters"
         ></div>
       </section>
+
+      <section data-viewer-stills aria-label="Checkpoint images"></section>
 
       <aside class="panel" aria-labelledby="review-title">
         <h2 id="review-title">Review notes</h2>

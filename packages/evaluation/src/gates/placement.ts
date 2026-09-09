@@ -3,12 +3,7 @@ import type { PlanAnnotation, PlanDocument } from './plan-types.js';
 import { bboxHeight, bboxWidth } from './plan-io.js';
 
 const CENTRE_BAN_RADIUS_PX = 120;
-const CENTER_ALLOWED = new Set([
-  'chapter',
-  'slate',
-  'outcome',
-  'outcome-pair',
-]);
+const CENTER_ALLOWED = new Set(['chapter', 'slate', 'outcome', 'outcome-pair']);
 
 export interface PlacementGateInput {
   readonly plan?: PlanDocument | undefined;
@@ -72,7 +67,10 @@ function plateCentre(
     };
   }
 
-  if (annotation.placement?.x !== undefined && annotation.placement?.y !== undefined) {
+  if (
+    annotation.placement?.x !== undefined &&
+    annotation.placement.y !== undefined
+  ) {
     return { x: annotation.placement.x, y: annotation.placement.y };
   }
 

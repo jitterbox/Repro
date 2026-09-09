@@ -1,9 +1,9 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import { denyByDefaultHarPolicy } from '@repro/render';
+import { denyByDefaultHarPolicy } from '@repro/core/redactor';
 
-import type { HarRedactionPolicy } from '@repro/render';
+import type { HarRedactionPolicy } from '@repro/core/redactor';
 
 export interface HarSanitizerOptions {
   readonly allowedHeaders?: readonly string[];
@@ -36,6 +36,9 @@ export function sanitizeHar<T>(
 ): T {
   const clone = jsonClone(har);
   const entries = harEntries(clone);
+  for (const page of arrayFrom(recordFrom(recordFrom(clone).log).pages))
+    page.title = redactedValue(options);
+  stripComments(clone);
 
   for (const entry of entries) {
     sanitizeEntry(entry, options);
@@ -60,6 +63,17 @@ export async function sanitizeHarFile(
   }
 }
 
+// HAR comments are unrestricted prose and can contain request values or failures.
+function stripComments(value: unknown): void {
+  if (Array.isArray(value)) {
+    for (const item of value) stripComments(item);
+    return;
+  }
+  if (!isRecord(value)) return;
+  delete value.comment;
+  for (const child of Object.values(value)) stripComments(child);
+}
+
 function sanitizeEntry(
   entry: MutableRecord,
   options: HarSanitizerOptions,
@@ -68,11 +82,37 @@ function sanitizeEntry(
   const response = recordFrom(entry.response);
   const url = stringFrom(request.url);
 
+  request.url = sanitizeUrl(url, options);
+  request.cookies = [];
+  response.cookies = [];
+  if (typeof response.redirectURL === 'string')
+    response.redirectURL = sanitizeUrl(response.redirectURL, options);
   sanitizeHeaders(request, options);
   sanitizeHeaders(response, options);
   sanitizeQuery(request, options);
   sanitizeRequestBody(request, url, options);
   sanitizeResponseBody(response, url, options);
+}
+
+function sanitizeUrl(raw: string, options: HarSanitizerOptions): string {
+  if (!raw) return raw;
+  try {
+    const url = new URL(raw);
+    if (!['http:', 'https:'].includes(url.protocol))
+      return redactedValue(options);
+    url.username = '';
+    url.password = '';
+    url.hash = '';
+    for (const name of [...url.searchParams.keys()]) {
+      if (OAUTH_QUERY_NAMES.has(name.toLowerCase()))
+        url.searchParams.delete(name);
+      else if (!allowedName(name, options.allowedQueryParams))
+        url.searchParams.set(name, redactedValue(options));
+    }
+    return url.toString();
+  } catch {
+    return redactedValue(options);
+  }
 }
 
 function sanitizeHeaders(
@@ -180,8 +220,10 @@ function allowedName(
   allowedNames: readonly string[] | undefined,
 ): boolean {
   const normalized = name.toLowerCase();
-  return allowedNames?.some((allowed) => allowed.toLowerCase() === normalized)
-    ?? false;
+  return (
+    allowedNames?.some((allowed) => allowed.toLowerCase() === normalized) ??
+    false
+  );
 }
 
 function urlAllowed(

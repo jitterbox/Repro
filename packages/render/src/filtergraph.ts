@@ -7,6 +7,8 @@ export interface CompositorOverlayInput {
   readonly x?: number;
   readonly y?: number;
   readonly enable?: string;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 /** @deprecated Use CompositorOverlayInput. */
@@ -38,7 +40,7 @@ export function buildFilterGraph(input: BuildFilterGraphInput): FilterGraph {
   const chains: string[] = [];
   let current = '[0:v]';
   let labelIndex = 0;
-  const fps = input.fps ?? input.timeline?.fps ?? input.plan.timeline?.fps ?? 30;
+  const fps = input.fps ?? input.timeline?.fps ?? input.plan.timeline.fps;
   const timeline = input.timeline ?? input.plan.timeline;
 
   const preFilters = input.videoPreFilters ?? [];
@@ -93,12 +95,10 @@ export function buildFilterGraph(input: BuildFilterGraphInput): FilterGraph {
     chains.push(
       `[${String(input.slateStreamIndex)}:v]scale=${String(width)}:` +
         `${String(height)},format=yuva420p,fps=${String(fps)},` +
-        `loop=loop=${String(holdFrames)}:size=1,` +
+        `trim=end_frame=1,loop=loop=${String(holdFrames - 1)}:size=1,` +
         `setpts=N/${String(fps)}/TB${slateRaw}`,
     );
-    chains.push(
-      `${slateRaw}settb=1/${String(fps)}${slateLabel}`,
-    );
+    chains.push(`${slateRaw}settb=1/${String(fps)}${slateLabel}`);
     chains.push(
       `${current}fps=${String(fps)},settb=1/${String(fps)},` +
         `setpts=PTS-STARTPTS${bodyTimed}`,
@@ -149,7 +149,10 @@ function buildTimeSurgery(
   readonly nextLabelIndex: number;
 } {
   const captureBeats = timeline.beats.filter(
-    (beat) => beat.source === 'capture' && beat.kind !== 'insert',
+    (beat) =>
+      beat.source === 'capture' &&
+      beat.kind !== 'insert' &&
+      outputFrames(beat.outStartMs, beat.outDurationMs, fps) > 0,
   );
 
   if (captureBeats.length === 0) {
@@ -171,21 +174,28 @@ function buildTimeSurgery(
 
   const bodyLabels: string[] = [];
   for (let i = 0; i < captureBeats.length; i += 1) {
-    const beat = captureBeats[i]!;
-    const src = splitOuts[i]!;
+    const beat = requireValue(captureBeats[i]);
+    const src = requireValue(splitOuts[i]);
     const out = `[b${String(labelIndex)}_${String(i)}]`;
     bodyLabels.push(out);
+    // Quantize absolute boundaries, not each duration independently. Otherwise
+    // sub-frame rounding accumulates across long sequences of reading holds.
+    const frames = outputFrames(beat.outStartMs, beat.outDurationMs, fps);
+    // Supply one terminal frame to establish the last frame's end time. The
+    // final CFR trim removes this sentinel, including before slate transitions.
+    const segmentFrames = frames + (i === captureBeats.length - 1 ? 1 : 0);
+    const firstBeat = requireValue(captureBeats[0]);
+    const firstFrame =
+      Math.round((beat.outStartMs * fps) / 1000) -
+      Math.round((firstBeat.outStartMs * fps) / 1000);
+    const presentationPts = `setpts=(N+${String(firstFrame)})/${String(fps)}/TB`;
 
     if (beat.kind === 'hold') {
-      const at = (beat.captureAtMs ?? 0) / 1_000;
-      const frames = Math.max(
-        1,
-        Math.round((beat.outDurationMs / 1_000) * fps),
-      );
-      const end = at + 1 / fps;
+      const at = Math.floor(((beat.captureAtMs ?? 0) / 1_000) * fps);
       chains.push(
-        `${src}trim=${String(at)}:${String(end)},setpts=PTS-STARTPTS,` +
-          `loop=loop=${String(frames)}:size=1,setpts=N/${String(fps)}/TB${out}`,
+        `${src}trim=start_frame=${String(at)}:end_frame=${String(at + 1)},setpts=PTS-STARTPTS,` +
+          `trim=end_frame=1,loop=loop=${String(segmentFrames - 1)}:size=1,` +
+          `${presentationPts}${out}`,
       );
       continue;
     }
@@ -193,25 +203,28 @@ function buildTimeSurgery(
     const start = (beat.captureStartMs ?? 0) / 1_000;
     const end = (beat.captureEndMs ?? beat.captureStartMs ?? 0) / 1_000;
     const rate = beat.rate > 0 ? beat.rate : 1;
-    if (Math.abs(rate - 1) < 1e-6) {
-      chains.push(
-        `${src}trim=${String(start)}:${String(end)},` +
-          `setpts=PTS-STARTPTS${out}`,
-      );
-    } else {
-      const factor = 1 / rate;
-      chains.push(
-        `${src}trim=${String(start)}:${String(end)},` +
-          `setpts=${String(factor)}*(PTS-STARTPTS)${out}`,
-      );
-    }
+    // CFR sampling and one source-frame of tail padding cover quantization at
+    // either trim edge (also after slow motion). Bound every segment to its
+    // published frame interval before concatenation.
+    chains.push(
+      `${src}trim=start_frame=${String(Math.floor(start * fps))}:end_frame=${String(Math.max(Math.floor(start * fps) + 1, Math.ceil(end * fps)))},` +
+        `setpts=${String(1 / rate)}*(PTS-STARTPTS),` +
+        `tpad=stop_mode=clone:stop_duration=${String(2 / fps / Math.min(1, rate))},` +
+        `fps=${String(fps)},trim=end_frame=${String(segmentFrames)},${presentationPts}${out}`,
+    );
   }
 
   const concatOut = label(labelIndex);
   labelIndex += 1;
+  const lastBeat = requireValue(captureBeats.at(-1));
+  const bodyFrames =
+    Math.round(((lastBeat.outStartMs + lastBeat.outDurationMs) * fps) / 1000) -
+    Math.round((requireValue(captureBeats[0]).outStartMs * fps) / 1000);
   chains.push(
-    `${bodyLabels.join('')}concat=n=${String(bodyLabels.length)}:v=1:a=0` +
-      `${concatOut}`,
+    // concat estimates a zero duration for a one-frame video segment. Merge
+    // explicitly timestamped segments instead, retaining every output frame.
+    `${bodyLabels.join('')}interleave=nb_inputs=${String(bodyLabels.length)}:duration=longest,fps=${String(fps)},trim=end_frame=${String(bodyFrames)},settb=1/${String(fps)}` +
+      concatOut,
   );
 
   return {
@@ -219,6 +232,17 @@ function buildTimeSurgery(
     output: concatOut,
     nextLabelIndex: labelIndex,
   };
+}
+
+function outputFrames(
+  startMs: number,
+  durationMs: number,
+  fps: number,
+): number {
+  return (
+    Math.round(((startMs + durationMs) / 1000) * fps) -
+    Math.round((startMs / 1000) * fps)
+  );
 }
 
 function hasProgressRail(plan: ReproPlan): boolean {
@@ -236,29 +260,29 @@ function overlayChain(
   const y = overlay.y ?? 0;
   const enable =
     overlay.enable === undefined ? '' : `:enable='${overlay.enable}'`;
+  const source = `[${String(overlay.streamIndex)}:v]`;
+  const scaled = `[overlayScaled${String(overlay.streamIndex)}]`;
+  const resize =
+    overlay.width !== undefined && overlay.height !== undefined
+      ? `${source}scale=${String(overlay.width)}:${String(overlay.height)},setsar=1${scaled};`
+      : '';
   return (
-    `${current}[${String(overlay.streamIndex)}:v]overlay=x=${String(x)}` +
+    resize +
+    `${current}${resize ? scaled : source}overlay=x=${String(x)}` +
     `:y=${String(y)}${enable}${next}`
   );
 }
 
 function progressFilters(plan: ReproPlan, timeline: Timeline): string {
-  const duration = Math.max(
-    timelineDurationSeconds(timeline, plan),
-    0.001,
-  );
+  const duration = Math.max(timelineDurationSeconds(timeline, plan), 0.001);
   const width = `min(iw,iw*t/${String(duration)})`;
-  const box =
-    `drawbox=x=0:y=ih-4:w='${width}':h=4:color=white@0.75:t=fill`;
+  const box = `drawbox=x=0:y=ih-4:w='${width}':h=4:color=white@0.75:t=fill`;
   return box;
 }
 
-function timelineDurationSeconds(
-  timeline: Timeline,
-  plan: ReproPlan,
-): number {
+function timelineDurationSeconds(timeline: Timeline, plan: ReproPlan): number {
   if (timeline.beats.length > 0) {
-    const last = timeline.beats[timeline.beats.length - 1]!;
+    const last = requireValue(timeline.beats[timeline.beats.length - 1]);
     return (last.outStartMs + last.outDurationMs) / 1_000;
   }
   return plan.metadata.durationMs / 1_000;
@@ -270,4 +294,10 @@ function label(index: number): string {
 
 function quote(value: string): string {
   return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

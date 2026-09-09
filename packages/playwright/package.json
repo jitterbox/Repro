@@ -1,0 +1,38 @@
+{
+  "name": "@repro/playwright",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./reporter": {
+      "types": "./dist/reporter.d.ts",
+      "import": "./dist/reporter.js",
+      "default": "./dist/reporter.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run src --passWithNoTests",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@repro/capture": "workspace:*",
+    "@repro/core": "workspace:*",
+    "@repro/contracts": "workspace:*",
+    "@repro/pipeline": "workspace:*",
+    "@playwright/test": "1.62.0",
+    "@axe-core/playwright": "4.13.0",
+    "@repro/probe": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

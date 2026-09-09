@@ -2,81 +2,12 @@ import type { AnnotationComponent } from '@repro/contracts';
 
 import type { AnnotationBox } from './types.js';
 
-export interface VisualCueDocument {
-  readonly schemaVersion: '1.0.0';
-  readonly id: string;
-  readonly component: AnnotationComponent;
-  readonly severity: AnnotationBox['severity'];
-  readonly outTimeRange: { readonly start: number; readonly end: number };
-  readonly renderer: 'ass' | 'compositor';
-  readonly layer: number;
-  readonly accessibilityText?: string;
-  readonly evidenceRef?: string;
-  readonly step?: {
-    readonly index: number;
-    readonly total: number;
-    readonly title: string;
-  };
-  readonly console?: {
-    readonly level: 'error' | 'warn' | 'info' | 'log';
-    readonly message: string;
-  };
-  readonly layoutShift?: {
-    readonly before: {
-      readonly x: number;
-      readonly y: number;
-      readonly width: number;
-      readonly height: number;
-    };
-    readonly after: {
-      readonly x: number;
-      readonly y: number;
-      readonly width: number;
-      readonly height: number;
-    };
-    readonly dx?: number;
-    readonly dy?: number;
-    readonly dw?: number;
-    readonly dh?: number;
-  };
-  readonly outcome?: {
-    readonly expected: string;
-    readonly actual: string;
-  };
-  readonly roi?: {
-    readonly source: {
-      readonly x: number;
-      readonly y: number;
-      readonly width: number;
-      readonly height: number;
-    };
-    readonly magnification: number;
-  };
-  readonly delta?: {
-    readonly class:
-      | 'geometry'
-      | 'color'
-      | 'typography'
-      | 'content'
-      | 'visibility'
-      | 'flow';
-    readonly caption: string;
-  };
-  readonly plate?: {
-    readonly kicker?: string;
-    readonly label?: string;
-    readonly measurement?: string;
-  };
-  readonly anchor?: {
-    readonly bbox?: {
-      readonly x: number;
-      readonly y: number;
-      readonly w: number;
-      readonly h: number;
-    };
-    readonly selector?: string;
-  };
-}
+import {
+  parseVisualCue,
+  type VisualCueDocument,
+  type VisualCueDraft,
+} from '@repro/contracts';
+export type { VisualCueDocument } from '@repro/contracts';
 
 const LAYER_BY_COMPONENT: Partial<Record<AnnotationComponent, number>> = {
   redaction: 2,
@@ -100,11 +31,11 @@ export function annotationsToVisualCues(
 ): readonly VisualCueDocument[] {
   return annotations.flatMap((annotation) => {
     const cue = toVisualCue(annotation);
-    return cue === undefined ? [] : [cue];
+    return cue === undefined ? [] : [parseVisualCue(cue)];
   });
 }
 
-function toVisualCue(annotation: AnnotationBox): VisualCueDocument | undefined {
+function toVisualCue(annotation: AnnotationBox): VisualCueDraft | undefined {
   const component = annotation.component;
   if (component === undefined) {
     return undefined;
@@ -122,7 +53,7 @@ function toVisualCue(annotation: AnnotationBox): VisualCueDocument | undefined {
           ...(selector === undefined ? {} : { selector }),
         };
   const plate = compactPlate(annotation.plate);
-  const base: VisualCueDocument = {
+  const base: VisualCueDraft = {
     schemaVersion: '1.0.0',
     id: annotation.id,
     component,
@@ -259,7 +190,7 @@ function parseStep(
   return {
     index,
     total,
-    title: match[3]?.trim() || label,
+    title: match[3]?.trim() ? match[3].trim() : label,
   };
 }
 

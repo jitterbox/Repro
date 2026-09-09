@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import {
-  AnnotationSchema,
-  ReproConfigSchema,
-} from '@repro/core';
+import { AnnotationSchema, ReproConfigSchema } from './config.js';
 
 import type { CapabilityDescriptor } from './types.js';
 
@@ -23,9 +20,7 @@ export const capabilityDescriptorSchema = z.object({
         engine: z.enum(['chromium', 'firefox', 'webkit']),
         minVersion: z.string(),
         maxVersion: z.string().optional(),
-        platforms: z
-          .array(z.enum(['linux', 'macos', 'windows']))
-          .optional(),
+        platforms: z.array(z.enum(['linux', 'macos', 'windows'])).optional(),
       }),
     )
     .min(1),
@@ -56,15 +51,13 @@ export const capabilityDescriptorSchema = z.object({
   description: z.string().optional(),
 });
 
-/** Re-export runtime config schema from @repro/core. */
+/** Re-export runtime config schema from the contracts package. */
 export const reproConfigSchema = ReproConfigSchema;
 
-/** Re-export runtime annotation schema from @repro/core. */
+/** Re-export runtime annotation schema from the contracts package. */
 export const reproAnnotationSchema = AnnotationSchema;
 
-export function parseCapabilityDescriptor(
-  data: unknown,
-): CapabilityDescriptor {
+export function parseCapabilityDescriptor(data: unknown): CapabilityDescriptor {
   return capabilityDescriptorSchema.parse(data) as CapabilityDescriptor;
 }
 
@@ -99,7 +92,7 @@ const bboxSchema = z.object({
   h: z.number().min(0),
 });
 
-const visualCueBaseSchema = z.object({
+export const visualCueBaseSchema = z.object({
   schemaVersion: z.literal('1.0.0'),
   id: z.string().min(1),
   severity: z.enum(['info', 'low', 'medium', 'warn', 'high', 'critical']),

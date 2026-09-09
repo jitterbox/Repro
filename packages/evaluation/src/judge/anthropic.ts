@@ -24,10 +24,12 @@ export function anthropicJudge(options: AnthropicJudgeOptions): VideoJudge {
 
   const model = options.model ?? DEFAULT_MODEL;
   const votes = options.votes ?? DEFAULT_VOTES;
-  const cacheDir = options.cacheDir ?? join(process.cwd(), '.repro', 'judge-cache');
+  const cacheDir =
+    options.cacheDir ?? join(process.cwd(), '.repro', 'judge-cache');
 
   return {
-    assess: (input) => assessWithCache(input, { ...options, model, votes, cacheDir }),
+    assess: (input) =>
+      assessWithCache(input, { ...options, model, votes, cacheDir }),
   };
 }
 
@@ -72,7 +74,9 @@ async function majorityVerdict(
     verdicts.reduce((total, verdict) => total + verdict.score, 0) /
     verdicts.length;
 
-  const findings = dedupeFindings(verdicts.flatMap((verdict) => verdict.findings));
+  const findings = dedupeFindings(
+    verdicts.flatMap((verdict) => verdict.findings),
+  );
   const summary = verdicts.map((verdict) => verdict.summary).join(' | ');
 
   return { pass, score, summary, findings };
@@ -150,7 +154,7 @@ function parseVerdict(text: string): JudgeVerdict {
   const parsed = JSON.parse(jsonMatch[0]) as Partial<JudgeVerdict>;
   return {
     pass: Boolean(parsed.pass),
-    score: clamp01(Number(parsed.score ?? 0)),
+    score: clamp01(parsed.score ?? 0),
     summary: typeof parsed.summary === 'string' ? parsed.summary : 'No summary',
     findings: Array.isArray(parsed.findings)
       ? parsed.findings.flatMap((finding) => {
@@ -163,7 +167,7 @@ function parseVerdict(text: string): JudgeVerdict {
             return [
               {
                 message: record.message,
-                confidence: clamp01(Number(record.confidence ?? 0.5)),
+                confidence: clamp01(record.confidence ?? 0.5),
               },
             ];
           }
@@ -200,7 +204,10 @@ function clamp01(value: number): number {
 }
 
 interface AnthropicResponse {
-  readonly content: readonly { readonly type: string; readonly text?: string }[];
+  readonly content: readonly {
+    readonly type: string;
+    readonly text?: string;
+  }[];
 }
 
 interface JudgeFindingRecord {

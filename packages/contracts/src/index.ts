@@ -20,11 +20,7 @@ export {
   type ValidationResult,
 } from './types.js';
 
-export {
-  getSchemasDir,
-  getValidator,
-  validateAgainst,
-} from './validate.js';
+export { getSchemasDir, getValidator, validateAgainst } from './validate.js';
 
 export {
   capabilityDescriptorSchema,
@@ -47,3 +43,15 @@ export {
   type OverlayColorName,
   type OverlayTheme,
 } from './generated/overlay-theme.js';
+
+export * from './evidence.js';
+export * from './registry.js';
+export * from './comparison.js';
+export * from './timeline.js';
+
+export { configJsonSchema } from './config.js';
+
+export * from './plan.js';
+export type * from './visual-cues.js';
+export * from './quality.js';
+export * from './sync-time.js';

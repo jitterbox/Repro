@@ -113,3 +113,31 @@ function sampleHar() {
     },
   };
 }
+
+it('removes secrets duplicated in URL credentials, queries, fragments, cookies and redirects', () => {
+  const secret = 'repro-canary-secret-hidden';
+  const har = {
+    log: {
+      entries: [
+        {
+          request: {
+            url: `https://user:${secret}@example.test/?access_token=${secret}&q=${secret}#${secret}`,
+            cookies: [{ name: 'session', value: secret }],
+          },
+          response: {
+            cookies: [{ name: 'session', value: secret }],
+            redirectURL: `https://example.test/?code=${secret}`,
+          },
+        },
+      ],
+    },
+  };
+  expect(JSON.stringify(sanitizeHar(har))).not.toContain(secret);
+});
+
+it('redacts page titles, opaque URL payloads and unrestricted HAR comments', () => {
+  const har = {log: {pages: [{title: 'private-page'}], comment: 'private-comment', entries: [{request: {url: 'data:text/plain,private-url', comment: 'nested-private'}, response: {}}]}};
+  const output = JSON.stringify(sanitizeHar(har));
+  expect(output).not.toContain('private');
+  expect(output).toContain('[redacted]');
+});

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "moving-privacy",
+  "title": "Private contact stays masked through motion, scrolling and a popup",
+  "variant": {
+    "id": "protected",
+    "role": "standalone",
+    "label": "Privacy reference"
+  },
+  "claim": "Measured selector masks protect untouched fields across page changes",
+  "expected": "The contact field remains present in each documented state",
+  "targets": [
+    { "id": "private-field", "description": "Untouched contact field" }
+  ],
+  "steps": [
+    { "id": "prepare", "title": "Open the untouched contact field" },
+    { "id": "move", "title": "Move the contact field", "trigger": true },
+    {
+      "id": "scroll",
+      "title": "Scroll the field into a new viewport position"
+    },
+    { "id": "popup", "title": "Open the contact field in a popup" }
+  ],
+  "checkpoints": [
+    {
+      "id": "untouched",
+      "step": "prepare",
+      "title": "Untouched field",
+      "targets": ["private-field"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    },
+    {
+      "id": "moved",
+      "step": "move",
+      "title": "Moved field",
+      "targets": ["private-field"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    },
+    {
+      "id": "scrolled",
+      "step": "scroll",
+      "title": "Scrolled field",
+      "targets": ["private-field"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    },
+    {
+      "id": "popup",
+      "step": "popup",
+      "title": "Popup field",
+      "targets": ["private-field"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    }
+  ],
+  "outputs": ["png", "mp4", "review", "package"],
+  "privacy": {
+    "strict": true,
+    "selectors": ["#secret"],
+    "patterns": ["moving.canary@example.test"]
+  }
+}

@@ -15,13 +15,17 @@ export default tseslint.config(
       },
     },
     rules: {
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports' },
       ],
     },
   },
+  // Legacy adapters deliberately consume the deprecated contracts retained for compatibility.
+  { files: ['packages/contracts/src/plan.ts', 'packages/plan/src/{features,planner,types}.ts', 'packages/render/src/{voiceover,filtergraph}.ts'], rules: { '@typescript-eslint/no-deprecated': 'off' } },
+  { files: ['**/*.config.ts', 'packages/playwright/examples/*.ts'], languageOptions: { parserOptions: { projectService: false, project: './tsconfig.tools.json' } } },
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.mjs'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/*.mjs', '**/.repro/**', '**/test-results/**', 'eslint.config.js'],
   },
 );

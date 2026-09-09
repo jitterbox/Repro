@@ -24,11 +24,11 @@ Artifacts live under `docs/spike-artifacts/`.
 
 **Results.**
 
-| Surface | Observed |
-| --- | --- |
-| DOM overlay | Present in `page.screenshot` (`overlay-dom.png`) |
+| Surface                 | Observed                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| DOM overlay             | Present in `page.screenshot` (`overlay-dom.png`)                                                                       |
 | CDP inspector highlight | Requires `DOM.enable` first; highlight geometry is available as data; screenshot artifact written as `overlay-cdp.png` |
-| `page.screencast` API | Present in Playwright 1.62 (`playwrightScreencastApi: true`) |
+| `page.screencast` API   | Present in Playwright 1.62 (`playwrightScreencastApi: true`)                                                           |
 
 **Decision.** Prefer closed shadow-DOM / probe overlays for guaranteed capture
 compositing. Treat CDP inspector overlays as non-authoritative for burned-in
@@ -68,19 +68,23 @@ chained `crop`/`boxblur`/`overlay` stages?
 
 **Method.** `scripts/spikes/redaction-bench.sh` on 1280×720@30 for 4s.
 
-| Path | Wall time |
-| --- | ---: |
-| `maskedmerge` + `gblur` | 1.378s |
-| chained N=1 | 0.888s |
-| chained N=5 | 1.017s |
-| chained N=20 | 1.638s |
-| `maskedmerge` + `pixelize` | 0.901s |
+| Path                       | Wall time |
+| -------------------------- | --------: |
+| `maskedmerge` + `gblur`    |    1.378s |
+| chained N=1                |    0.888s |
+| chained N=5                |    1.017s |
+| chained N=20               |    1.638s |
+| `maskedmerge` + `pixelize` |    0.901s |
 
-**Decision.** Use **one** mask video + `maskedmerge`. Prefer **pixelize** for
-irreversible redaction; keep `gblur` only for non-secret emphasis. Do not scale
-filtergraphs linearly with region count. Expand masks to a full-width viewport
-band during scroll + 200ms trailing window (implemented in render redaction
-filters).
+**Superseded decision.** The benchmark originally selected one mask video plus
+`maskedmerge` and pixelation. The moving-field canary corpus later demonstrated
+readable residual text in that output despite an OCR pass; pixelation cannot be
+treated as irreversible redaction. Production now uses opaque `drawbox` fills
+with outward rounding and input-resolution scaling. Actual pixel tests cover
+untouched, moved, scrolled and popup fields, with an unmasked export rejection.
+The benchmark remains historical performance evidence, not privacy acceptance.
+Optimizing large numbers of opaque regions remains work to do without weakening
+full pixel replacement.
 
 ## 4. rrweb overhead + overlay exclusion
 
@@ -135,7 +139,17 @@ page CSP/Trusted Types.
 
 1. Probe/DOM overlays for burned-in viz; CDP geometry as data.
 2. JPEG SOF dimension assertion is mandatory.
-3. Pixel redaction uses mask video + `maskedmerge` (+ pixelize for secrets).
+3. Privacy redaction replaces measured regions with opaque pixels; OCR is an additional gate, not proof that pixelated text is unreadable.
 4. rrweb must block `[data-repro-overlay]`.
 5. BT.709 limited-range encode path is explicit, not assumed.
 6. Multi-page = multi-timeline + deterministic cuts.
+
+## Native screencast acceptance (Playwright 1.62.0)
+
+Decision: retain CDP as the production default. `repro experiment-native --out-dir <dir>` uses identical pages and real popups with each capture owner independently. It separately exercises no tracing, DOM snapshot tracing, and screenshot-enabled tracing; registrations are awaited before fixture actions. The experiment is deliberately not a promotion switch.
+
+The latest implementation-host run passed all three CDP cases. Native passed snapshot tracing but rejected a 960×720 popup frame in the plain case and an 800×450 main-page frame with screenshot tracing, against the required 1280×720 viewport. Earlier runs also observed intermittent CDP popup rejections. All attempts remain diagnostic evidence; a subsequent pass does not erase an earlier failure. Rejected frame reports now retain page identity, source-relative time, actual dimensions and drop counts.
+
+Screenshot-enabled tracing shares Playwright's screencast and can override requested dimensions; see [Playwright Screencast.start](https://playwright.dev/docs/api/class-screencast#screencast-start). Repro-owned traces now request DOM snapshots without screenshots so the evidence recorder owns pixel capture. Actual applied settings are recorded in `environment.reproTracing`. External Playwright tracing/video configuration can still introduce another capture owner and must be considered separately.
+
+A public CLI scenario with snapshot tracing preserved stationary intervals, a brief color change and the recording end; transition errors were 30–42 ms, within two frames at 30 FPS. Damaged copies of its decoded frame sequence (compressed holds, missing brief interval, truncated ending) were rejected. This does not establish native clean-pixel parity or an overhead advantage; promotion remains deferred. Frame tables, traces and experiment reports remain local diagnostic artifacts.

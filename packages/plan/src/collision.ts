@@ -223,8 +223,7 @@ function isBottomBand(annotation: AnnotationBox): boolean {
 
 function beatKey(annotation: AnnotationBox): string {
   return (
-    annotation.beatId ??
-    `${String(Math.floor(annotation.timeRange.start / 100))}`
+    annotation.beatId ?? String(Math.floor(annotation.timeRange.start / 100))
   );
 }
 
@@ -274,10 +273,7 @@ function placementCandidates(
   if (target === null) {
     // Unanchored HUD chips — park in corners, never centre
     return [
-      clampRect(
-        { ...annotation.bounds, x: inset, y: inset },
-        viewport,
-      ),
+      clampRect({ ...annotation.bounds, x: inset, y: inset }, viewport),
       clampRect(
         {
           ...annotation.bounds,
@@ -396,7 +392,12 @@ function below(target: Rect, width: number, height: number, gap: number): Rect {
   };
 }
 
-function leftOf(target: Rect, width: number, height: number, gap: number): Rect {
+function leftOf(
+  target: Rect,
+  width: number,
+  height: number,
+  gap: number,
+): Rect {
   return {
     height,
     width,

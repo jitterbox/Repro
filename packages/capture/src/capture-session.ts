@@ -1,26 +1,31 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { maskTrackerScript } from './mask-tracker.js';
+import { mkdir, writeFile, readdir } from 'node:fs/promises';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 
-import { getProbeInitScript } from '@repro/probe';
+import { getProbeInitScript, sampleDocumentClock } from '@repro/probe';
 import {
   REPRO_CORE_VERSION,
   MonotonicClockBridge,
   ReproStore,
   cacheKey,
+  implementationDigest,
   writeStageAtomic,
 } from '@repro/core';
-import { createPresidioLikeRedactor } from '@repro/render';
+import { createPresidioLikeRedactor } from '@repro/core/redactor';
 import { chromium } from 'playwright';
 
 import { captureAnchor } from './anchors.js';
-import { startCdpTelemetry } from './cdp-telemetry.js';
+import { startBrowserDiagnostics } from './browser-diagnostics.js';
 import { collectEnvironmentManifest } from './environment.js';
 import { StoreEventSink } from './events.js';
 import { sanitizeHarFile } from './har.js';
 import {
   applyProfileToContext,
   applyProfileToPage,
+  verifyPageProfile,
   contextOptionsForProfile,
 } from './profiles.js';
 import { MultiPageTracker } from './multipage.js';
@@ -45,7 +50,7 @@ import type {
   StageManifest,
   Viewport,
 } from '@repro/core';
-import type { StreamRedactor } from '@repro/render';
+import type { StreamRedactor } from '@repro/core/redactor';
 import type { CaptureProfileOptions } from './profiles.js';
 
 export interface CaptureSessionOptions {
@@ -102,7 +107,7 @@ interface ExperimentalActionScreencast {
   readonly showChapter?: (title: string) => Promise<void> | void;
 }
 
-const REPRO_CAPTURE_STAGE_VERSION = '0.0.0';
+const REPRO_CAPTURE_STAGE_VERSION = '0.1.0';
 
 export class CaptureSession {
   readonly #clock: MonotonicClockBridge;
@@ -117,12 +122,14 @@ export class CaptureSession {
   readonly #storePath: string | undefined;
   readonly #tracePath: string | undefined;
   #completed = false;
+  #storeClosed = false;
   #harFinalized = false;
   #harRecording = false;
   #resources: CaptureResources | undefined;
   #screencasts: PageScreencast[] = [];
   #stageWrite: CaptureStageWrite | undefined;
   #telemetry: CdpTelemetry[] = [];
+  readonly #redactionErrors = new Set<string>();
   #traceStarted = false;
   #traceStopped = false;
   #tracker: MultiPageTracker | undefined;
@@ -150,6 +157,7 @@ export class CaptureSession {
       this.#runId,
       this.#clock,
       redactorFromOptions(options),
+      this.#config.profile === 'controlled',
     );
   }
 
@@ -186,25 +194,38 @@ export class CaptureSession {
   }
 
   async start(): Promise<void> {
-    await this.#prepareArtifactDirectories();
-    this.#store.markStage({
-      name: 'capture',
-      runId: this.#runId,
-      status: 'running',
-    });
+    try {
+      await this.#prepareArtifactDirectories();
+      this.#store.markStage({
+        name: 'capture',
+        runId: this.#runId,
+        status: 'running',
+      });
 
-    this.#resources = await this.#createResources();
-    await this.#installContextHooks();
-    await this.#installHarStub();
-    await this.#startTracing();
-    this.#startTracker();
+      this.#resources = await this.#createResources();
+      await this.#installContextHooks();
+      await this.#installHarStub();
+      await this.#startTracing();
+      this.#startTracker();
+      await this.#tracker?.ready();
 
-    if (this.#options.url !== undefined) {
-      await this.page.goto(this.#options.url);
+      if (this.#options.url !== undefined) {
+        await this.page.goto(this.#options.url);
+      }
+
+      await this.#calibrateClock(this.page);
+      await this.#writeEnvironmentManifest('start');
+    } catch (error) {
+      try {
+        await this.fail(error);
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [error, cleanupError],
+          'Capture initialization failed and cleanup reported another error',
+        );
+      }
+      throw error;
     }
-
-    await this.#calibrateClock(this.page);
-    await this.#writeEnvironmentManifest('start');
   }
 
   async complete(): Promise<CaptureRunResult> {
@@ -212,20 +233,27 @@ export class CaptureSession {
       return this.#result();
     }
 
+    await this.#tracker?.ready();
     await this.#stopCaptureResources();
+    if (this.#redactionErrors.size)
+      throw new Error(
+        `Redaction capture incomplete: ${[...this.#redactionErrors].join('; ')}`,
+      );
     await this.#writeEnvironmentManifest('complete');
     await this.#closeResources();
     await this.#finalizeHar();
-    this.#stageWrite = await this.#writeCaptureStage();
     this.#store.markStage({
-      cacheKey: this.#stageWrite.cacheKey,
+      cacheKey: captureStageCacheKey({
+        config: this.#config,
+        ...(this.#options.url ? { url: this.#options.url } : {}),
+      }),
       completedAtEpoch: Date.now(),
-      manifestPath: this.#stageWrite.manifestPath,
       name: 'capture',
       runId: this.#runId,
       status: 'complete',
     });
-    this.#store.close();
+    this.#closeStore();
+    this.#stageWrite = await this.#writeCaptureStage();
     this.#completed = true;
     return this.#result();
   }
@@ -235,17 +263,19 @@ export class CaptureSession {
       return;
     }
 
-    this.#sink.emitEvent({
-      kind: 'capture.error',
-      pageId: this.#primaryPageId(),
-      payload: { message: errorMessage(error) },
-    });
-    this.#store.markStage({
-      completedAtEpoch: Date.now(),
-      name: 'capture',
-      runId: this.#runId,
-      status: 'failed',
-    });
+    if (!this.#storeClosed) {
+      this.#sink.emitEvent({
+        kind: 'capture.error',
+        pageId: this.#resources ? this.#primaryPageId() : 'page-1',
+        payload: { message: errorMessage(error) },
+      });
+      this.#store.markStage({
+        completedAtEpoch: Date.now(),
+        name: 'capture',
+        runId: this.#runId,
+        status: 'failed',
+      });
+    }
     await this.dispose();
   }
 
@@ -254,11 +284,14 @@ export class CaptureSession {
       return;
     }
 
-    await this.#stopCaptureResources();
-    await this.#closeResources();
-    await this.#finalizeHar();
-    this.#store.close();
-    this.#completed = true;
+    try {
+      await this.#stopCaptureResources();
+    } finally {
+      await this.#closeResources();
+      if (!this.#storeClosed) await this.#finalizeHar();
+      this.#closeStore();
+      this.#completed = true;
+    }
   }
 
   markActionOwningPage(page: Page): void {
@@ -269,7 +302,8 @@ export class CaptureSession {
     this.#tracker?.markFocusedPage(page);
   }
 
-  emitEditorialCut(reason: string): void {
+  async emitEditorialCut(reason: string): Promise<void> {
+    await this.#tracker?.ready();
     this.#tracker?.emitEditorialCut(reason);
   }
 
@@ -294,7 +328,10 @@ export class CaptureSession {
     selector: string,
     extra: Readonly<Record<string, unknown>> = {},
   ): Promise<void> {
-    const box = await this.page.locator(selector).boundingBox().catch(() => null);
+    const box = await this.page
+      .locator(selector)
+      .boundingBox()
+      .catch(() => null);
     this.emitSemantic(kind, {
       selector,
       ...(box === null
@@ -323,10 +360,6 @@ export class CaptureSession {
   }
 
   async showChapter(title: string, stepId?: string): Promise<void> {
-    if (this.#config.features.steps !== true) {
-      return;
-    }
-
     this.#sink.emitEvent({
       kind: 'step.chapter',
       pageId: this.#primaryPageId(),
@@ -348,13 +381,23 @@ export class CaptureSession {
     }
   }
 
-  captureAnchor(
+  /** Call before acting on a newly opened page so capture owns it first. */
+  async ready(page: Page = this.page): Promise<string> {
+    const pageId = this.#pageIdFor(page);
+    await this.#tracker?.ready();
+    await this.#calibrateClock(page);
+    return pageId;
+  }
+
+  async captureAnchor(
     page: Page,
     label: string,
     boundary: AnchorBoundary,
   ): Promise<AnchorRecord> {
+    await this.ready(page);
     return captureAnchor({
       boundary,
+      now: () => this.#clock.nowMono(),
       directory: join(this.#outputDir, 'anchors'),
       label,
       page,
@@ -369,18 +412,24 @@ export class CaptureSession {
     }
 
     const browser = this.#options.browser ?? (await chromium.launch());
-    const context = await browser.newContext(this.#contextOptions());
-    this.#harRecording = true;
-    const page = this.#options.page ?? (await context.newPage());
-
-    return {
-      browser,
-      context,
-      ownedBrowser: this.#options.browser === undefined,
-      ownedContext: true,
-      ownedPage: this.#options.page === undefined,
-      page,
-    };
+    let context: BrowserContext | undefined;
+    try {
+      context = await browser.newContext(this.#contextOptions());
+      this.#harRecording = true;
+      const page = this.#options.page ?? (await context.newPage());
+      return {
+        browser,
+        context,
+        ownedBrowser: this.#options.browser === undefined,
+        ownedContext: true,
+        ownedPage: this.#options.page === undefined,
+        page,
+      };
+    } catch (error) {
+      await context?.close();
+      if (!this.#options.browser) await browser.close();
+      throw error;
+    }
   }
 
   #contextOptions(): BrowserContextOptions {
@@ -414,22 +463,26 @@ export class CaptureSession {
       resources.context,
       profileOptions(this.#options, this.#config),
     );
+    await resources.context.addInitScript(
+      `window.__REPRO_RRWEB__ = ${String(this.#config.capture?.rrweb === true)};`,
+    );
     await resources.context.addInitScript(getProbeInitScript());
+    await resources.context.addInitScript(
+      maskTrackerScript(this.#config.redaction?.masks ?? []),
+    );
     await resources.context.exposeBinding('__reproEmit', (...args) => {
       this.#emitProbeEvent(args);
     });
   }
 
   async #installHarStub(): Promise<void> {
-    if (
-      this.#options.harStubPath === undefined ||
-      this.#config.profile !== 'controlled'
-    ) {
+    const harPath = this.#options.harStubPath ?? this.#config.capture?.har;
+    if (harPath === undefined || this.#config.profile !== 'controlled') {
       return;
     }
 
-    await this.context.routeFromHAR(this.#options.harStubPath, {
-      notFound: 'fallback',
+    await this.context.routeFromHAR(harPath, {
+      notFound: 'abort',
     });
   }
 
@@ -439,7 +492,9 @@ export class CaptureSession {
     }
 
     await this.context.tracing.start({
-      screenshots: true,
+      // Tracing screenshots share Playwright's screencast and can change its size.
+      // Repro owns the pixels; tracing keeps DOM snapshots and action diagnostics.
+      screenshots: false,
       snapshots: true,
     });
     this.#traceStarted = true;
@@ -457,25 +512,23 @@ export class CaptureSession {
   }
 
   async #startPageCapture(registration: PageRegistration): Promise<void> {
+    this.#telemetry.push(startBrowserDiagnostics(registration.page, registration.pageId, this.#sink));
     await applyProfileToPage(
       registration.page,
       profileOptions(this.#options, this.#config),
     );
-    await registration.page
-      .setViewportSize({
-        height: this.#config.viewport.height,
-        width: this.#config.viewport.width,
-      })
-      .catch(() => undefined);
-    this.#telemetry.push(
-      await startCdpTelemetry({
-        page: registration.page,
-        pageId: registration.pageId,
-        sink: this.#sink,
-      }),
+    await registration.page.setViewportSize({
+      height: this.#config.viewport.height,
+      width: this.#config.viewport.width,
+    });
+    await verifyPageProfile(
+      registration.page,
+      profileOptions(this.#options, this.#config),
     );
+    await this.#calibrateClock(registration.page);
     const screencast = await this.#screencastFor(registration);
     this.#screencasts.push(screencast);
+    await screencast.ready();
     await this.#showActions(registration.page);
   }
 
@@ -511,14 +564,25 @@ export class CaptureSession {
   }
 
   async #calibrateClock(page: Page): Promise<void> {
-    const timeOrigin = await page.evaluate(() => performance.timeOrigin);
-    this.#clock.calibrate(timeOrigin);
-    this.#sink.emitEvent({
-      kind: 'clock.calibrated',
-      pageId: this.#pageIdFor(page),
-      payload: { timeOrigin },
-      tMono: this.#clock.nowMono(),
-    });
+    for (const frame of page.frames()) {
+      if (frame.isDetached()) continue;
+      const started = this.#clock.nowMono();
+      const { timeOrigin, now, documentId } =
+        await frame.evaluate(sampleDocumentClock);
+      const ended = this.#clock.nowMono();
+      const sample = {
+        pageNowMs: now,
+        runTimeMs: (started + ended) / 2,
+        uncertaintyMs: (ended - started) / 2,
+      };
+      this.#clock.calibrate(timeOrigin, documentId, sample);
+      this.#sink.emitEvent({
+        kind: 'clock.calibrated',
+        pageId: this.#pageIdFor(page),
+        payload: { timeOrigin, documentId, ...sample, method: 'page-sampled' },
+        tMono: this.#clock.nowMono(),
+      });
+    }
   }
 
   async #writeEnvironmentManifest(phase: 'start' | 'complete'): Promise<void> {
@@ -542,21 +606,47 @@ export class CaptureSession {
     const resources = this.#requiredResources();
     const browser = resources.browser ?? resources.context.browser();
 
-    return collectEnvironmentManifest({
+    const environment = await collectEnvironmentManifest({
       ...(browser === null ? {} : { browser }),
       page: resources.page,
       viewport: this.#config.viewport,
     });
+    return {
+      ...environment,
+      reproTracing: {
+        started: this.#traceStarted,
+        screenshots: false,
+        snapshots: this.#traceStarted,
+      },
+    };
   }
 
   async #stopCaptureResources(): Promise<void> {
     this.#tracker?.stop();
 
-    await Promise.all(this.#screencasts.map((screencast) => screencast.stop()));
-    await Promise.all(this.#telemetry.map((telemetry) => telemetry.dispose()));
+    // Registration may still be acquiring a screencast when initialization fails.
+    const failures: unknown[] = [];
+    try {
+      await this.#tracker?.ready();
+    } catch (error) {
+      failures.push(error);
+    }
+    const captures = await Promise.allSettled(
+      this.#screencasts.map((screencast) => screencast.stop()),
+    );
+    const telemetry = await Promise.allSettled(
+      this.#telemetry.map((item) => item.dispose()),
+    );
+    for (const result of [...captures, ...telemetry])
+      if (result.status === 'rejected') failures.push(result.reason);
     await this.#stopTracing();
     this.#screencasts = [];
     this.#telemetry = [];
+    if (failures.length)
+      throw new AggregateError(
+        failures,
+        'Capture resources did not complete cleanly',
+      );
   }
 
   async #stopTracing(): Promise<void> {
@@ -620,7 +710,7 @@ export class CaptureSession {
       ...(this.#options.url === undefined ? {} : { url: this.#options.url }),
     });
     const manifest = captureStageManifest({
-      artifacts: this.#stageArtifacts(),
+      artifacts: await this.#stageArtifacts(),
       cacheKey: key,
       config: this.#config,
       ...(this.#options.url === undefined ? {} : { url: this.#options.url }),
@@ -637,10 +727,19 @@ export class CaptureSession {
     };
   }
 
-  #stageArtifacts(): readonly string[] {
+  async #stageArtifacts(): Promise<readonly string[]> {
+    const files: string[] = [];
+    for (const folder of ['frames', 'anchors']) {
+      const root = join(this.#outputDir, folder);
+      for (const name of await readdir(root, { recursive: true }).catch(
+        () => [] as string[],
+      ))
+        if (/\.(jpg|png|json)$/.test(name)) files.push(join(root, name));
+    }
     return [
+      ...files,
       this.#environmentPath(),
-      this.#harPath,
+      ...(this.#harRecording ? [this.#harPath] : []),
       ...(this.#storePath === undefined ? [] : [this.#storePath]),
       ...(this.#tracePath === undefined ? [] : [this.#tracePath]),
     ];
@@ -660,8 +759,15 @@ export class CaptureSession {
   }
 
   #emitProbeEvent(args: readonly unknown[]): void {
+    if (this.#storeClosed || this.#completed) return;
     const source = args[0] as BindingSourceLike | undefined;
     const payload = jsonValueFrom(args[1]);
+    if (isRecord(payload) && payload.type === 'redaction.error')
+      this.#redactionErrors.add(
+        typeof payload.message === 'string'
+          ? payload.message
+          : 'Unknown redaction measurement failure',
+      );
     const page = source?.page;
     const pageNowMs = pageNowFromPayload(payload);
 
@@ -671,6 +777,12 @@ export class CaptureSession {
         page === undefined ? this.#primaryPageId() : this.#pageIdFor(page),
       payload,
       ...(pageNowMs === undefined ? {} : { pageNowMs }),
+      ...(isRecord(payload) && typeof payload.timeOrigin === 'number'
+        ? { pageTimeOriginMs: payload.timeOrigin }
+        : {}),
+      ...(isRecord(payload) && typeof payload.documentId === 'string'
+        ? { documentId: payload.documentId }
+        : {}),
     });
   }
 
@@ -715,6 +827,13 @@ export class CaptureSession {
     };
   }
 
+  #closeStore(): void {
+    if (!this.#storeClosed) {
+      this.#store.close();
+      this.#storeClosed = true;
+    }
+  }
+
   #environmentPath(): string {
     return join(this.#outputDir, 'environment.json');
   }
@@ -741,13 +860,26 @@ export async function runCapture(
     await options.run?.(session);
     return await session.complete();
   } catch (error) {
-    await session.fail(error);
+    try {
+      await session.fail(error);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        'Capture failed and cleanup reported another error',
+      );
+    }
     throw error;
   }
 }
 
 function configFromOptions(options: CaptureSessionOptions): ReproConfig {
   if (options.config !== undefined) {
+    if (options.config.surfaceCapture === 'os')
+      throw new Error('Unsupported capture backend: os');
+    if (options.config.capture?.backend === 'native')
+      throw new Error(
+        'Native capture is experimental and unavailable; select cdp',
+      );
     return options.config;
   }
 
@@ -769,6 +901,7 @@ export function captureStageCacheKey(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
+      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
     },
     versions: captureStageVersions(),
   });
@@ -787,6 +920,7 @@ export function captureStageManifest(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
+      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
     },
     stage: 'capture',
     versions: captureStageVersions(),
@@ -809,6 +943,11 @@ function profileOptions(
   return {
     profile: config.profile,
     viewport: config.viewport,
+    freezeTimeEpoch: config.capture?.date ?? 1704067200000,
+    seed: config.capture?.seed ?? 1,
+    locale: config.capture?.locale ?? 'en-US',
+    timezone: config.capture?.timezone ?? 'UTC',
+    blockServiceWorkers: config.capture?.serviceWorkers !== 'allow',
     ...(options.blockServiceWorkers === undefined
       ? {}
       : { blockServiceWorkers: options.blockServiceWorkers }),
@@ -856,7 +995,7 @@ function actionScreencastFrom(
   const screencast = record.screencast;
 
   return screencast !== null && typeof screencast === 'object'
-    ? (screencast)
+    ? screencast
     : undefined;
 }
 
@@ -864,6 +1003,12 @@ function captureStageVersions(): Record<string, string> {
   return {
     '@repro/capture': REPRO_CAPTURE_STAGE_VERSION,
     '@repro/core': REPRO_CORE_VERSION,
+    captureImplementation: implementationDigest(
+      new URL('./index.js', import.meta.url).href,
+    ),
+    probeImplementation: implementationDigest(
+      createRequire(import.meta.url).resolve('@repro/probe'),
+    ),
   };
 }
 

@@ -151,7 +151,7 @@ describe('ShopLite feature-coverage videos', () => {
       });
       await assertVideo(annotated.videoPath);
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ label?: string }>;
+        annotations: { label?: string }[];
       };
       expect(plan.annotations.length).toBeGreaterThan(0);
     });
@@ -360,7 +360,7 @@ describe('ShopLite feature-coverage videos', () => {
       expect(result.layouts.difference.length).toBeGreaterThan(0);
       expect(result.layouts.edgeOverlay.length).toBeGreaterThan(0);
       expect(result.geometryDeltas.length).toBeGreaterThan(0);
-      expect(result.composition.sync.anchors?.length ?? 0).toBeGreaterThan(0);
+      expect(result.composition?.sync.anchors?.length ?? 0).toBeGreaterThan(0);
       expect(result.compareVideoPaths?.length).toBe(5);
       for (const path of result.compareVideoPaths ?? []) {
         await assertVideo(path);
@@ -423,7 +423,7 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ component?: string }>;
+        annotations: { component?: string }[];
       };
       expect(
         plan.annotations.some((item) => item.component === 'cursor-path'),
@@ -453,7 +453,7 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ component?: string }>;
+        annotations: { component?: string }[];
       };
       expect(
         plan.annotations.some((item) => item.component === 'hit-target-guide'),
@@ -480,7 +480,7 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ component?: string }>;
+        annotations: { component?: string }[];
       };
       expect(
         plan.annotations.some((item) => item.component === 'stacking-labels'),
@@ -510,7 +510,7 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ component?: string }>;
+        annotations: { component?: string }[];
       };
       expect(
         plan.annotations.some((item) => item.component === 'pause-badge'),
@@ -542,7 +542,7 @@ describe('ShopLite feature-coverage videos', () => {
         videoPath: capture.videoPath,
       });
       const plan = JSON.parse(await readFile(annotated.planPath, 'utf8')) as {
-        annotations: Array<{ shape?: string }>;
+        annotations: { shape?: string }[];
       };
       expect(plan.annotations.length).toBeGreaterThan(0);
       await assertVideo(annotated.videoPath);
@@ -556,7 +556,8 @@ describe('ShopLite feature-coverage videos', () => {
       profile: 'controlled',
       surfaceCapture: 'page',
       viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
-      features: { steps: true, specCard: true },
+      features: { steps: true, specCard: true, redaction:true },
+      redaction:{strict:true,masks:['[data-testid="input-email"]','[data-testid="input-ssn"]']},
       metadata: { bugId: 'PKG-001', specTitle: 'package-quality' },
     };
 

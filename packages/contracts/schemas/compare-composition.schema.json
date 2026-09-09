@@ -1,17 +1,10 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/compare-composition.schema.json",
-  "title": "ReproCompareComposition",
-  "description": "Written by `repro compare`, consumed by `repro render-compare`. Replaces the six raw ffmpeg filter strings returned by compareRepros(). The composite frame is the product.",
+  "title": "Repro comparison composition",
+  "description": "Structural comparison contract. parseCompareComposition additionally validates pane roles, strictly increasing synchronization, measured ROI bounds and explicit blink opt-in.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "readOnly": true,
   "type": "object",
-  "required": [
-    "schemaVersion",
-    "layout",
-    "panes",
-    "sync",
-    "output"
-  ],
-  "additionalProperties": false,
   "properties": {
     "schemaVersion": {
       "type": "string",
@@ -19,6 +12,119 @@
     },
     "bugId": {
       "type": "string"
+    },
+    "presentation": {
+      "readOnly": true,
+      "type": "object",
+      "properties": {
+        "steps": {
+          "readOnly": true,
+          "type": "array",
+          "items": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "before",
+                  "after"
+                ]
+              },
+              "index": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "trigger": {
+                "type": "boolean"
+              },
+              "startMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "endMs": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "role",
+              "index",
+              "title",
+              "trigger",
+              "startMs",
+              "endMs"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "outcomes": {
+          "readOnly": true,
+          "type": "array",
+          "items": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "before",
+                  "after"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "expected": {
+                "type": "string",
+                "minLength": 1
+              },
+              "observed": {
+                "type": "string",
+                "minLength": 1
+              },
+              "atMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "observationRefs": {
+                "readOnly": true,
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "role",
+              "label",
+              "expected",
+              "observed",
+              "atMs",
+              "observationRefs"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "steps",
+        "outcomes"
+      ],
+      "additionalProperties": false
     },
     "layout": {
       "type": "string",
@@ -33,154 +139,189 @@
       ]
     },
     "layoutReason": {
-      "type": "string",
-      "description": "geometry->onion, color/type->wipe, content/flow->side-by-side, sub-8px->cropped-roi. Printed on the slate."
+      "type": "string"
     },
     "output": {
+      "readOnly": true,
       "type": "object",
+      "properties": {
+        "width": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "height": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fps": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "filename": {
+          "type": "string",
+          "pattern": "^[^/\\\\\\u0000]+\\.mp4$"
+        }
+      },
       "required": [
         "width",
         "height",
         "fps"
       ],
-      "properties": {
-        "width": {
-          "type": "integer"
-        },
-        "height": {
-          "type": "integer"
-        },
-        "fps": {
-          "type": "integer"
-        },
-        "filename": {
-          "type": "string"
-        }
-      }
+      "additionalProperties": false
     },
     "panes": {
+      "readOnly": true,
       "type": "object",
+      "properties": {
+        "a": {
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "runId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "build": {
+              "type": "string"
+            },
+            "viewport": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "color": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            }
+          },
+          "required": [
+            "runId",
+            "role",
+            "label"
+          ],
+          "additionalProperties": false
+        },
+        "b": {
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "runId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "build": {
+              "type": "string"
+            },
+            "viewport": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "color": {
+              "type": "string",
+              "enum": [
+                "before",
+                "after"
+              ]
+            }
+          },
+          "required": [
+            "runId",
+            "role",
+            "label"
+          ],
+          "additionalProperties": false
+        }
+      },
       "required": [
         "a",
         "b"
       ],
-      "properties": {
-        "a": {
-          "type": "object",
-          "required": [
-            "runId",
-            "role",
-            "label"
-          ],
-          "properties": {
-            "runId": {
-              "type": "string"
-            },
-            "role": {
-              "type": "string",
-              "enum": [
-                "before",
-                "after"
-              ]
-            },
-            "label": {
-              "type": "string"
-            },
-            "build": {
-              "type": "string"
-            },
-            "viewport": {
-              "type": "object"
-            },
-            "color": {
-              "type": "string",
-              "enum": [
-                "before",
-                "after"
-              ]
-            }
-          }
-        },
-        "b": {
-          "type": "object",
-          "required": [
-            "runId",
-            "role",
-            "label"
-          ],
-          "properties": {
-            "runId": {
-              "type": "string"
-            },
-            "role": {
-              "type": "string",
-              "enum": [
-                "before",
-                "after"
-              ]
-            },
-            "label": {
-              "type": "string"
-            },
-            "build": {
-              "type": "string"
-            },
-            "viewport": {
-              "type": "object"
-            },
-            "color": {
-              "type": "string",
-              "enum": [
-                "before",
-                "after"
-              ]
-            }
-          }
-        }
-      }
+      "additionalProperties": false
     },
     "sync": {
+      "readOnly": true,
       "type": "object",
-      "required": [
-        "strategy",
-        "knots"
-      ],
       "properties": {
         "strategy": {
           "type": "string",
           "enum": [
             "anchored-dtw",
             "anchors-only",
-            "dtw-only"
-          ],
-          "default": "anchored-dtw"
+            "dtw-only",
+            "anchors-with-image-fallback"
+          ]
         },
         "anchors": {
+          "readOnly": true,
           "type": "array",
           "items": {
+            "readOnly": true,
             "type": "object",
+            "properties": {
+              "stepId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "aMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "outMs": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
             "required": [
               "stepId",
               "aMs",
               "bMs"
             ],
-            "properties": {
-              "stepId": {
-                "type": "string"
-              },
-              "aMs": {
-                "type": "number"
-              },
-              "bMs": {
-                "type": "number"
-              },
-              "outMs": {
-                "type": "number"
-              }
-            }
+            "additionalProperties": false
           }
         },
         "band": {
+          "readOnly": true,
           "type": "object",
           "properties": {
             "kind": {
@@ -189,65 +330,103 @@
             },
             "radiusMs": {
               "type": "number",
-              "default": 250
+              "minimum": 0
             }
-          }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
         },
         "signature": {
-          "type": "string",
-          "default": "luma-32x18",
-          "description": "Downscaled frame signature DTW runs on between anchors."
+          "type": "string"
         },
         "maxStretch": {
           "type": "number",
-          "default": 2.5
+          "exclusiveMinimum": 0
         },
         "knots": {
+          "readOnly": true,
           "type": "array",
-          "description": "[aMs, bMs, outMs, confidence] — the syncMap. Shared by encoder, viewer dual player and quality gate.",
           "items": {
+            "readOnly": true,
             "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            ],
             "minItems": 4,
-            "maxItems": 4,
-            "items": {
-              "type": "number"
-            }
+            "maxItems": 4
           }
         },
         "lowConfidenceSpans": {
+          "readOnly": true,
           "type": "array",
           "items": {
+            "readOnly": true,
             "type": "object",
             "properties": {
               "outStartMs": {
-                "type": "number"
+                "type": "number",
+                "minimum": 0
               },
               "outEndMs": {
-                "type": "number"
+                "type": "number",
+                "minimum": 0
               },
               "confidence": {
-                "type": "number"
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
               }
-            }
-          },
-          "description": "Rendered as DRIFT ticks on the shared rail rather than silently warped."
+            },
+            "required": [
+              "outStartMs",
+              "outEndMs",
+              "confidence"
+            ],
+            "additionalProperties": false
+          }
         }
-      }
+      },
+      "required": [
+        "strategy",
+        "knots"
+      ],
+      "additionalProperties": false
     },
     "onion": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "beforeOpacity": {
           "type": "number",
-          "default": 0.45
+          "minimum": 0,
+          "maximum": 1
         },
         "ghostRing": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "wipe": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "axis": {
@@ -255,58 +434,88 @@
           "enum": [
             "vertical",
             "horizontal"
-          ],
-          "default": "vertical"
+          ]
         },
         "animate": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         },
         "restAt": {
           "type": "number",
-          "default": 0.5
+          "minimum": 0,
+          "maximum": 1
         },
         "restForMs": {
-          "type": "integer",
-          "default": 1000
+          "type": "number",
+          "minimum": 0
         }
-      }
+      },
+      "additionalProperties": false
     },
     "croppedRoi": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "rect": {
-          "type": "object"
+          "readOnly": true,
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0
+            },
+            "w": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "h": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "w",
+            "h"
+          ],
+          "additionalProperties": false
         },
         "magnification": {
           "type": "number",
-          "default": 2.5
+          "exclusiveMinimum": 0
         }
-      }
+      },
+      "additionalProperties": false
     },
     "blink": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "hz": {
           "type": "number",
-          "maximum": 2,
-          "default": 2
+          "exclusiveMinimum": 0,
+          "maximum": 2
         },
         "optIn": {
           "type": "boolean",
           "const": true
         }
       },
-      "description": "Never a default. Emits an a11y warning into the manifest whenever used."
+      "required": [
+        "optIn"
+      ],
+      "additionalProperties": false
     },
     "deltas": {
+      "readOnly": true,
       "type": "array",
       "items": {
+        "readOnly": true,
         "type": "object",
-        "required": [
-          "selector",
-          "class"
-        ],
         "properties": {
           "selector": {
             "type": "string"
@@ -359,30 +568,35 @@
               "after"
             ]
           }
-        }
+        },
+        "required": [
+          "selector",
+          "class"
+        ],
+        "additionalProperties": false
       }
     },
     "chrome": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "sharedRail": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         },
         "driftTicks": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         },
         "legend": {
           "type": "string"
         },
         "stepCounter": {
-          "type": "boolean",
-          "default": true
+          "type": "boolean"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "a11y": {
+      "readOnly": true,
       "type": "object",
       "properties": {
         "blinkUsed": {
@@ -390,9 +604,19 @@
         },
         "maxFlashHz": {
           "type": "number",
+          "minimum": 0,
           "maximum": 2
         }
-      }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "required": [
+    "schemaVersion",
+    "layout",
+    "output",
+    "panes",
+    "sync"
+  ],
+  "additionalProperties": false
 }

@@ -14,9 +14,15 @@ export interface ShopliteServer {
 export async function startShopliteServer(): Promise<ShopliteServer> {
   const root = join(getRepoRoot(), 'apps/shoplite');
   const server = await createServer({
+    // Vite's config-file merge drops null overrides, including watch: null.
+    // This fixture owns its complete configuration; preserve the disabled watcher.
+    configFile: false,
     root,
     server: {
       host: '127.0.0.1',
+      // Committed acceptance fixtures do not need file watching or hot reload.
+      watch: null,
+      hmr: false,
       port: 0,
       strictPort: false,
     },

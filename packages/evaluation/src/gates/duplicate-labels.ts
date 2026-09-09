@@ -23,9 +23,9 @@ export function checkDuplicateLabels(
   const collisions: string[] = [];
 
   for (let i = 0; i < labels.length; i += 1) {
-    const left = labels[i]!;
+    const left = requireValue(labels[i]);
     for (let j = i + 1; j < labels.length; j += 1) {
-      const right = labels[j]!;
+      const right = requireValue(labels[j]);
       if (left.text !== right.text) {
         continue;
       }
@@ -55,9 +55,7 @@ export function checkDuplicateLabels(
 
 function timedLabels(plan: PlanDocument | undefined): readonly TimedLabel[] {
   return (plan?.annotations ?? []).flatMap((annotation) => {
-    const text = normalize(
-      annotation.plate?.label ?? annotation.label ?? '',
-    );
+    const text = normalize(annotation.plate?.label ?? annotation.label ?? '');
     if (text.length === 0) {
       return [];
     }
@@ -67,7 +65,7 @@ function timedLabels(plan: PlanDocument | undefined): readonly TimedLabel[] {
     }
     return [
       {
-        id: annotation.id ?? text,
+        id: annotation.id,
         text,
         start: range.start,
         end: range.end,
@@ -80,9 +78,12 @@ function normalize(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/gu, ' ');
 }
 
-function rangesOverlap(
-  left: TimedLabel,
-  right: TimedLabel,
-): boolean {
+function rangesOverlap(left: TimedLabel, right: TimedLabel): boolean {
   return left.start < right.end && right.start < left.end;
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

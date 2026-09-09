@@ -1,44 +1,77 @@
-const NS_PER_MS = 1_000_000n;
-
+/** One run-relative clock, with a separate calibration for each page/document. */
 export class MonotonicClockBridge {
-  #pageOriginMonoNs: bigint | undefined;
-
-  calibrate(pageTimeOriginMs: number): void {
-    if (!Number.isFinite(pageTimeOriginMs)) {
-      throw new TypeError('pageTimeOriginMs must be finite');
+  readonly #startNs = process.hrtime.bigint();
+  readonly #startEpoch = Date.now();
+  readonly #origins = new Map<
+    string,
+    {
+      sourceOrigin: number;
+      offset: number;
+      method: 'page-epoch' | 'page-sampled';
+      uncertaintyMs: number | null;
     }
+  >();
 
-    const nodeMonoNs = process.hrtime.bigint();
-    const epochDeltaMs = Date.now() - pageTimeOriginMs;
-    this.#pageOriginMonoNs = nodeMonoNs - msToNs(epochDeltaMs);
+  calibrate(
+    pageTimeOriginMs: number,
+    documentId = 'default',
+    sample?: { pageNowMs: number; runTimeMs: number; uncertaintyMs: number },
+  ): void {
+    if (!Number.isFinite(pageTimeOriginMs))
+      throw new TypeError('pageTimeOriginMs must be finite');
+    const previous = this.#origins.get(documentId);
+    if (!sample && previous?.sourceOrigin === pageTimeOriginMs) return;
+    if (
+      sample &&
+      ![sample.pageNowMs, sample.runTimeMs, sample.uncertaintyMs].every(
+        Number.isFinite,
+      )
+    )
+      throw new TypeError('Clock calibration sample must be finite');
+    this.#origins.set(documentId, {
+      sourceOrigin: pageTimeOriginMs,
+      offset: sample
+        ? sample.runTimeMs - sample.pageNowMs
+        : pageTimeOriginMs - this.#startEpoch,
+      method: sample ? 'page-sampled' : 'page-epoch',
+      uncertaintyMs: sample?.uncertaintyMs ?? null,
+    });
   }
 
-  toMono(pagePerformanceNowMs: number): number {
-    if (!Number.isFinite(pagePerformanceNowMs)) {
+  toMono(pagePerformanceNowMs: number, documentId = 'default'): number {
+    if (!Number.isFinite(pagePerformanceNowMs))
       throw new TypeError('pagePerformanceNowMs must be finite');
-    }
-
-    const originNs = this.#pageOriginMonoNs;
-    if (originNs === undefined) {
+    const origin = this.#origins.get(documentId);
+    if (origin === undefined)
       throw new Error('Clock bridge must be calibrated before use');
-    }
+    const value = origin.offset + pagePerformanceNowMs;
+    if (
+      value < -1 ||
+      (origin.method === 'page-epoch' && value > this.nowMono() + 2)
+    )
+      throw new Error(
+        'Page clock needs sampled calibration; its epoch origin is not the capture clock',
+      );
+    return Math.max(0, value);
+  }
 
-    return nsToMs(originNs + msToNs(pagePerformanceNowMs));
+  calibration(documentId = 'default') {
+    const origin = this.#origins.get(documentId);
+    return origin
+      ? { method: origin.method, uncertaintyMs: origin.uncertaintyMs }
+      : undefined;
+  }
+
+  fromEpoch(epochMs: number): number {
+    if (!Number.isFinite(epochMs))
+      throw new TypeError('epochMs must be finite');
+    return Math.max(0, epochMs - this.#startEpoch);
   }
 
   nowMono(): number {
-    return nsToMs(process.hrtime.bigint());
+    return Number(process.hrtime.bigint() - this.#startNs) / 1_000_000;
   }
-
   epochMs(): number {
-    return Date.now();
+    return this.#startEpoch + this.nowMono();
   }
-}
-
-function msToNs(ms: number): bigint {
-  return BigInt(Math.round(ms * Number(NS_PER_MS)));
-}
-
-function nsToMs(ns: bigint): number {
-  return Number(ns) / Number(NS_PER_MS);
 }

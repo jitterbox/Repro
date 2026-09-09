@@ -6,67 +6,111 @@ on:
   pull_request:
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
+  fast-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Lint
-        continue-on-error: true
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Type check (blocking)
+        run: pnpm typecheck
+      - name: Lint (blocking)
         run: pnpm lint
+      - name: Contracts, pipeline, privacy and compatibility tests
+        run: node node_modules/vitest/vitest.mjs run packages/contracts packages/core packages/capture packages/plan packages/render packages/compare packages/evaluation packages/cli packages/pipeline packages/alm packages/viewer packages/mcp packages/playwright/src
+      - name: Builds and tests leave tracked sources unchanged
+        run: git diff --exit-code
 
-      - name: Test contracts
-        run: pnpm --filter @repro/contracts test
-
-      - name: Test plan
-        run: pnpm --filter @repro/plan test
-
-      - name: Test render
-        run: pnpm --filter @repro/render test
-
-      - name: Test compare
-        run: pnpm --filter @repro/compare test
-
-      - name: Test evaluation
-        run: pnpm --filter @repro/evaluation test
-
-      - name: Test compositor
-        run: pnpm --filter @repro/compositor test
-
-      - name: Test viewer
-        run: pnpm --filter @repro/viewer test
-
-      - name: Test core packages
+  browser-media:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - name: Install the lockfile-pinned browser and media dependencies
         run: |
-          pnpm --filter @repro/core test
-          pnpm --filter @repro/capture test
-          pnpm --filter @repro/cli test
-
-      - name: Agent E2E mock (no API keys)
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg tesseract-ocr fonts-liberation
+      - run: pnpm build
+      - name: Dependency provenance
+        run: |
+          mkdir -p .repro/ci
+          node packages/cli/dist/bin.js doctor > .repro/ci/doctor.json
+          dpkg-query -W ffmpeg tesseract-ocr fonts-liberation > .repro/ci/system-versions.txt
+      - name: Public CLI before/after proof with real pixels and strict OCR
+        run: node scripts/e2e/public-workflow.mjs
+      - name: Real browser timing, stationary intervals, and recording ends
+        run: |
+          node scripts/e2e/capture-timing.mjs
+          REPRO_TIMING_TRACE=1 REPRO_TIMING_OUT=.repro/timing-trace-acceptance node scripts/e2e/capture-timing.mjs
+      - name: Fractional crops and high-DPI checkpoint holds
+        run: |
+          node scripts/e2e/hidpi.mjs
+          REPRO_HIDPI_PRIVATE=1 REPRO_HIDPI_OUT=.repro/hidpi-private node scripts/e2e/hidpi.mjs
+      - name: Interaction absence, scrolling and frame-boundary controls
+        run: node scripts/e2e/interaction-diagnostics.mjs
+      - name: Untouched and moving privacy fields with strict negative control
+        run: |
+          node scripts/e2e/moving-privacy.mjs
+          node scripts/e2e/har-privacy.mjs
+      - name: Ordinary checks, proof labels and caught assertion failures
+        run: node scripts/e2e/checkpoint-checks.mjs
+      - name: Uneven before/after synchronization with decoded-frame negative control
+        run: node scripts/e2e/synchronization.mjs
+      - name: Browser diagnostics and event-linked transient frames
+        run: |
+          node scripts/e2e/browser-diagnostics.mjs
+          node scripts/e2e/transient.mjs
+          node scripts/e2e/recipes.mjs
+      - name: Local review timing, uncertainty and original playback
+        run: node scripts/e2e/review.mjs
+      - name: Compositor and fixture coverage
+        run: |
+          pnpm --filter @repro/compositor test
+          pnpm test:e2e-fixture
+      - name: Clean project installation and public scenario
+        run: pnpm test:clean-install
+      - name: Agent mock evaluation (no model or API keys)
         run: pnpm --filter @repro/agent-e2e test
-
-      - name: Fixture visual gates (browser + encode)
-        run: pnpm test:e2e-fixture
-        timeout-minutes: 35
-
-      - name: Design-language coverage ledger
-        run: pnpm --filter @repro/evaluation exec vitest run src/coverage/matrix.test.ts
+      - name: Preserve acceptance and failure artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence-${{ github.run_id }}
+          include-hidden-files: true
+          path: |
+            .repro/ci
+            .repro/public-acceptance
+            .repro/timing-acceptance
+            .repro/timing-trace-acceptance
+            .repro/hidpi-acceptance
+            .repro/hidpi-private
+            .repro/interaction-diagnostics
+            .repro/moving-privacy
+            .repro/checkpoint-checks
+            .repro/synchronization
+            .repro/browser-diagnostics
+            .repro/transient
+            .repro/recipes
+            .repro/har-privacy
+            .repro/review-acceptance
+            .repro/fixture-videos
+            packages/*/test-results
+            packages/e2e-fixture/artifacts
+          retention-days: 7
+      - name: Builds and tests leave tracked sources unchanged
+        run: git diff --exit-code

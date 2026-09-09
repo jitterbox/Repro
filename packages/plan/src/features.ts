@@ -1,4 +1,6 @@
 import { overlayTheme } from '@repro/contracts';
+import { motionMaskEnvelopes } from '@repro/core';
+import type { MaskSample } from '@repro/core';
 
 import { measureTextWidth } from './text.js';
 
@@ -26,13 +28,14 @@ export function emitFeatureAnnotations(
   const segments: Segment[] = [];
   const beatDrafts: BeatDraft[] = [];
   const redactionRects: Rect[] = [];
+  const measuredMasks: MaskSample[] = [];
   const flags = input.config.features;
   const stepEvents = input.events.filter((event) => isStepChapterEvent(event));
   const stepTotal = stepEvents.length;
 
   if (flags.steps === true && stepTotal > 0) {
     for (let index = 0; index < stepEvents.length; index += 1) {
-      const event = stepEvents[index]!;
+      const event = requireValue(stepEvents[index]);
       const stepIndex = index + 1;
       chapters.push(...stepChapters(event, stepIndex, stepTotal));
       annotations.push(...stepBadgeAnnotations(event, stepIndex, stepTotal));
@@ -109,10 +112,17 @@ export function emitFeatureAnnotations(
     }
 
     if (flags.redaction === true) {
-      redactionRects.push(...redactionRectsFrom(event));
+      const selector = objectPayload(event).selector;
+      measuredMasks.push(
+        ...redactionRectsFrom(event).map((rect) => ({
+          ...rect,
+          group: `${event.pageId}/${typeof selector === 'string' ? selector : event.id}`,
+        })),
+      );
     }
   }
 
+  redactionRects.push(...motionMaskEnvelopes(measuredMasks));
   if (flags.cursor === true) {
     annotations.push(...aggregateCursorPath(cursorMoves));
   }
@@ -149,8 +159,8 @@ function aggregateCursorPath(
   if (moves.length === 0) {
     return [];
   }
-  const first = moves[0]!;
-  const last = moves[moves.length - 1]!;
+  const first = requireValue(moves[0]);
+  const last = requireValue(moves[moves.length - 1]);
   const points = moves.flatMap((event) => {
     const point = pointFromPayload(event);
     return point === null ? [] : [point];
@@ -313,25 +323,34 @@ function nearestPointerTarget(
 }
 
 function stackingAnnotations(event: EventRecord): readonly AnnotationBox[] {
-  if (!matches(event, ['stacking', 'z-index', 'zindex', 'editorial.stacking'])) {
+  if (
+    !matches(event, ['stacking', 'z-index', 'zindex', 'editorial.stacking'])
+  ) {
     return [];
   }
 
   const payload = objectPayload(event);
-  const z =
-    numberValue(payload, 'zIndex') ?? numberValue(payload, 'z');
+  const z = numberValue(payload, 'zIndex') ?? numberValue(payload, 'z');
   const label =
     z === undefined
       ? eventLabel(event, 'Stacking context')
       : `z-index ${String(z)}`;
   return [
-    annotation(event, 'stackingContexts', label, rectFromPayload(event), 72, 'rect', {
-      component: 'stacking-labels',
-      renderer: 'ass',
-      severity: 'medium',
-      kicker: 'STACK',
-      ...(z === undefined ? {} : { measurement: `z=${String(z)}` }),
-    }),
+    annotation(
+      event,
+      'stackingContexts',
+      label,
+      rectFromPayload(event),
+      72,
+      'rect',
+      {
+        component: 'stacking-labels',
+        renderer: 'ass',
+        severity: 'medium',
+        kicker: 'STACK',
+        ...(z === undefined ? {} : { measurement: `z=${String(z)}` }),
+      },
+    ),
   ];
 }
 
@@ -512,9 +531,7 @@ function annotationHintsFromConfig(
     const label = stringValue(hint, 'label') ?? 'Highlight';
     const shapeRaw = stringValue(hint, 'shape');
     const shape =
-      shapeRaw === 'ellipse' ||
-      shapeRaw === 'underline' ||
-      shapeRaw === 'rect'
+      shapeRaw === 'ellipse' || shapeRaw === 'underline' || shapeRaw === 'rect'
         ? shapeRaw
         : 'rect';
     const x = numberValue(hint, 'x');
@@ -566,10 +583,7 @@ function annotationHintsFromConfig(
 }
 
 function isStepChapterEvent(event: EventRecord): boolean {
-  return (
-    event.kind === 'step.chapter' ||
-    matches(event, ['step.chapter'])
-  );
+  return event.kind === 'step.chapter' || matches(event, ['step.chapter']);
 }
 
 function stepChapters(
@@ -738,18 +752,25 @@ function pauseBadgeAnnotations(event: EventRecord): readonly AnnotationBox[] {
   }
   const holdMs = Math.max(
     1_000,
-    numberFromPayload(event, 'holdMs') ??
-      overlayTheme.holdsMs.pause.typical,
+    numberFromPayload(event, 'holdMs') ?? overlayTheme.holdsMs.pause.typical,
   );
   return [
-    annotation(event, 'pauses', `PAUSED ${String(holdMs)}ms`, null, 76, undefined, {
-      component: 'pause-badge',
-      renderer: 'ass',
-      severity: 'info',
-      holdMs,
-      kicker: 'PAUSE',
-      plateLabel: `PAUSED ${String(holdMs)}ms`,
-    }),
+    annotation(
+      event,
+      'pauses',
+      `PAUSED ${String(holdMs)}ms`,
+      null,
+      76,
+      undefined,
+      {
+        component: 'pause-badge',
+        renderer: 'ass',
+        severity: 'info',
+        holdMs,
+        kicker: 'PAUSE',
+        plateLabel: `PAUSED ${String(holdMs)}ms`,
+      },
+    ),
   ];
 }
 
@@ -779,13 +800,21 @@ function zoomAnnotations(event: EventRecord): readonly AnnotationBox[] {
   }
 
   return [
-    annotation(event, 'zoom', 'Zoom target', rectFromPayload(event), 85, undefined, {
-      component: 'roi-magnifier',
-      renderer: 'compositor',
-      severity: 'info',
-      kicker: 'ROI',
-      measurement: '2.5×',
-    }),
+    annotation(
+      event,
+      'zoom',
+      'Zoom target',
+      rectFromPayload(event),
+      85,
+      undefined,
+      {
+        component: 'roi-magnifier',
+        renderer: 'compositor',
+        severity: 'info',
+        kicker: 'ROI',
+        measurement: '2.5×',
+      },
+    ),
   ];
 }
 
@@ -827,12 +856,20 @@ function vitalsAnnotations(event: EventRecord): readonly AnnotationBox[] {
   }
 
   return [
-    annotation(event, 'vitalsHud', eventLabel(event, 'Vitals'), null, 30, undefined, {
-      component: 'vitals-hud',
-      renderer: 'compositor',
-      severity: 'info',
-      kicker: 'VITALS',
-    }),
+    annotation(
+      event,
+      'vitalsHud',
+      eventLabel(event, 'Vitals'),
+      null,
+      30,
+      undefined,
+      {
+        component: 'vitals-hud',
+        renderer: 'compositor',
+        severity: 'info',
+        kicker: 'VITALS',
+      },
+    ),
   ];
 }
 
@@ -846,9 +883,7 @@ function redactionRectsFrom(event: EventRecord): readonly Rect[] {
 }
 
 /** Derive mask boxes from interactions on config.redaction.masks selectors. */
-function redactionRectsFromMasks(
-  input: FeatureEmitInput,
-): readonly Rect[] {
+function redactionRectsFromMasks(input: FeatureEmitInput): readonly Rect[] {
   const masks = input.config.redaction?.masks ?? [];
   if (masks.length === 0) {
     return [];
@@ -885,11 +920,8 @@ function payloadHitsMask(
   payload: PayloadObject,
   masks: readonly string[],
 ): boolean {
-  const selector =
-    typeof payload.selector === 'string' ? payload.selector : '';
-  const path = Array.isArray(payload.path)
-    ? payload.path.map(String)
-    : [];
+  const selector = typeof payload.selector === 'string' ? payload.selector : '';
+  const path = Array.isArray(payload.path) ? payload.path.map(String) : [];
   return masks.some((mask) => {
     if (selector.includes(mask)) {
       return true;
@@ -1018,13 +1050,10 @@ function annotation(
     options.holdMs ??
     Math.max(
       overlayTheme.holdsMs.callout.min,
-      label.length * (overlayTheme.holdsMs.callout.perChar ?? 45),
+      label.length * overlayTheme.holdsMs.callout.perChar,
     );
   const fontSize = overlayTheme.type.calloutLabel.size;
-  const width = Math.max(
-    120,
-    measureTextWidth({ fontSize, text: label }) + 32,
-  );
+  const width = Math.max(120, measureTextWidth({ fontSize, text: label }) + 32);
   const height = options.measurement === undefined ? 44 : 62;
 
   return baseAnnotation({
@@ -1036,7 +1065,10 @@ function annotation(
     target,
     timeRange: eventRange(event, holdMs),
     x: target === null ? overlayTheme.safeZones.inset : target.x,
-    y: target === null ? overlayTheme.safeZones.inset : Math.max(0, target.y - height - 8),
+    y:
+      target === null
+        ? overlayTheme.safeZones.inset
+        : Math.max(0, target.y - height - 8),
     width,
     height,
     ...options,
@@ -1065,8 +1097,7 @@ function baseAnnotation(input: {
   readonly lineStyle?: AnnotationBox['lineStyle'];
   readonly kind?: AnnotationBox['kind'];
 }): AnnotationBox {
-  const component =
-    input.component ?? defaultComponent(input.feature);
+  const component = input.component ?? defaultComponent(input.feature);
   const severity = input.severity ?? 'info';
   const height = input.height ?? 44;
   const base: AnnotationBox = {
@@ -1162,9 +1193,7 @@ function defaultComponent(
   }
 }
 
-function defaultRenderer(
-  component: AnnotationComponent,
-): 'ass' | 'compositor' {
+function defaultRenderer(component: AnnotationComponent): 'ass' | 'compositor' {
   switch (component) {
     case 'slate':
     case 'console-toast':
@@ -1209,10 +1238,8 @@ function rectFromPayload(event: EventRecord): Rect | null {
   const source = nested ?? payload;
   const x = numberValue(source, 'x');
   const y = numberValue(source, 'y');
-  const width =
-    numberValue(source, 'width') ?? numberValue(source, 'w');
-  const height =
-    numberValue(source, 'height') ?? numberValue(source, 'h');
+  const width = numberValue(source, 'width') ?? numberValue(source, 'w');
+  const height = numberValue(source, 'height') ?? numberValue(source, 'h');
 
   if (
     x === undefined ||
@@ -1330,4 +1357,10 @@ function metadataString(
 ): string | undefined {
   const value = payload[key];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

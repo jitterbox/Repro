@@ -1,11 +1,11 @@
+import type { ShareReport } from '@repro/contracts';
+import { mapComparisonTime } from './sync-time.js';
+import type { SyncKnot } from './sync-time.js';
+export type { SyncKnot } from './sync-time.js';
 export type ViewerTheme = 'dark' | 'high-contrast' | 'light';
 export type ReviewerPreset = 'alm' | 'developer' | 'product' | 'tester';
 export type ViewerStateKind =
-  | 'empty'
-  | 'error'
-  | 'loading'
-  | 'ready'
-  | 'redaction-blocked';
+  'empty' | 'error' | 'loading' | 'ready' | 'redaction-blocked';
 
 export interface EvidenceManifest {
   readonly assets: readonly EvidenceManifestAsset[];
@@ -17,17 +17,23 @@ export interface EvidenceCompareMeta {
   readonly syncMap?: readonly SyncKnot[];
 }
 
-/** [aMs, bMs, outMs, confidence] */
-export type SyncKnot = readonly [number, number, number, number];
-
 export interface EvidenceManifestAsset {
   readonly href: string;
-  readonly kind: 'chapters' | 'json' | 'mp4' | 'vtt';
+  readonly kind: 'chapters' | 'json' | 'mp4' | 'vtt' | 'png';
   readonly path?: string;
   readonly role?: 'after' | 'before';
+  readonly title?: string;
 }
 
 export interface ViewerReport {
+  readonly title?: string;
+  readonly variants?: readonly {
+    role?: 'before' | 'after' | 'standalone' | 'single';
+    label: string;
+    outcome: string;
+    expected: string;
+    durationMs: number;
+  }[];
   readonly annotations?: readonly ViewerAnnotation[];
   readonly chapters?: readonly ViewerChapter[];
   readonly redactionBlocked?: boolean;
@@ -44,6 +50,7 @@ export interface ViewerAnnotation {
 export interface ViewerChapter {
   readonly title: string;
   readonly timeRange?: { readonly start: number; readonly end: number };
+  readonly variantTimeRanges?: ShareReport['chapters'][number]['variantTimeRanges'];
 }
 
 export interface TranscriptLine {
@@ -54,11 +61,7 @@ export interface TranscriptLine {
 }
 
 export type KeyboardAction =
-  | 'back'
-  | 'end'
-  | 'forward'
-  | 'start'
-  | 'toggle-play';
+  'back' | 'end' | 'forward' | 'start' | 'toggle-play';
 
 export interface KeyboardShortcut {
   readonly action: KeyboardAction;
@@ -118,11 +121,14 @@ export function keyboardShortcutFor(key: string): KeyboardShortcut {
   return { action: 'toggle-play', handled: false };
 }
 
-export function shouldReduceMotion(query = '(prefers-reduced-motion: reduce)'):
-  boolean {
-  const matcher = (globalThis as {
-    readonly matchMedia?: (query: string) => MediaQueryList;
-  }).matchMedia;
+export function shouldReduceMotion(
+  query = '(prefers-reduced-motion: reduce)',
+): boolean {
+  const matcher = (
+    globalThis as {
+      readonly matchMedia?: (query: string) => MediaQueryList;
+    }
+  ).matchMedia;
   return matcher?.(query).matches ?? false;
 }
 
@@ -132,40 +138,12 @@ export function mapSyncTime(
   from: 'a' | 'b',
   to: 'a' | 'b',
 ): number {
-  if (from === to || knots.length === 0) {
-    return sourceMs;
-  }
-
-  const fromIndex = from === 'a' ? 0 : 1;
-  const toIndex = to === 'a' ? 0 : 1;
-  const sorted = [...knots].sort((left, right) => left[fromIndex] - right[fromIndex]);
-
-  if (sourceMs <= sorted[0]![fromIndex]) {
-    return sorted[0]![toIndex];
-  }
-
-  const last = sorted[sorted.length - 1]!;
-  if (sourceMs >= last[fromIndex]) {
-    return last[toIndex];
-  }
-
-  for (let index = 1; index < sorted.length; index += 1) {
-    const previous = sorted[index - 1]!;
-    const current = sorted[index]!;
-    if (sourceMs > current[fromIndex]) {
-      continue;
-    }
-
-    const span = current[fromIndex] - previous[fromIndex];
-    if (span <= 0) {
-      return current[toIndex];
-    }
-
-    const ratio = (sourceMs - previous[fromIndex]) / span;
-    return previous[toIndex] + ratio * (current[toIndex] - previous[toIndex]);
-  }
-
-  return sourceMs;
+  return mapComparisonTime(
+    sourceMs,
+    knots,
+    from === 'a' ? 0 : 1,
+    to === 'a' ? 0 : 1,
+  );
 }
 
 export function activeAnnotationIndex(
@@ -183,7 +161,10 @@ export function activeAnnotationIndex(
 
     const startMs = range.start;
     const endMs = range.end > 0 ? range.end : range.start + SYNC_TOLERANCE_MS;
-    if (timeMs >= startMs - SYNC_TOLERANCE_MS && timeMs <= endMs + SYNC_TOLERANCE_MS) {
+    if (
+      timeMs >= startMs - SYNC_TOLERANCE_MS &&
+      timeMs <= endMs + SYNC_TOLERANCE_MS
+    ) {
       match = index;
     }
   }
@@ -198,9 +179,10 @@ export async function mountViewer(root: ParentNode = document): Promise<void> {
     const manifest = await loadManifest();
     const report = await loadReport(manifest);
     renderAssets(root, manifest, report);
-    setState(root, report.redactionBlocked === true
-      ? 'redaction-blocked'
-      : 'ready');
+    setState(
+      root,
+      report.redactionBlocked === true ? 'redaction-blocked' : 'ready',
+    );
   } catch (error) {
     setState(root, 'error', errorMessage(error));
   }
@@ -214,17 +196,39 @@ function renderAssets(
   const video = root.querySelector<HTMLVideoElement>('[data-repro-video]');
   const videoB = root.querySelector<HTMLVideoElement>('[data-repro-video-b]');
   const mp4Assets = manifest.assets.filter((asset) => asset.kind === 'mp4');
-  const primary = mp4Assets[0];
-  const secondary = mp4Assets[1];
-  const vtt = assetOfKind(manifest, 'vtt');
+  const primary =
+    mp4Assets.find((asset) => asset.role === 'before') ?? mp4Assets[0];
+  const secondary =
+    mp4Assets.find((asset) => asset.role === 'after' && asset !== primary) ??
+    mp4Assets.find((asset) => asset !== primary);
+  const title = root.querySelector('#media-title');
+  if (title && report.title) title.textContent = report.title;
+  if (report.variants) {
+    const summary = document.createElement('p');
+    summary.textContent = report.variants
+      .map(
+        (variant) =>
+          `${variant.label}: ${variant.outcome} (${(variant.durationMs / 1000).toFixed(2)} seconds original)`,
+      )
+      .join(' | ');
+    title?.after(summary);
+  }
+  const captionsFor = (asset: EvidenceManifestAsset | undefined) =>
+    manifest.assets.find(
+      (candidate) => candidate.kind === 'vtt' && candidate.role === asset?.role,
+    );
+  const vtt = captionsFor(primary);
   const syncKnots = manifest.compare?.syncMap ?? [];
   const compareMode = syncKnots.length > 0 || secondary !== undefined;
 
   if (video !== null && primary !== undefined) {
     video.src = primary.href;
+    video.setAttribute(
+      'aria-label',
+      primary.role === 'before' ? 'Before evidence video' : 'Evidence video',
+    );
     wireKeyboard(video);
     wirePlayheadSync(root, video, report.annotations ?? []);
-    wireScrubber(root, video, report.chapters ?? []);
   }
 
   if (video !== null && vtt !== undefined) {
@@ -232,12 +236,45 @@ function renderAssets(
     track?.setAttribute('src', vtt.href);
   }
 
-  if (compareMode && video !== null && videoB !== null && secondary !== undefined) {
+  if (
+    compareMode &&
+    video !== null &&
+    videoB !== null &&
+    secondary !== undefined
+  ) {
     videoB.src = secondary.href;
+    wireKeyboard(videoB);
+    const captions = captionsFor(secondary);
+    if (captions)
+      videoB.querySelector('track')?.setAttribute('src', captions.href);
     wireComparePlayer(root, video, videoB, syncKnots);
   }
 
-  renderList(root, '[data-viewer-chapters]', report.chapters ?? [], chapterNode);
+  const stills = root.querySelector('[data-viewer-stills]');
+  for (const asset of manifest.assets.filter(
+    (candidate) => candidate.kind === 'png',
+  )) {
+    const label =
+      report.variants?.find((variant) => variant.role === asset.role)?.label ??
+      asset.role ??
+      'Checkpoint';
+    const figure = document.createElement('figure');
+    const image = document.createElement('img');
+    image.src = asset.href;
+    image.alt = `${label} · ${asset.title ?? 'Annotated checkpoint'}`;
+    image.loading = 'lazy';
+    image.style.maxWidth = '100%';
+    const caption = document.createElement('figcaption');
+    caption.textContent = image.alt;
+    figure.append(image, caption);
+    stills?.append(figure);
+  }
+  renderList(
+    root,
+    '[data-viewer-chapters]',
+    report.chapters ?? [],
+    chapterNode,
+  );
   renderList(
     root,
     '[data-viewer-annotations]',
@@ -251,15 +288,41 @@ function renderAssets(
     transcriptNode,
   );
   renderTimeline(root, report);
+  if (video && primary)
+    wireScrubber(
+      root,
+      [
+        { video, side: 'a', role: primary.role ?? 'standalone' },
+        ...(videoB && secondary
+          ? [
+              {
+                video: videoB,
+                side: 'b' as const,
+                role: secondary.role ?? ('after' as const),
+              },
+            ]
+          : []),
+      ],
+      report.chapters ?? [],
+      syncKnots,
+    );
   wireControls(root);
   applyReviewerPreset(root, 'developer');
 }
 
 async function loadManifest(): Promise<EvidenceManifest> {
   const url = new URL(globalThis.location.href);
-  const manifestUrl = url.searchParams.get('manifest') ??
-    '../evidence-manifest.json';
-  return fetchJson<EvidenceManifest>(manifestUrl);
+  const manifestUrl =
+    url.searchParams.get('manifest') ?? '../../evidence-manifest.json';
+  const manifest = await fetchJson<EvidenceManifest>(manifestUrl);
+  const base = new URL(manifestUrl, window.location.href);
+  return {
+    ...manifest,
+    assets: manifest.assets.map((asset) => ({
+      ...asset,
+      href: new URL(asset.href, base).href,
+    })),
+  };
 }
 
 async function loadReport(manifest: EvidenceManifest): Promise<ViewerReport> {
@@ -309,7 +372,8 @@ function emptyAware<T>(
 }
 
 function chapterNode(chapter: ViewerChapter): HTMLElement {
-  const node = element('article', 'chapter', chapter.title);
+  const node = element('button', 'chapter', chapter.title);
+  node.setAttribute('type', 'button');
   if (chapter.timeRange !== undefined) {
     node.dataset.startMs = String(chapter.timeRange.start);
   }
@@ -377,7 +441,9 @@ function wirePlayheadSync(
     return;
   }
 
-  const nodes = Array.from(container.querySelectorAll<HTMLElement>('.annotation'));
+  const nodes = Array.from(
+    container.querySelectorAll<HTMLElement>('.annotation'),
+  );
 
   const sync = (): void => {
     const index = activeAnnotationIndex(annotations, video.currentTime);
@@ -400,8 +466,13 @@ function wirePlayheadSync(
 
 function wireScrubber(
   root: ParentNode,
-  video: HTMLVideoElement,
+  players: readonly {
+    video: HTMLVideoElement;
+    side: 'a' | 'b';
+    role: 'before' | 'after' | 'standalone';
+  }[],
   chapters: readonly ViewerChapter[],
+  knots: readonly SyncKnot[],
 ): void {
   const scrubber = root.querySelector<HTMLElement>('[data-viewer-scrubber]');
   const seek = root.querySelector<HTMLInputElement>('[data-viewer-seek]');
@@ -411,7 +482,28 @@ function wireScrubber(
     return;
   }
 
+  const active = () =>
+    requireValue(
+      players.find((player) => player.video.tabIndex >= 0) ?? players[0],
+    );
+  const chapterTime = (chapter: ViewerChapter): number | undefined => {
+    const player = active();
+    const actual = chapter.variantTimeRanges?.[player.role]?.start;
+    if (actual !== undefined) return actual;
+    const source = chapter.timeRange?.start;
+    return source === undefined
+      ? undefined
+      : mapSyncTime(source, knots, 'a', player.side);
+  };
+  const jump = (chapter: ViewerChapter): void => {
+    const ms = chapterTime(chapter);
+    if (ms !== undefined) {
+      active().video.currentTime = ms / 1000;
+      seek.value = String(Math.round(ms));
+    }
+  };
   const updateRange = (): void => {
+    const { video, role } = active();
     if (!Number.isFinite(video.duration) || video.duration <= 0) {
       return;
     }
@@ -419,25 +511,49 @@ function wireScrubber(
     scrubber.hidden = false;
     seek.max = String(Math.round(video.duration * 1000));
     seek.value = String(Math.round(video.currentTime * 1000));
-    renderChapterMarkers(markers, chapters, video.duration);
+    seek.setAttribute('aria-label', `Seek ${role} evidence`);
+    renderChapterMarkers(markers, chapters, video.duration, chapterTime, jump);
   };
 
-  video.addEventListener('loadedmetadata', updateRange);
-  video.addEventListener('durationchange', updateRange);
-
-  video.addEventListener('timeupdate', () => {
-    seek.value = String(Math.round(video.currentTime * 1000));
-  });
+  for (const { video } of players) {
+    video.addEventListener('loadedmetadata', updateRange);
+    video.addEventListener('durationchange', updateRange);
+    video.addEventListener('repro-side-change', updateRange);
+    const syncValue = () => {
+      if (active().video === video)
+        seek.value = String(Math.round(video.currentTime * 1000));
+    };
+    video.addEventListener('timeupdate', syncValue);
+    video.addEventListener('seeking', syncValue);
+    video.addEventListener('seeked', syncValue);
+  }
 
   seek.addEventListener('input', () => {
-    video.currentTime = Number.parseInt(seek.value, 10) / 1000;
+    active().video.currentTime = Number.parseInt(seek.value, 10) / 1000;
   });
+  for (const button of Array.from(
+    root.querySelectorAll<HTMLButtonElement>('button.chapter'),
+  )) {
+    const chapter = chapters.find(
+      (candidate) =>
+        candidate.title === button.textContent &&
+        String(candidate.timeRange?.start) === button.dataset.startMs,
+    );
+    if (chapter)
+      button.addEventListener('click', () => {
+        jump(chapter);
+      });
+    else button.disabled = true;
+  }
+  updateRange();
 }
 
 function renderChapterMarkers(
   container: Element,
   chapters: readonly ViewerChapter[],
   durationSeconds: number,
+  chapterTime: (chapter: ViewerChapter) => number | undefined,
+  jump: (chapter: ViewerChapter) => void,
 ): void {
   container.replaceChildren();
 
@@ -446,16 +562,20 @@ function renderChapterMarkers(
   }
 
   for (const chapter of chapters) {
-    const startMs = chapter.timeRange?.start;
+    const startMs = chapterTime(chapter);
     if (startMs === undefined) {
       continue;
     }
 
-    const marker = document.createElement('span');
+    const marker = document.createElement('button');
+    marker.type = 'button';
     marker.className = 'scrubber-marker';
     marker.style.left = `${String((startMs / 1000 / durationSeconds) * 100)}%`;
     marker.title = chapter.title;
     marker.setAttribute('aria-label', `Chapter: ${chapter.title}`);
+    marker.addEventListener('click', () => {
+      jump(chapter);
+    });
     container.append(marker);
   }
 }
@@ -466,17 +586,51 @@ function wireComparePlayer(
   videoB: HTMLVideoElement,
   syncKnots: readonly SyncKnot[],
 ): void {
-  const toggle = root.querySelector<HTMLElement>('[data-viewer-compare-toggle]');
+  const toggle = root.querySelector<HTMLElement>(
+    '[data-viewer-compare-toggle]',
+  );
   if (toggle === null) {
     return;
   }
 
   toggle.hidden = false;
+  const independent = root.querySelector<HTMLInputElement>(
+    '[data-compare-independent]',
+  );
+  if (independent) {
+    independent.checked = syncKnots.length < 2;
+    independent.disabled = syncKnots.length < 2;
+  }
+  const layout = root.querySelector<HTMLSelectElement>('[data-compare-layout]');
+  const timing = root.querySelector('[data-compare-timing]');
+  const showTiming = () => {
+    if (timing)
+      timing.textContent = `${independent?.checked ? 'Independent' : 'Synchronized'} presentation timing (includes reading holds): Before ${videoA.currentTime.toFixed(2)} / ${Number.isFinite(videoA.duration) ? videoA.duration.toFixed(2) : 'unknown'} s · After ${videoB.currentTime.toFixed(2)} / ${Number.isFinite(videoB.duration) ? videoB.duration.toFixed(2) : 'unknown'} s`;
+  };
+  independent?.addEventListener('change', () => {
+    videoA.playbackRate = 1;
+    videoB.playbackRate = 1;
+    videoA.controls = !videoA.hidden;
+    videoB.controls = !videoB.hidden && independent.checked;
+    showTiming();
+  });
+  for (const video of [videoA, videoB]) {
+    video.addEventListener('loadedmetadata', showTiming);
+    video.addEventListener('timeupdate', showTiming);
+  }
   let activeSide: 'a' | 'b' = 'a';
   let syncing = false;
 
-  const setSide = (side: 'a' | 'b'): void => {
-    activeSide = side;
+  const setSide = (side: 'a' | 'b' | 'both'): void => {
+    activeSide = side === 'b' ? 'b' : 'a';
+    root
+      .querySelector('[data-repro-video-shell]')
+      ?.setAttribute('data-layout', side);
+    videoA.setAttribute('aria-hidden', String(side === 'b'));
+    videoB.setAttribute('aria-hidden', String(side === 'a'));
+    videoA.tabIndex = activeSide === 'a' ? 0 : -1;
+    videoB.tabIndex = activeSide === 'b' ? 0 : -1;
+    videoA.dispatchEvent(new Event('repro-side-change'));
     for (const button of Array.from(
       toggle.querySelectorAll<HTMLButtonElement>('[data-compare-side]'),
     )) {
@@ -484,11 +638,11 @@ function wireComparePlayer(
       button.setAttribute('aria-pressed', pressed ? 'true' : 'false');
     }
 
-    if (side === 'a') {
+    if (side !== 'b') {
       videoA.hidden = false;
       videoA.controls = true;
-      videoB.hidden = true;
-      videoB.controls = false;
+      videoB.hidden = side === 'a';
+      videoB.controls = side === 'both' && independent?.checked === true;
       videoB.pause();
       return;
     }
@@ -499,30 +653,49 @@ function wireComparePlayer(
     videoB.controls = true;
     videoA.pause();
   };
+  layout?.addEventListener('change', () => {
+    setSide('both');
+    root
+      .querySelector('[data-repro-video-shell]')
+      ?.setAttribute('data-visual-layout', layout.value);
+  });
 
   for (const button of Array.from(
     toggle.querySelectorAll<HTMLButtonElement>('[data-compare-side]'),
   )) {
     button.addEventListener('click', () => {
-      const side = button.dataset.compareSide === 'b' ? 'b' : 'a';
+      const side =
+        button.dataset.compareSide === 'both'
+          ? 'both'
+          : button.dataset.compareSide === 'b'
+            ? 'b'
+            : 'a';
       setSide(side);
-      const master = side === 'a' ? videoA : videoB;
-      const follower = side === 'a' ? videoB : videoA;
+      const master = activeSide === 'a' ? videoA : videoB;
+      const follower = activeSide === 'a' ? videoB : videoA;
       const masterMs = master.currentTime * 1000;
-      follower.currentTime =
-        mapSyncTime(masterMs, syncKnots, side, side === 'a' ? 'b' : 'a') / 1000;
+      if (!independent?.checked)
+        follower.currentTime =
+          mapSyncTime(
+            masterMs,
+            syncKnots,
+            activeSide,
+            activeSide === 'a' ? 'b' : 'a',
+          ) / 1000;
     });
   }
 
   const mirrorTime = (master: HTMLVideoElement, from: 'a' | 'b'): void => {
-    if (syncing) {
+    if (syncing || independent?.checked) {
       return;
     }
     syncing = true;
     const follower = from === 'a' ? videoB : videoA;
     const to = from === 'a' ? 'b' : 'a';
     const masterMs = master.currentTime * 1000;
-    follower.currentTime = mapSyncTime(masterMs, syncKnots, from, to) / 1000;
+    const nextTime = mapSyncTime(masterMs, syncKnots, from, to) / 1000;
+    if (Math.abs(follower.currentTime - nextTime) > 1 / 60)
+      follower.currentTime = nextTime;
     syncing = false;
   };
 
@@ -547,24 +720,62 @@ function wireComparePlayer(
     }
   });
 
-  setSide('a');
+  // timeupdate alone is too infrequent for paired visual inspection. Keep the
+  // passive side aligned on animation frames while the selected side plays.
+  let animation: number | undefined;
+  const followPlayback = () => {
+    if (animation !== undefined) cancelAnimationFrame(animation);
+    const tick = () => {
+      const master = activeSide === 'a' ? videoA : videoB;
+      mirrorTime(master, activeSide);
+      animation =
+        master.paused || master.ended ? undefined : requestAnimationFrame(tick);
+    };
+    tick();
+  };
+  videoA.addEventListener('play', followPlayback);
+  videoB.addEventListener('play', followPlayback);
+  setSide('both');
 }
 
 function wireKeyboard(video: HTMLVideoElement): void {
   const handler = (event: KeyboardEvent): void => {
     const shortcut = keyboardShortcutFor(event.key);
 
-    if (!shortcut.handled) {
+    if (
+      video.hidden ||
+      video.tabIndex < 0 ||
+      event.defaultPrevented ||
+      !shortcut.handled
+    ) {
       return;
     }
 
     event.preventDefault();
+    event.stopPropagation();
+    if (event.repeat && shortcut.action === 'toggle-play') return;
     applyShortcut(video, shortcut);
   };
 
-  video.addEventListener('keydown', handler);
+  // Native video controls also toggle Space on keyup. Own both phases for
+  // documented shortcuts so one press cannot play and immediately pause.
+  video.addEventListener('keydown', handler, { capture: true });
+  video.addEventListener(
+    'keyup',
+    (event) => {
+      if (
+        !video.hidden &&
+        video.tabIndex >= 0 &&
+        keyboardShortcutFor(event.key).handled
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    { capture: true },
+  );
   document.addEventListener('keydown', (event) => {
-    if (event.target === video || event.target === document.body) {
+    if (event.target === document.body) {
       handler(event);
     }
   });
@@ -664,4 +875,10 @@ function errorMessage(error: unknown): string {
 
 if (typeof document !== 'undefined') {
   void mountViewer();
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

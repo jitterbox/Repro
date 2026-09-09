@@ -2,12 +2,8 @@ import { bandedDtw } from './dtw.js';
 
 import type { DtwSample } from './dtw.js';
 
-export interface SyncAnchor {
-  readonly stepId: string;
-  readonly aMs: number;
-  readonly bMs: number;
-  readonly outMs?: number;
-}
+import type { SyncAnchor } from '@repro/contracts';
+export type { SyncAnchor } from '@repro/contracts';
 
 export interface SyncMap {
   readonly strategy: 'anchored-dtw';
@@ -60,12 +56,7 @@ export function buildSyncMap(input: {
     );
 
     if (left.length === 0 || right.length === 0) {
-      knots.push([
-        segment.aStart,
-        segment.bStart,
-        segment.outStart,
-        1,
-      ]);
+      knots.push([segment.aStart, segment.bStart, segment.outStart, 1]);
       continue;
     }
 
@@ -73,7 +64,7 @@ export function buildSyncMap(input: {
       bandRadius,
       maxDistance: 1,
     });
-    const outEnd = segment.outEnd ?? segment.outStart;
+    const outEnd = segment.outEnd;
     const spanA = segment.aEnd - segment.aStart || 1;
     const spanOut = outEnd - segment.outStart || 1;
 
@@ -287,7 +278,7 @@ function enforceMonotoneAndStretch(
   }
 
   const sorted = [...knots].sort((left, right) => left[0] - right[0]);
-  const output: Knot[] = [sorted[0] as Knot];
+  const output: Knot[] = [requireValue(sorted[0])];
   let previousOut = sorted[0]?.[2] ?? 0;
 
   for (let index = 1; index < sorted.length; index += 1) {
@@ -321,7 +312,9 @@ function enforceMonotoneAndStretch(
   return output;
 }
 
-function findLowConfidenceSpans(knots: readonly Knot[]): SyncMap['lowConfidenceSpans'] {
+function findLowConfidenceSpans(
+  knots: readonly Knot[],
+): SyncMap['lowConfidenceSpans'] {
   const spans: SyncMap['lowConfidenceSpans'][number][] = [];
   let spanStart: number | null = null;
   let minConfidence = 1;
@@ -365,4 +358,10 @@ function findLowConfidenceSpans(knots: readonly Knot[]): SyncMap['lowConfidenceS
   }
 
   return spans;
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

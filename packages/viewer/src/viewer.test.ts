@@ -75,7 +75,7 @@ describe('viewer accessibility acceptance checks', () => {
   });
 
   it('maps compare sync knots between sides', () => {
-    const knots: Array<[number, number, number, number]> = [
+    const knots: [number, number, number, number][] = [
       [0, 0, 0, 1],
       [5_000, 4_000, 5_000, 1],
     ];

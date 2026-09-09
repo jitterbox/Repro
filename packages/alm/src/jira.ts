@@ -15,6 +15,7 @@ export interface JiraClientOptions {
 
 export interface JiraAttachInput extends SizeBudget {
   readonly issueKey: string;
+  readonly idempotent?: boolean;
   readonly fileName: string;
   readonly bytes: Uint8Array | string;
   readonly contentType?: string;
@@ -62,6 +63,30 @@ export class JiraClient {
 
   async attachFile(input: JiraAttachInput): Promise<JiraAttachmentResult> {
     const bytes = artifactBytes(input.bytes);
+    if (input.idempotent) {
+      const response = await this.#fetch(
+        this.#url(
+          `/rest/api/3/issue/${encodeURIComponent(input.issueKey)}?fields=attachment`,
+        ),
+        { headers: this.#authHeaders() },
+      );
+      assertOk(response, 'Jira attachment reconciliation failed');
+      const issue = (await response.json()) as {
+        fields?: { attachment?: JiraAttachmentResult[] };
+      };
+      const existing = issue.fields?.attachment?.find(
+        (a) => a.filename === input.fileName,
+      );
+      if (existing) {
+        await verifyDownload({
+          expectedBytes: bytes,
+          fetchImpl: this.#fetch,
+          headers: this.#authHeaders(),
+          url: existing.content,
+        });
+        return existing;
+      }
+    }
     const meta = await this.discoverAttachmentLimit();
     assertJiraLimit(bytes.byteLength, meta.uploadLimit);
     assertSizeBudget(bytes.byteLength, input);

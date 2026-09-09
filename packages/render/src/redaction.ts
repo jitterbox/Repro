@@ -1,5 +1,13 @@
+import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { access, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import {
+  access,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, extname, join, parse } from 'node:path';
 
@@ -22,6 +30,7 @@ export interface OcrAuditOptions {
   readonly ffmpegPath?: string;
   readonly ocrCommand?: string;
   readonly requireAudit?: boolean;
+  readonly patterns?: readonly string[];
 }
 
 export interface OcrAdapter {
@@ -31,6 +40,7 @@ export interface OcrAdapter {
 export interface OcrAdapterInput {
   readonly frameDir: string;
   readonly framePaths: readonly string[];
+  readonly patterns?: readonly string[];
   readonly sidecarPath: string;
   readonly videoPath: string;
   readonly captionsPath?: string;
@@ -39,6 +49,9 @@ export interface OcrAdapterInput {
 
 export interface OcrAdapterResult {
   readonly audited: boolean;
+  readonly source?: 'frame-ocr';
+  readonly framesScanned?: number;
+  readonly toolVersion?: string;
   readonly hits: readonly OcrHit[];
 }
 
@@ -74,7 +87,14 @@ export async function runOcrAudit(
       adapters(options.adapter, command).map((adapter) => adapter.scan(input)),
     );
     const hits = uniqueHits(results.flatMap((result) => result.hits));
-    const audited = results.some((result) => result.audited);
+    const audited =
+      framePaths.length > 0 &&
+      results.some(
+        (result) =>
+          result.audited &&
+          result.source === 'frame-ocr' &&
+          result.framesScanned === framePaths.length,
+      );
 
     if (options.requireAudit === true && !audited) {
       throw new GateError(
@@ -95,23 +115,119 @@ export async function enforceOcrAudit(input: {
   readonly captionsPath?: string;
   readonly eventsPath?: string;
   readonly requireAudit?: boolean;
+  readonly patterns?: readonly string[];
 }): Promise<readonly OcrHit[]> {
+  const auditedBytes = await readFile(input.path).catch(() => {
+    throw new GateError(
+      'Required output artifact is missing or unreadable',
+      [],
+    );
+  });
+  const auditedHash = createHash('sha256').update(auditedBytes).digest('hex');
   const requireAudit = input.requireAudit ?? input.redaction?.strict === true;
   const hits = await runOcrAudit(input.path, {
     ...(input.captionsPath === undefined
       ? {}
       : { captionsPath: input.captionsPath }),
-    ...(input.eventsPath === undefined
-      ? {}
-      : { eventsPath: input.eventsPath }),
+    ...(input.eventsPath === undefined ? {} : { eventsPath: input.eventsPath }),
     requireAudit,
+    ...(input.patterns ? { patterns: input.patterns } : {}),
   });
 
   if (input.redaction?.strict === true && hits.length > 0) {
     throw new GateError('OCR audit found text after strict redaction', hits);
   }
 
+  if (requireAudit) {
+    const sha256 = createHash('sha256')
+      .update(await readFile(input.path))
+      .digest('hex');
+    if (sha256 !== auditedHash)
+      throw new GateError('Artifact changed during audit', []);
+    const toolVersion = await runProcess({
+      command: 'tesseract',
+      args: ['--version'],
+    });
+    const policyHash = createHash('sha256')
+      .update(
+        JSON.stringify({
+          redaction: input.redaction ?? { strict: true },
+          patterns: input.patterns ?? [],
+        }),
+      )
+      .digest('hex');
+    await writeFile(
+      `${input.path}.audit.json`,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          sha256,
+          policyHash,
+          policyVersion: '1.1.0',
+          pageSegmentationModes: [3, 11],
+          source: 'frame-ocr',
+          tool: 'tesseract',
+          toolVersion: toolVersion.output.split('\n')[0],
+          auditedAt: new Date().toISOString(),
+          passed: hits.length === 0,
+        },
+        null,
+        2,
+      ),
+    );
+  }
   return hits;
+}
+
+/** Every extracted output frame is OCR'd; identical pixels share a result. */
+export class TesseractOcrAdapter implements OcrAdapter {
+  async scan(input: OcrAdapterInput): Promise<OcrAdapterResult> {
+    const version = await runProcess({
+      command: 'tesseract',
+      args: ['--version'],
+    });
+    if (!version.ok || !input.framePaths.length)
+      return { audited: false, hits: [] };
+    const cache = new Map<string, readonly OcrHit[]>();
+    const hits: OcrHit[] = [];
+    for (const path of input.framePaths) {
+      const hash = createHash('sha256')
+        .update(await readFile(path))
+        .digest('hex');
+      let found = cache.get(hash);
+      if (!found) {
+        const texts: string[] = [];
+        // Sparse text can miss light text on dark caption bars. Automatic layout
+        // and sparse layout complement each other; both must complete.
+        for (const mode of ['3', '11']) {
+          const result = await runProcess({
+            command: 'tesseract',
+            args: [path, 'stdout', '--psm', mode],
+            env: { ...process.env, OMP_THREAD_LIMIT: '1' },
+          });
+          if (!result.ok) return { audited: false, hits };
+          texts.push(result.output);
+        }
+        found = uniqueHits(
+          texts.flatMap((text) => [
+            ...hitsFromText(text),
+            ...(input.patterns ?? [])
+              .filter((pattern) => text.includes(pattern))
+              .map((text) => ({ text, confidence: 1 })),
+          ]),
+        );
+        cache.set(hash, found);
+      }
+      hits.push(...found);
+    }
+    return {
+      audited: true,
+      source: 'frame-ocr',
+      framesScanned: input.framePaths.length,
+      toolVersion: version.output.split('\n')[0] ?? 'unknown',
+      hits: uniqueHits(hits),
+    };
+  }
 }
 
 export class HeuristicOcrAdapter implements OcrAdapter {
@@ -125,7 +241,7 @@ export class HeuristicOcrAdapter implements OcrAdapter {
     ];
 
     return {
-      audited: samples.some((sample) => sample.audited),
+      audited: false,
       hits: uniqueHits(samples.flatMap((sample) => hitsFromText(sample.text))),
     };
   }
@@ -206,8 +322,12 @@ function adapters(
   adapter: OcrAdapter | undefined,
   command: string | undefined,
 ): readonly OcrAdapter[] {
-  const base = adapter ?? new HeuristicOcrAdapter();
-  return command === undefined ? [base] : [base, new CommandOcrAdapter(command)];
+  const base = adapter ?? new TesseractOcrAdapter();
+  return [
+    base,
+    new HeuristicOcrAdapter(),
+    ...(command === undefined ? [] : [new CommandOcrAdapter(command)]),
+  ];
 }
 
 function adapterInput(
@@ -219,6 +339,7 @@ function adapterInput(
   return {
     frameDir,
     framePaths,
+    ...(options.patterns ? { patterns: options.patterns } : {}),
     sidecarPath: `${videoPath}.ocr.json`,
     videoPath,
     ...(options.captionsPath === undefined
@@ -230,7 +351,9 @@ function adapterInput(
   };
 }
 
-async function sampleFrames(input: SampleFramesInput): Promise<readonly string[]> {
+async function sampleFrames(
+  input: SampleFramesInput,
+): Promise<readonly string[]> {
   if (!(await pathExists(input.videoPath))) {
     return [];
   }
@@ -244,8 +367,8 @@ async function sampleFrames(input: SampleFramesInput): Promise<readonly string[]
       '-y',
       '-i',
       input.videoPath,
-      '-vf',
-      'fps=1',
+      '-fps_mode',
+      'passthrough',
       '-q:v',
       '3',
       outputPattern,
@@ -308,10 +431,7 @@ async function frameSamples(
     textPaths.map(async (path) => textSample(await readOptional(path), true)),
   );
 
-  return [
-    ...samples,
-    ...textSamples.filter((sample) => sample.audited),
-  ];
+  return [...samples, ...textSamples.filter((sample) => sample.audited)];
 }
 
 function frameTextCandidates(path: string): readonly string[] {

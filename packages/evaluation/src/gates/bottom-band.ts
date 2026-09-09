@@ -1,6 +1,6 @@
 import type { GateResult } from '../types/gate.js';
 import type { PlanAnnotation, PlanDocument } from './plan-types.js';
-import { bboxHeight, bboxWidth } from './plan-io.js';
+import { bboxHeight } from './plan-io.js';
 
 const BOTTOM_BAND_PX = 96;
 
@@ -50,7 +50,12 @@ function intersectsBottomBand(
 
 function findOverlapViolations(
   occupants: readonly PlanAnnotation[],
-): readonly { readonly a: string; readonly b: string; readonly start: number; readonly end: number }[] {
+): readonly {
+  readonly a: string;
+  readonly b: string;
+  readonly start: number;
+  readonly end: number;
+}[] {
   const violations: {
     a: string;
     b: string;

@@ -14,7 +14,7 @@ export * from './geometry-diff.js';
 export * from './layouts.js';
 export * from './sync.js';
 
-export const REPRO_COMPARE_VERSION = '0.0.0' as const;
+export const REPRO_COMPARE_VERSION = '0.1.0' as const;
 
 export interface EnvironmentViewport {
   readonly width: number;
@@ -144,9 +144,7 @@ function parseManifest(value: unknown): CompareManifest {
     geometry: geometry as ElementSnapshot[],
     schemaVersion: 1,
     steps: steps as TimelineStep[],
-    ...(isRecord(value.environment)
-      ? { environment: value.environment }
-      : {}),
+    ...(isRecord(value.environment) ? { environment: value.environment } : {}),
     ...(value.overrideEnvDrift === true ? { overrideEnvDrift: true } : {}),
   };
 }

@@ -1,4 +1,5 @@
 import { record } from '@rrweb/record';
+import { sampleDocumentClock } from './document-clock.js';
 import { onCLS, onINP, onLCP } from 'web-vitals/attribution';
 
 import type {
@@ -75,6 +76,7 @@ declare global {
     __REPRO_FLAGS__?: ProbeFlags;
     __REPRO_PROBE__?: ProbeInfo;
     __REPRO_TARGETS__?: readonly string[];
+    __REPRO_DOCUMENT_ID__?: string;
   }
 }
 
@@ -91,10 +93,13 @@ const state: {
 
 function emit(type: string, payload: Record<string, unknown> = {}): void {
   try {
+    const clock = sampleDocumentClock();
     window.__reproEmit?.({
       protocol: PROBE_PROTOCOL,
       type,
-      time: performance.now(),
+      time: clock.now,
+      timeOrigin: clock.timeOrigin,
+      documentId: clock.documentId,
       ...payload,
     });
   } catch {
@@ -148,6 +153,8 @@ function declareProbe(): void {
 }
 
 function startRrwebRecorder(): void {
+  if (!(window as unknown as { __REPRO_RRWEB__?: boolean }).__REPRO_RRWEB__)
+    return;
   if (state.rrwebStop !== undefined) {
     return;
   }
@@ -242,8 +249,8 @@ function listenForPointers(): void {
 function onPointer(event: PointerEvent): void {
   safeRun(() => {
     const point = {
-      x: Math.round(event.clientX),
-      y: Math.round(event.clientY),
+      x: event.clientX,
+      y: event.clientY,
     };
 
     emit('pointer:path', {
@@ -253,6 +260,8 @@ function onPointer(event: PointerEvent): void {
       button: event.button,
       buttons: event.buttons,
       pointerType: event.pointerType,
+      coordinateSpace:
+        window === window.top ? 'viewport-css' : 'frame-viewport-css',
       path: pathSelectors(event),
     });
 
@@ -355,10 +364,10 @@ function queryTargets(selector: string): Element[] {
 
 function rectFrom(rect: DOMRect): RectSample {
   return {
-    x: Math.round(rect.x),
-    y: Math.round(rect.y),
-    width: Math.round(rect.width),
-    height: Math.round(rect.height),
+    x: rect.x,
+    y: rect.y,
+    width: rect.width,
+    height: rect.height,
   };
 }
 

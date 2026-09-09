@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "interaction",
+  "title": "Checkout accepts the intended pointer action",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "An invisible overlay intercepts Checkout before the fix; the intended click opens Checkout after it",
+  "expected": "Clicking Checkout opens Checkout",
+  "targets": [
+    {
+      "id": "target",
+      "description": "Checkout button"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open the cart",
+      "trigger": false
+    },
+    {
+      "id": "trigger",
+      "title": "Click Checkout",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Verify the Checkout heading",
+      "trigger": false
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Checkout result after the click",
+      "targets": ["target"],
+      "required": true,
+      "observations": ["screenshot", "bounds", "assertion", "hit-test"],
+      "timing": "stable"
+    }
+  ],
+  "outputs": ["png", "mp4", "review"],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 1200,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [],
+    "patterns": []
+  }
+}

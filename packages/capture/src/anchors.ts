@@ -16,6 +16,7 @@ export interface CaptureAnchorOptions {
   readonly page: Page;
   readonly pageId: string;
   readonly sink?: CaptureEventSink;
+  readonly now?: () => number;
 }
 
 export interface AnchorRecord {
@@ -24,6 +25,7 @@ export interface AnchorRecord {
   readonly pageId: string;
   readonly path: string;
   readonly tMono: number;
+  readonly endMono?: number;
 }
 
 export async function captureAnchor(
@@ -31,16 +33,19 @@ export async function captureAnchor(
 ): Promise<AnchorRecord> {
   await mkdir(options.directory, { recursive: true });
 
-  const tMono = performance.now();
+  const tMono = (options.now ?? (() => performance.now()))();
   const path = join(options.directory, anchorName(options));
 
   await options.page.screenshot({
-    animations: 'disabled',
+    animations: 'allow',
     path,
     type: 'png',
   });
 
-  const record = anchorRecord(options, path, tMono);
+  const record = {
+    ...anchorRecord(options, path, tMono),
+    endMono: (options.now ?? (() => performance.now()))(),
+  };
   emitAnchor(record, options.sink);
   return record;
 }
@@ -70,6 +75,7 @@ function emitAnchor(
       boundary: record.boundary,
       label: record.label,
       path: record.path,
+      endMono: record.endMono ?? record.tMono,
     },
     tMono: record.tMono,
   });

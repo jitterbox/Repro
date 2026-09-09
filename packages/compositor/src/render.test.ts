@@ -1,10 +1,9 @@
-import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { chromium } from 'playwright';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { cardCacheKey, closeCompositor, renderCards } from './render.js';
 import type { CardSpec } from './types.js';
@@ -28,13 +27,14 @@ describe('cardCacheKey', () => {
   it('hashes kind and props deterministically', () => {
     const keyA = cardCacheKey(slateCard);
     const keyB = cardCacheKey({ ...slateCard });
-    const expected = createHash('sha256')
-      .update(JSON.stringify({ kind: 'slate', props: slateCard.props }))
-      .digest('hex');
-
-    expect(keyA).toBe(expected);
     expect(keyA).toBe(keyB);
     expect(keyA).toHaveLength(64);
+  });
+
+  it('includes font and browser identity', () => {
+    expect(cardCacheKey(slateCard, { fonts: 'first' })).not.toBe(
+      cardCacheKey(slateCard, { fonts: 'second' }),
+    );
   });
 
   it('changes when props change', () => {
@@ -58,10 +58,7 @@ describe('renderCards', () => {
 
   it('reuses cache entries for identical props', async () => {
     outDir = await mkdtemp(join(tmpdir(), 'repro-compositor-'));
-    const cards: CardSpec[] = [
-      slateCard,
-      { ...slateCard, id: 'slate-2' },
-    ];
+    const cards: CardSpec[] = [slateCard, { ...slateCard, id: 'slate-2' }];
 
     const first = await renderCards({ cards, outDir });
     const second = await renderCards({ cards, outDir });
@@ -74,21 +71,50 @@ describe('renderCards', () => {
     expect(first[0]?.height).toBe(720);
   });
 
+  it('repairs corrupt cached pixels and serves verified hits without launching a browser', async () => {
+    if (!outDir) outDir = await mkdtemp(join(tmpdir(), 'repro-compositor-'));
+    const first = await renderCards({ cards: [slateCard], outDir });
+    const path = requireValue(first[0]).path;
+    const original = await readFile(path);
+    await writeFile(path, 'corrupted image');
+    await renderCards({ cards: [slateCard], outDir });
+    expect(await readFile(path)).toEqual(original);
+    await closeCompositor();
+    const launch = vi
+      .spyOn(chromium, 'launch')
+      .mockRejectedValue(new Error('A cache hit must not launch Chromium'));
+    try {
+      await renderCards({ cards: [slateCard], outDir });
+      expect(launch).not.toHaveBeenCalled();
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it('keeps simultaneous renders isolated on the shared page', async () => {
+    if (!outDir) outDir = await mkdtemp(join(tmpdir(), 'repro-compositor-'));
+    const other: CardSpec = {
+      ...slateCard,
+      id: 'other',
+      props: { ...slateCard.props, title: 'Distinct scenario title' },
+    };
+    const expected = await renderCards({
+      cards: [slateCard, other],
+      outDir: join(outDir, 'reference'),
+    });
+    const actual = await Promise.all([
+      renderCards({ cards: [slateCard], outDir: join(outDir, 'parallel') }),
+      renderCards({ cards: [other], outDir: join(outDir, 'parallel') }),
+    ]);
+    for (let i = 0; i < 2; i++)
+      expect(
+        await readFile(requireValue(requireValue(actual[i])[0]).path),
+      ).toEqual(await readFile(requireValue(expected[i]).path));
+  });
+
   it('writes RGBA PNG when Chromium is available', async () => {
     if (!outDir) {
       outDir = await mkdtemp(join(tmpdir(), 'repro-compositor-'));
-    }
-
-    let browserOk = true;
-    try {
-      const probe = await chromium.launch();
-      await probe.close();
-    } catch {
-      browserOk = false;
-    }
-
-    if (!browserOk) {
-      return;
     }
 
     const toast: CardSpec = {
@@ -107,9 +133,15 @@ describe('renderCards', () => {
     });
 
     expect(results[0]).toBeDefined();
-    const png = await readFile(results[0]!.path);
+    const png = await readFile(requireValue(results[0]).path);
     expect(png[0]).toBe(0x89);
     expect(png[1]).toBe(0x50);
     expect(png.subarray(12, 16).toString('ascii')).toBe('IHDR');
   });
 });
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
+}

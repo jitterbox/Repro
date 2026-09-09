@@ -12,3 +12,5 @@ coverage/
 .turbo/
 *.tsbuildinfo
 apps/shoplite/dist/
+test-results/
+playwright-report/

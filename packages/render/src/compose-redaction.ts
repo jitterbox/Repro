@@ -1,6 +1,5 @@
 import {
-  buildPixelizeRedactionFilter,
-  buildRectMaskFilter,
+  buildOpaqueRedactionFilter,
   expandScrollBand,
 } from './redaction-filters.js';
 import { rrwebInvertedSafeDefaults } from './redaction/source-mask.js';
@@ -52,17 +51,12 @@ export function composeRedactionFilter(
   }
 
   return {
-    filter: [
-      buildRectMaskFilter(rects, input.maskLabel, input.plan.viewport),
-      buildPixelizeRedactionFilter({
-        maskLabel: input.maskLabel,
-        outputLabel: input.outputLabel,
-        sourceLabel: input.inputLabel,
-        ...(input.workLabel === undefined
-          ? {}
-          : { workLabel: input.workLabel }),
-      }),
-    ].join(';'),
+    filter: buildOpaqueRedactionFilter(
+      rects,
+      input.inputLabel,
+      input.outputLabel,
+      input.plan.viewport,
+    ),
     hasRedactions: true,
     rrwebMask,
   };

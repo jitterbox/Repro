@@ -1,112 +1,31 @@
 import type { GeometryDelta } from './geometry-diff.js';
-import type { SyncAnchor, SyncMap } from './sync.js';
-
-export type CompareLayout =
-  | 'side-by-side'
-  | 'onion'
-  | 'wipe'
-  | 'cropped-roi'
-  | 'difference'
-  | 'edge'
-  | 'blink';
-
-export interface ComparePane {
-  readonly runId: string;
-  readonly role: 'before' | 'after';
-  readonly label: string;
-  readonly build?: string;
-  readonly viewport?: Record<string, unknown>;
-  readonly color?: 'before' | 'after';
-}
-
-export interface CompareCompositionDelta {
-  readonly selector: string;
-  readonly class:
-    | 'geometry'
-    | 'color'
-    | 'typography'
-    | 'content'
-    | 'visibility'
-    | 'flow';
-  readonly dx?: number;
-  readonly dy?: number;
-  readonly dw?: number;
-  readonly dh?: number;
-  readonly before?: string;
-  readonly after?: string;
-  readonly caption?: string;
-  readonly ringA?: 'remove' | 'change' | 'before';
-  readonly ringB?: 'add' | 'change' | 'after';
-}
-
-export interface CompareComposition {
-  readonly schemaVersion: string;
-  readonly bugId?: string;
-  readonly layout: CompareLayout;
-  readonly layoutReason?: string;
-  readonly output: {
-    readonly width: number;
-    readonly height: number;
-    readonly fps: number;
-    readonly filename?: string;
-  };
-  readonly panes: {
-    readonly a: ComparePane;
-    readonly b: ComparePane;
-  };
-  readonly sync: {
-    readonly strategy: 'anchored-dtw' | 'anchors-only' | 'dtw-only';
-    readonly anchors?: readonly SyncAnchor[];
-    readonly band?: { readonly kind: 'sakoe-chiba'; readonly radiusMs?: number };
-    readonly signature?: string;
-    readonly maxStretch?: number;
-    readonly knots: readonly (readonly [number, number, number, number])[];
-    readonly lowConfidenceSpans?: SyncMap['lowConfidenceSpans'];
-  };
-  readonly onion?: {
-    readonly beforeOpacity?: number;
-    readonly ghostRing?: boolean;
-  };
-  readonly wipe?: {
-    readonly axis?: 'vertical' | 'horizontal';
-    readonly animate?: boolean;
-    readonly restAt?: number;
-    readonly restForMs?: number;
-  };
-  readonly croppedRoi?: {
-    readonly rect?: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
-    readonly magnification?: number;
-  };
-  readonly blink?: {
-    readonly hz?: number;
-    readonly optIn: true;
-  };
-  readonly deltas?: readonly CompareCompositionDelta[];
-  readonly chrome?: {
-    readonly sharedRail?: boolean;
-    readonly driftTicks?: boolean;
-    readonly legend?: string;
-    readonly stepCounter?: boolean;
-  };
-  readonly a11y?: {
-    readonly blinkUsed?: boolean;
-    readonly maxFlashHz?: number;
-  };
-}
+import type { SyncMap } from './sync.js';
+import type {
+  CompareComposition,
+  CompareCompositionDelta,
+  CompareLayout,
+  ComparePane,
+} from '@repro/contracts';
+export type {
+  CompareComposition,
+  CompareCompositionDelta,
+  CompareLayout,
+  ComparePane,
+} from '@repro/contracts';
 
 const SUB_PIXEL_THRESHOLD = 8;
 
-export function selectLayout(
-  deltas: readonly GeometryDelta[],
-): { readonly layout: CompareLayout; readonly reason: string } {
+export function selectLayout(deltas: readonly GeometryDelta[]): {
+  readonly layout: CompareLayout;
+  readonly reason: string;
+} {
   if (deltas.length === 0) {
     return { layout: 'side-by-side', reason: 'content/flow change' };
   }
 
   if (
     deltas.some(
-      (delta) =>
-        delta.kind === 'appeared' || delta.kind === 'disappeared',
+      (delta) => delta.kind === 'appeared' || delta.kind === 'disappeared',
     )
   ) {
     return { layout: 'side-by-side', reason: 'content/flow change' };
@@ -126,7 +45,9 @@ export function selectLayout(
     return { layout: 'cropped-roi', reason: 'sub-8px geometry delta' };
   }
 
-  if (deltas.some((delta) => delta.kind === 'moved' || delta.kind === 'resized')) {
+  if (
+    deltas.some((delta) => delta.kind === 'moved' || delta.kind === 'resized')
+  ) {
     return { layout: 'onion', reason: 'geometry shift' };
   }
 
@@ -187,12 +108,17 @@ export function buildCompareComposition(input: {
       ? { onion: { beforeOpacity: 0.45, ghostRing: true } }
       : {}),
     ...(layout === 'wipe'
-      ? { wipe: { animate: true, axis: 'vertical', restAt: 0.5, restForMs: 1000 } }
+      ? {
+          wipe: {
+            animate: true,
+            axis: 'vertical',
+            restAt: 0.5,
+            restForMs: 1000,
+          },
+        }
       : {}),
     ...(croppedRoi === undefined ? {} : { croppedRoi }),
-    ...(layout === 'blink'
-      ? { blink: { hz: 2, optIn: true as const } }
-      : {}),
+    ...(layout === 'blink' ? { blink: { hz: 2, optIn: true as const } } : {}),
     schemaVersion: '1.0.0',
   };
 }
@@ -260,7 +186,11 @@ function deltaClass(delta: GeometryDelta): CompareCompositionDelta['class'] {
     const styles = delta.after?.styles ?? delta.before?.styles ?? {};
     const keys = Object.keys(styles).join(' ').toLowerCase();
 
-    if (keys.includes('font') || keys.includes('size') || keys.includes('weight')) {
+    if (
+      keys.includes('font') ||
+      keys.includes('size') ||
+      keys.includes('weight')
+    ) {
       return 'typography';
     }
 

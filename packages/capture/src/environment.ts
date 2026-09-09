@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { arch, platform } from 'node:process';
@@ -16,13 +15,15 @@ export interface EnvironmentViewport {
   readonly deviceScaleFactor: number;
 }
 
-export interface FontManifestEntry {
-  readonly family: string;
-  readonly source: string;
-  readonly sha256: string | null;
-}
+export type { FontManifestEntry } from '@repro/core';
+import { enumerateFonts, type FontManifestEntry } from '@repro/core';
 
 export interface EnvironmentManifest {
+  readonly reproTracing?: {
+    readonly started: boolean;
+    readonly screenshots: false;
+    readonly snapshots: boolean;
+  };
   readonly schemaVersion: 1;
   readonly nodeVersion: string;
   readonly platform: string;
@@ -33,6 +34,8 @@ export interface EnvironmentManifest {
   readonly browserVersion: string;
   readonly build: string;
   readonly viewport: EnvironmentViewport;
+  readonly viewportSource: 'page' | 'requested';
+  readonly reducedMotion: boolean | null;
   readonly locale: string;
   readonly timezone: string;
   readonly ffmpegVersion: string | null;
@@ -41,9 +44,7 @@ export interface EnvironmentManifest {
   readonly fontManifest: readonly FontManifestEntry[];
 }
 
-export type VersionCommandRunner = (
-  command: string,
-) => Promise<string | null>;
+export type VersionCommandRunner = (command: string) => Promise<string | null>;
 
 export interface EnvironmentPage {
   evaluate<T>(pageFunction: () => T): Promise<T>;
@@ -63,6 +64,8 @@ export interface CollectEnvironmentOptions {
 }
 
 interface PageLocaleInfo {
+  readonly viewport?: EnvironmentViewport;
+  readonly reducedMotion?: boolean;
   readonly locale: string;
   readonly timezone: string;
 }
@@ -102,7 +105,9 @@ export async function collectEnvironmentManifest(
     playwrightVersion: options.playwrightVersion ?? playwrightVersion(),
     schemaVersion: 1,
     timezone: pageInfo.timezone,
-    viewport: {
+    viewportSource: pageInfo.viewport ? 'page' : 'requested',
+    reducedMotion: pageInfo.reducedMotion ?? null,
+    viewport: pageInfo.viewport ?? {
       deviceScaleFactor: options.viewport.deviceScaleFactor,
       height: options.viewport.height,
       width: options.viewport.width,
@@ -163,54 +168,6 @@ export function runVersionCommandFrom(command: string): Promise<string | null> {
   });
 }
 
-async function enumerateFonts(): Promise<readonly FontManifestEntry[]> {
-  try {
-    const { stdout } = await execFileAsync(
-      'fc-list',
-      [':family', '-f', '%{family[0]}\n'],
-      { timeout: 2_000 },
-    );
-    const families = [
-      ...new Set(
-        stdout
-          .split(/\r?\n/u)
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0),
-      ),
-    ].slice(0, 64);
-
-    if (families.length === 0) {
-      return defaultFonts();
-    }
-
-    return families.map((family) => ({
-      family,
-      sha256: createHash('sha256').update(family).digest('hex').slice(0, 16),
-      source: 'fontconfig',
-    }));
-  } catch {
-    return defaultFonts();
-  }
-}
-
-function defaultFonts(): readonly FontManifestEntry[] {
-  return [
-    {
-      family: 'DejaVu Sans',
-      sha256: createHash('sha256').update('DejaVu Sans').digest('hex').slice(0, 16),
-      source: 'pinned',
-    },
-    {
-      family: 'DejaVu Sans Mono',
-      sha256: createHash('sha256')
-        .update('DejaVu Sans Mono')
-        .digest('hex')
-        .slice(0, 16),
-      source: 'pinned',
-    },
-  ];
-}
-
 async function resolveBuildLabel(): Promise<string> {
   try {
     const { stdout: branchOut } = await execFileAsync(
@@ -244,6 +201,12 @@ async function pageLocaleInfo(
     return {
       locale: options.locale,
       timezone: options.timeZone,
+      viewport: {
+        width: innerWidth,
+        height: innerHeight,
+        deviceScaleFactor: devicePixelRatio,
+      },
+      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     };
   });
 }

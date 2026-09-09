@@ -8,7 +8,9 @@ import { RoiMagnifier } from './components/RoiMagnifier.js';
 import { Slate } from './components/Slate.js';
 import { VitalsHud } from './components/VitalsHud.js';
 
-type CardViewProps = { card: CardSpec };
+interface CardViewProps {
+  card: CardSpec;
+}
 
 export function CardView({ card }: CardViewProps) {
   switch (card.kind) {

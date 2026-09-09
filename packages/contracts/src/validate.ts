@@ -8,6 +8,8 @@ import addFormats from 'ajv-formats';
 
 import type { SchemaName, ValidationResult } from './types.js';
 import { SCHEMA_NAMES } from './types.js';
+import { configJsonSchema } from './config.js';
+import { compareCompositionJsonSchema } from './comparison.js';
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const schemasDir = join(packageRoot, 'schemas');
@@ -50,7 +52,13 @@ function loadSchemas(): Ajv2020 {
   for (const file of schemaFiles) {
     const raw = readFileSync(join(schemasDir, file), 'utf8');
     const schema = JSON.parse(raw) as Record<string, unknown>;
-    ajv.addSchema(schema);
+    ajv.addSchema(
+      file === 'config.schema.json'
+        ? { ...configJsonSchema, $id: schema.$id }
+        : file === 'compare-composition.schema.json'
+          ? { ...compareCompositionJsonSchema, $id: schema.$id }
+          : schema,
+    );
   }
 
   for (const name of SCHEMA_NAMES) {

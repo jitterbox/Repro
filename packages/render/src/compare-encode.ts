@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
+import { runProcess, h264Profile } from '@repro/core';
+import { parseCompareComposition } from '@repro/contracts';
 
 import {
   blinkLayout,
@@ -24,28 +25,10 @@ export interface RenderCompareInput {
 export interface RenderCompareResult {
   readonly outputPath: string;
   readonly compositionPath: string;
+  readonly timing: 'synchronized' | 'original';
 }
 
-const BT709_ARGS = [
-  '-c:v',
-  'libx264',
-  '-crf',
-  '18',
-  '-pix_fmt',
-  'yuv420p',
-  '-profile:v',
-  'high',
-  '-color_primaries',
-  'bt709',
-  '-color_trc',
-  'bt709',
-  '-colorspace',
-  'bt709',
-  '-color_range',
-  'tv',
-  '-movflags',
-  '+faststart',
-] as const;
+const BT709_ARGS = h264Profile;
 
 const FRAME_W = 1280;
 const FRAME_H = 720;
@@ -59,9 +42,10 @@ const PANE_B_X = PANE_A_X + PANE_W + PANE_GAP;
 export async function renderCompare(
   input: RenderCompareInput,
 ): Promise<RenderCompareResult> {
+  const composition = parseCompareComposition(input.composition);
+  if (composition.output.width !== 1280 || composition.output.height !== 720)
+    throw new Error('This renderer currently supports 1280x720 output only');
   await mkdir(input.outDir, { recursive: true });
-
-  const composition = input.composition as CompareComposition;
   const compositionPath = join(input.outDir, 'compare-composition.json');
   const outputName =
     composition.output.filename ?? `${composition.layout}_compare.mp4`;
@@ -91,7 +75,11 @@ export async function renderCompare(
     ffmpegPath,
   });
 
-  return { compositionPath, outputPath };
+  return {
+    compositionPath,
+    outputPath,
+    timing: composition.sync.knots.length >= 2 ? 'synchronized' : 'original',
+  };
 }
 
 interface CompareFilterGraph {
@@ -103,8 +91,8 @@ function buildCompareFilterGraph(
   composition: CompareComposition,
 ): CompareFilterGraph {
   return {
-    filterComplex: buildLayoutFilter(composition),
-    videoLabel: '[v]',
+    filterComplex: `${buildLayoutFilter(composition)};${checkpointOverlay(composition)};${scenarioOverlay(composition)}`,
+    videoLabel: '[proof]',
   };
 }
 
@@ -114,7 +102,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
   const labelB = escapeDrawtext(composition.panes.b.label);
   const bugId = escapeDrawtext(composition.bugId ?? 'COMPARE');
   const delta = escapeDrawtext(primaryDeltaCaption(composition));
-  const step = escapeDrawtext(stepCounterLabel(composition));
 
   switch (composition.layout) {
     case 'side-by-side':
@@ -132,9 +119,8 @@ function buildLayoutFilter(composition: CompareComposition): string {
           `fontsize=18:fontcolor=white:box=1:boxcolor=0x5B6B8C@0.85[lA]`,
         `[lA]drawtext=text='${labelB}':x=${String(PANE_B_X)}:y=84:` +
           `fontsize=18:fontcolor=white:box=1:boxcolor=0x1B7F4A@0.85[lB]`,
-        `[lB]drawtext=text='${bugId}':x=24:y=24:fontsize=20:fontcolor=0x2457D6[id]`,
-        `[id]drawtext=text='${step}':x=w-220:y=24:fontsize=18:fontcolor=white:` +
-          `box=1:boxcolor=black@0.55[step]`,
+        `[lB]drawtext=text='${bugId}':x=24:y=24:fontsize=20:fontcolor=white[id]`,
+        `[id]null[step]`,
         `[step]drawtext=text='${delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
           `box=1:boxcolor=black@0.55[delta]`,
         `[delta]drawbox=x=24:y=h-12:w=iw-48:h=4:color=white@0.75:t=fill[v]`,
@@ -151,7 +137,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'ONION',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     case 'wipe':
@@ -171,7 +156,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'WIPE',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     case 'blink':
@@ -186,7 +170,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'BLINK',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     case 'difference':
@@ -205,7 +188,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'DIFF',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     case 'edge':
@@ -224,17 +206,10 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'EDGE',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     case 'cropped-roi': {
-      const source = composition.croppedRoi?.rect;
-      const rect = {
-        x: source?.x ?? 400,
-        y: source?.y ?? 200,
-        w: source?.w ?? 160,
-        h: source?.h ?? 80,
-      };
+      const rect = requireValue(composition.croppedRoi?.rect);
       return [
         synced.a,
         synced.b,
@@ -254,7 +229,6 @@ function buildLayoutFilter(composition: CompareComposition): string {
           layout: 'ROI',
           labelA,
           labelB,
-          step,
         }),
       ].join(';');
     }
@@ -264,14 +238,13 @@ function buildLayoutFilter(composition: CompareComposition): string {
 }
 
 /**
- * Apply a coarse sync warp from first/last knots so both streams share
- * output duration. Full per-segment DTW concat is a follow-up.
+ * Apply every measured synchronization knot so unequal intervals share output time.
  */
 function syncPrep(composition: CompareComposition): {
   readonly a: string;
   readonly b: string;
 } {
-  const knots = composition.sync?.knots ?? [];
+  const knots = composition.sync.knots;
   const fps = composition.output.fps || 30;
   if (knots.length < 2) {
     return {
@@ -280,22 +253,36 @@ function syncPrep(composition: CompareComposition): {
     };
   }
 
-  const first = knots[0]!;
-  const last = knots[knots.length - 1]!;
-  const aSpan = Math.max(1, last[0] - first[0]);
-  const bSpan = Math.max(1, last[1] - first[1]);
-  const outSpan = Math.max(1, last[2] - first[2]);
-  const aRate = outSpan / aSpan;
-  const bRate = outSpan / bSpan;
-
+  // The final capture interval can end between source frames. Preserve its
+  // terminal image through the measured endpoint instead of letting the
+  // shortest pane truncate a late checkpoint (or its label).
+  const endMs = requireValue(knots.at(-1))[2];
+  const frameCount = Math.ceil((endMs * fps) / 1000);
+  const tail = `fps=${fps},tpad=stop_mode=clone:stop_duration=${endMs / 1000},trim=end_frame=${frameCount},settb=1/${fps}`;
   return {
-    a:
-      `[0:v]fps=${String(fps)},settb=1/${String(fps)},` +
-      `setpts=${aRate.toFixed(6)}*(PTS-STARTPTS)[aSync]`,
-    b:
-      `[1:v]fps=${String(fps)},settb=1/${String(fps)},` +
-      `setpts=${bRate.toFixed(6)}*(PTS-STARTPTS)[bSync]`,
+    a: `[0:v]setpts='${piecewisePts(knots, 0)}',${tail}[aSync]`,
+    b: `[1:v]setpts='${piecewisePts(knots, 1)}',${tail}[bSync]`,
   };
+}
+
+export function piecewisePts(
+  knots: CompareComposition['sync']['knots'],
+  side: 0 | 1,
+): string {
+  let expression = 'PTS-STARTPTS';
+  for (let i = knots.length - 2; i >= 0; i--) {
+    const a = requireValue(knots[i]),
+      b = requireValue(knots[i + 1]);
+    if (b[side] <= a[side] || b[2] < a[2])
+      throw new Error('Sync knots must increase in source and output time');
+    const rate = (b[2] - a[2]) / (b[side] - a[side]);
+    const mapped = `${a[2] / 1000}/TB+(PTS-STARTPTS-${a[side] / 1000}/TB)*${rate}`;
+    expression =
+      i === knots.length - 2
+        ? mapped
+        : `if(lt((PTS-STARTPTS)*TB,${b[side] / 1000}),${mapped},${expression})`;
+  }
+  return expression;
 }
 
 function primaryDeltaCaption(composition: CompareComposition): string {
@@ -321,12 +308,100 @@ function formatDelta(value: number): string {
   return `${sign}${String(value)}px`;
 }
 
-function stepCounterLabel(composition: CompareComposition): string {
-  const anchors = composition.sync?.anchors ?? [];
-  if (anchors.length === 0) {
-    return 'STEP —';
+export function comparisonCheckpointLabels(composition: CompareComposition) {
+  return (composition.sync.anchors ?? []).flatMap((anchor, index, anchors) => {
+    const knot = composition.sync.knots.find(
+      (point) => point[0] === anchor.aMs && point[1] === anchor.bMs,
+    );
+    return knot
+      ? [
+          {
+            atMs: knot[2],
+            text: `CHECKPOINT ${index + 1} / ${anchors.length} - ${anchor.title ?? anchor.stepId}`,
+          },
+        ]
+      : [];
+  });
+}
+
+function checkpointOverlay(composition: CompareComposition): string {
+  if (composition.chrome?.stepCounter === false) return '[v]null[progress]';
+  const labels = comparisonCheckpointLabels(composition);
+  if (!labels.length) return '[v]null[progress]';
+  return labels
+    .map((label, index) => {
+      const next = labels[index + 1];
+      const input = index === 0 ? '[v]' : `[checkpoint${index - 1}]`;
+      const output =
+        index === labels.length - 1 ? '[progress]' : `[checkpoint${index}]`;
+      const enable = next
+        ? `gte(t,${label.atMs / 1000})*lt(t,${next.atMs / 1000})`
+        : `gte(t,${label.atMs / 1000})`;
+      return `${input}drawtext=text='${escapeDrawtext(label.text)}':x=24:y=h-96:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.55:enable='${enable}'${output}`;
+    })
+    .join(';');
+}
+
+/** Timings and observation references are committed in the comparison document. */
+export function comparisonScenarioLabels(composition: CompareComposition) {
+  const presentation = composition.presentation;
+  if (!presentation) return [];
+  const labels: {
+    text: string;
+    startMs: number;
+    endMs?: number;
+    x: number;
+    y: number;
+  }[] = [];
+  for (const role of ['before', 'after'] as const) {
+    const x = role === 'before' ? PANE_A_X : PANE_B_X;
+    const steps = presentation.steps.filter((s) => s.role === role);
+    steps.forEach((step, index) =>
+      labels.push({
+        text: `STEP ${step.index} / ${steps.length}: ${step.title}${step.trigger ? ' [Trigger]' : ''}`,
+        startMs: step.startMs,
+        ...(steps[index + 1]
+          ? { endMs: requireValue(steps[index + 1]).startMs }
+          : {}),
+        x,
+        y: 496,
+      }),
+    );
+    const outcome = presentation.outcomes.find((o) => o.role === role);
+    if (outcome) {
+      labels.push({
+        text: `Expected: ${outcome.expected}`,
+        startMs: 0,
+        x,
+        y: 526,
+      });
+      labels.push({
+        text: `Observed: ${outcome.observed}`,
+        startMs: outcome.atMs,
+        x,
+        y: 552,
+      });
+      labels.push({ text: outcome.label, startMs: outcome.atMs, x, y: 578 });
+    }
   }
-  return `STEP 1 / ${String(anchors.length)}`;
+  return labels;
+}
+function scenarioOverlay(composition: CompareComposition): string {
+  const labels = comparisonScenarioLabels(composition);
+  if (!labels.length) return '[progress]null[proof]';
+  return labels
+    .map((label, index) => {
+      const input = index ? `[proof${index - 1}]` : '[progress]';
+      const output =
+        index === labels.length - 1 ? '[proof]' : `[proof${index}]`;
+      const enable =
+        `gte(t,${label.startMs / 1000})` +
+        (label.endMs === undefined ? '' : `*lt(t,${label.endMs / 1000})`);
+      const text =
+        label.text.length > 66 ? label.text.slice(0, 63) + '...' : label.text;
+      return `${input}drawtext=text='${escapeDrawtext(text)}':x=${label.x}:y=${label.y}:fontsize=16:fontcolor=white:box=1:boxcolor=black@0.75:enable='${enable}'${output}`;
+    })
+    .join(';');
 }
 
 function scaleToFrame(input: string, output: string): string {
@@ -347,15 +422,13 @@ function chromeOverlay(
     readonly layout: string;
     readonly labelA: string;
     readonly labelB: string;
-    readonly step: string;
   },
 ): string {
   return [
     `${input}drawtext=text='${labels.layout} · ${labels.labelA} / ${labels.labelB}':` +
       `x=24:y=84:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.55[c0]`,
-    `[c0]drawtext=text='${labels.bugId}':x=24:y=24:fontsize=20:fontcolor=0x2457D6[c1]`,
-    `[c1]drawtext=text='${labels.step}':x=w-220:y=24:fontsize=18:fontcolor=white:` +
-      `box=1:boxcolor=black@0.55[c2]`,
+    `[c0]drawtext=text='${labels.bugId}':x=24:y=24:fontsize=20:fontcolor=white[c1]`,
+    `[c1]null[c2]`,
     `[c2]drawtext=text='${labels.delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
       `box=1:boxcolor=black@0.55[c3]`,
     `[c3]drawbox=x=24:y=h-12:w=iw-48:h=4:color=white@0.75:t=fill${output}`,
@@ -370,27 +443,15 @@ function escapeDrawtext(value: string): string {
     .replace(/%/g, '\\%');
 }
 
-function runFfmpeg(input: {
+async function runFfmpeg(input: {
   readonly ffmpegPath: string;
   readonly args: readonly string[];
 }): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(input.ffmpegPath, [...input.args]);
-    let stderr = '';
+  await runProcess(input.ffmpegPath, input.args);
+}
 
-    child.stderr.setEncoding('utf8');
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk;
-    });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      const exitCode = code === null ? 'unknown' : String(code);
-      reject(new Error(`ffmpeg exited with ${exitCode}: ${stderr}`));
-    });
-  });
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

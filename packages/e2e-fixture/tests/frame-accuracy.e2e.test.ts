@@ -21,7 +21,7 @@ const MAX_FLASH_HZ = 2;
 const LUMINANCE_DELTA_THRESHOLD = 35;
 
 interface SyntheticPlan {
-  readonly annotations: Array<{
+  readonly annotations: {
     readonly id: string;
     readonly component: string;
     readonly bounds?: {
@@ -30,9 +30,9 @@ interface SyntheticPlan {
       readonly width: number;
       readonly height: number;
     };
-  }>;
+  }[];
   readonly timeline?: {
-    readonly beats: Array<{ readonly id: string; readonly kind?: string }>;
+    readonly beats: { readonly id: string; readonly kind?: string }[];
   };
 }
 
@@ -130,13 +130,16 @@ describe('frame-accuracy gates (synthetic)', () => {
     await writeFile(
       timelinePath,
       `${JSON.stringify({
-        beats: [{ id: 'slate', kind: 'insert' }, { id: 'body-0', kind: 'play' }],
+        beats: [
+          { id: 'slate', kind: 'insert' },
+          { id: 'body-0', kind: 'play' },
+        ],
       })}\n`,
     );
 
     const durationMs = await probeDurationMs(videoPath);
     const timeline = JSON.parse(await readFile(timelinePath, 'utf8')) as {
-      beats: Array<{ id: string }>;
+      beats: { id: string }[];
     };
 
     if (durationMs >= 8_000) {
@@ -147,7 +150,10 @@ describe('frame-accuracy gates (synthetic)', () => {
   });
 
   it('requires component on plan annotations', async () => {
-    const planPath = join(getRepoRoot(), 'packages/contracts/fixtures/plan.valid.json');
+    const planPath = join(
+      getRepoRoot(),
+      'packages/contracts/fixtures/plan.valid.json',
+    );
     const plan = JSON.parse(await readFile(planPath, 'utf8')) as SyntheticPlan;
     expect(plan.annotations.length).toBeGreaterThan(0);
     for (const annotation of plan.annotations) {
@@ -176,7 +182,9 @@ describe('frame-accuracy gates (synthetic)', () => {
         },
       ],
     };
-    expect(() => assertNoCentrePlates(unsafePlan)).toThrow();
+    expect(() => {
+      assertNoCentrePlates(unsafePlan);
+    }).toThrow();
   });
 
   it('flags high contact-sheet luminance change rate', async () => {
@@ -210,14 +218,17 @@ describe('frame-accuracy gates (synthetic)', () => {
 
 describe('frame-accuracy gates (fixture plan)', () => {
   it('validates packaged plan geometry from contracts fixture', async () => {
-    const planPath = join(getRepoRoot(), 'packages/contracts/fixtures/plan.valid.json');
+    const planPath = join(
+      getRepoRoot(),
+      'packages/contracts/fixtures/plan.valid.json',
+    );
     const plan = JSON.parse(await readFile(planPath, 'utf8')) as SyntheticPlan;
     assertNoCentrePlates(plan);
   });
 });
 
-describe('frame-accuracy gates (capture)', () => {
-  it('full capture frame assertions with ffmpeg test video', async () => {
+describe('frame-accuracy gates (synthetic capture media)', () => {
+  it('checks duration of a synthetic ffmpeg test video', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repro-frame-capture-'));
     await mkdir(dir, { recursive: true });
     const videoPath = join(dir, 'capture.mp4');

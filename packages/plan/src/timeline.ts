@@ -1,47 +1,23 @@
-import { overlayTheme } from '@repro/contracts';
+import { overlayTheme, parseTimeline } from '@repro/contracts';
 
 import type { BeatDraft, TimeRange } from './types.js';
 
-export type BeatKind = 'play' | 'hold' | 'insert' | 'trim';
-export type BeatSource = 'capture' | 'composited';
-export type BeatBadge = 'PAUSED' | 'FREEZE' | 'SLOWMO';
-
-export interface BeatTransition {
-  readonly kind: 'cut' | 'fade' | 'dissolve';
-  readonly ms: number;
-}
-
-export interface Beat {
-  readonly id: string;
-  readonly kind: BeatKind;
-  readonly source: BeatSource;
-  readonly assetRef?: string;
-  readonly captureStartMs?: number;
-  readonly captureEndMs?: number;
-  readonly captureAtMs?: number;
-  readonly rate: number;
-  readonly outStartMs: number;
-  readonly outDurationMs: number;
-  readonly minOutDurationMs?: number;
-  readonly chapterId?: string;
-  readonly badge?: BeatBadge;
-  readonly transitionIn?: BeatTransition;
-  readonly transitionOut?: BeatTransition;
-}
-
-export interface TimeMap {
-  readonly kind: 'piecewise-linear';
-  readonly knots: readonly (readonly [number, number])[];
-}
-
-export interface Timeline {
-  readonly schemaVersion: '1.0.0';
-  readonly fps: 30;
-  readonly targetDurationMs?: number;
-  readonly beats: readonly Beat[];
-  readonly timeMap: TimeMap;
-  readonly warnings: readonly string[];
-}
+import type {
+  Beat,
+  BeatKind,
+  BeatBadge,
+  BeatSource,
+  Timeline,
+} from '@repro/contracts';
+export type {
+  BeatKind,
+  BeatSource,
+  BeatBadge,
+  BeatTransition,
+  Beat,
+  TimeMap,
+  Timeline,
+} from '@repro/contracts';
 
 export interface CompileTimelineInput {
   readonly captureDurationMs: number;
@@ -64,13 +40,19 @@ const FPS = 30 as const;
 export function compileTimeline(input: CompileTimelineInput): Timeline {
   const warnings: string[] = [];
   const beats: Beat[] = [];
-  const knots: Array<[number, number]> = [];
+  const knots: [number, number][] = [];
   let outCursor = 0;
 
+  const frameMs = 1000 / FPS;
   const slateHold =
-    input.slateHoldMs ?? HOLDS.slate.typical;
-  const dissolveMs =
-    input.slateDissolveMs ?? overlayTheme.motion.slateToContent.ms;
+    Math.round((input.slateHoldMs ?? HOLDS.slate.typical) / frameMs) * frameMs;
+  const dissolveMs = Math.min(
+    slateHold,
+    Math.round(
+      (input.slateDissolveMs ?? overlayTheme.motion.slateToContent.ms) /
+        frameMs,
+    ) * frameMs,
+  );
 
   if (input.includeSlate !== false) {
     beats.push({
@@ -84,7 +66,8 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
       minOutDurationMs: HOLDS.slate.min,
       transitionOut: { kind: 'dissolve', ms: dissolveMs },
     });
-    outCursor = slateHold;
+    // The body begins when the dissolve begins, not after the slate ends.
+    outCursor = slateHold - dissolveMs;
   }
 
   const drafts = input.drafts ?? [];
@@ -113,22 +96,16 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
       minOutDurationMs: HOLDS.outcome.min,
     };
     beats.push(beat);
-    appendKnots(knots, beat);
+    appendKnots(knots, beat, captureEnd);
     outCursor += holdMs;
   }
 
-  // xfade overlaps slate/body by dissolveMs; pad so probed MP4 still hits
-  // the filed minimum after encode.
-  const slateOverlapMs =
-    input.includeSlate === false
-      ? 0
-      : (input.slateDissolveMs ?? overlayTheme.motion.slateToContent.ms);
   const minTarget =
     input.targetDurationMs ??
     (input.outcomeHoldMs === undefined
-      ? DURATION.hardMinMs + slateOverlapMs
-      : DURATION.filedReproMinMs + slateOverlapMs);
-  if (minTarget !== undefined && outCursor < minTarget) {
+      ? DURATION.hardMinMs
+      : DURATION.filedReproMinMs);
+  if (outCursor < minTarget) {
     const padMs = minTarget - outCursor;
     const last = beats[beats.length - 1];
     if (last?.kind === 'hold') {
@@ -139,7 +116,7 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
       beats[beats.length - 1] = extended;
       // Last two knots are the hold; bump the end out-time.
       if (knots.length >= 2) {
-        const [capture] = knots[knots.length - 1]!;
+        const [capture] = requireValue(knots[knots.length - 1]);
         knots[knots.length - 1] = [
           capture,
           extended.outStartMs + extended.outDurationMs,
@@ -163,7 +140,7 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
         badge: 'FREEZE',
       };
       beats.push(pad);
-      appendKnots(knots, pad);
+      appendKnots(knots, pad, captureEnd);
       warnings.push(
         `padded ${String(padMs)}ms freeze to meet ${String(minTarget)}ms target`,
       );
@@ -196,7 +173,7 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
     );
   }
 
-  return {
+  return parseTimeline({
     schemaVersion: '1.0.0',
     fps: FPS,
     ...(input.targetDurationMs === undefined
@@ -205,7 +182,7 @@ export function compileTimeline(input: CompileTimelineInput): Timeline {
     beats,
     timeMap: { kind: 'piecewise-linear', knots },
     warnings,
-  };
+  });
 }
 
 /** Map capture-time ms through the compiled timeMap to output-time ms. */
@@ -215,13 +192,13 @@ export function mapTime(timeline: Timeline, captureMs: number): number {
     return captureMs;
   }
 
-  if (captureMs <= knots[0]![0]) {
-    return knots[0]![1];
+  if (captureMs <= requireValue(knots[0])[0]) {
+    return requireValue(knots[0])[1];
   }
 
   for (let i = 1; i < knots.length; i += 1) {
-    const [c0, o0] = knots[i - 1]!;
-    const [c1, o1] = knots[i]!;
+    const [c0, o0] = requireValue(knots[i - 1]);
+    const [c1, o1] = requireValue(knots[i]);
 
     if (captureMs <= c1 || i === knots.length - 1) {
       if (c1 === c0) {
@@ -233,13 +210,10 @@ export function mapTime(timeline: Timeline, captureMs: number): number {
     }
   }
 
-  return knots[knots.length - 1]![1];
+  return requireValue(knots[knots.length - 1])[1];
 }
 
-export function mapTimeRange(
-  timeline: Timeline,
-  range: TimeRange,
-): TimeRange {
+export function mapTimeRange(timeline: Timeline, range: TimeRange): TimeRange {
   const start = mapTime(timeline, range.start);
   const end = Math.max(start, mapTime(timeline, range.end));
   return { start, end };
@@ -249,7 +223,7 @@ export function timelineDurationMs(timeline: Timeline): number {
   if (timeline.beats.length === 0) {
     return 0;
   }
-  const last = timeline.beats[timeline.beats.length - 1]!;
+  const last = requireValue(timeline.beats[timeline.beats.length - 1]);
   return last.outStartMs + last.outDurationMs;
 }
 
@@ -283,9 +257,7 @@ function expandDrafts(
     ];
   }
 
-  const sorted = [...drafts].sort(
-    (a, b) => draftStart(a) - draftStart(b),
-  );
+  const sorted = [...drafts].sort((a, b) => draftStart(a) - draftStart(b));
   const result: InternalDraft[] = [];
   let cursor = 0;
 
@@ -431,10 +403,7 @@ function materializeBeat(
   let rate = draft.rate > 0 ? draft.rate : 1;
   let outDur = captureDur / rate;
 
-  if (
-    draft.minOutDurationMs !== undefined &&
-    outDur < draft.minOutDurationMs
-  ) {
+  if (draft.minOutDurationMs !== undefined && outDur < draft.minOutDurationMs) {
     rate = captureDur / draft.minOutDurationMs;
     outDur = draft.minOutDurationMs;
     warnings.push(
@@ -458,9 +427,15 @@ function materializeBeat(
   };
 }
 
-function appendKnots(knots: Array<[number, number]>, beat: Beat): void {
+function appendKnots(
+  knots: [number, number][],
+  beat: Beat,
+  holdBoundaryMs = beat.captureAtMs ?? 0,
+): void {
   if (beat.kind === 'hold') {
-    const at = beat.captureAtMs ?? 0;
+    // Terminal holds begin at capture EOF, while their image is sampled from
+    // the last in-range frame. Sampling that frame must not rewind the map.
+    const at = holdBoundaryMs;
     knots.push([at, beat.outStartMs]);
     knots.push([at, beat.outStartMs + beat.outDurationMs]);
     return;
@@ -471,7 +446,7 @@ function appendKnots(knots: Array<[number, number]>, beat: Beat): void {
     if (knots.length === 0) {
       knots.push([0, beat.outStartMs]);
     }
-    const lastCapture = knots[knots.length - 1]![0];
+    const lastCapture = requireValue(knots[knots.length - 1])[0];
     knots.push([lastCapture, beat.outStartMs + beat.outDurationMs]);
     return;
   }
@@ -480,4 +455,10 @@ function appendKnots(knots: Array<[number, number]>, beat: Beat): void {
   const c1 = beat.captureEndMs ?? c0;
   knots.push([c0, beat.outStartMs]);
   knots.push([c1, beat.outStartMs + beat.outDurationMs]);
+}
+
+function requireValue<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined)
+    throw new Error('Required evidence value is missing');
+  return value;
 }

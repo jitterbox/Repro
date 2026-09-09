@@ -7,15 +7,28 @@
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "build": "pnpm -r run build",
+    "build": "pnpm -r run build && node scripts/generate-capabilities.mjs",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
     "test:e2e-fixture": "pnpm --filter @repro/e2e-fixture test:e2e",
     "test:agent-e2e": "pnpm --filter @repro/agent-e2e test",
-    "shoplite:dev": "pnpm --filter @repro/shoplite dev"
+    "shoplite:dev": "pnpm --filter @repro/shoplite dev",
+    "test:public-workflow": "node scripts/e2e/public-workflow.mjs",
+    "test:capture-timing": "node scripts/e2e/capture-timing.mjs",
+    "test:hidpi": "node scripts/e2e/hidpi.mjs",
+    "test:interaction-diagnostics": "node scripts/e2e/interaction-diagnostics.mjs",
+    "test:moving-privacy": "node scripts/e2e/moving-privacy.mjs",
+    "test:checkpoint-checks": "node scripts/e2e/checkpoint-checks.mjs",
+    "test:synchronization": "node scripts/e2e/synchronization.mjs",
+    "test:review": "node scripts/e2e/review.mjs",
+    "test:clean-install": "node scripts/e2e/clean-install.mjs",
+    "test:browser-diagnostics": "node scripts/e2e/browser-diagnostics.mjs",
+    "test:transient": "node scripts/e2e/transient.mjs",
+    "test:recipes": "node scripts/e2e/recipes.mjs",
+    "test:har-privacy": "node scripts/e2e/har-privacy.mjs",
+    "test:milestone": "node scripts/e2e/milestone.mjs"
   },
-
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/better-sqlite3": "^7.6.13",
@@ -27,11 +40,11 @@
     "eslint-config-prettier": "^9.1.0",
     "node-gyp": "^13.0.1",
     "opentype.js": "^2.0.0",
-    "playwright": "^1.62.0",
+    "playwright": "1.62.0",
     "prettier": "^3.4.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "vitest": "^3.0.2",
-    "zod": "^4.4.3"
+    "zod": "4.4.3"
   }
 }

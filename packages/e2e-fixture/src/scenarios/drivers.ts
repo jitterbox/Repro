@@ -10,15 +10,23 @@ export async function driveMenuExport(session: CaptureSession): Promise<void> {
   await page.click('[data-testid="chk-terms"]');
   await session.showChapter('Open Actions');
   await page.click('[data-testid="btn-actions"]');
-  await session.emitElementCue('editorial.stacking', '[data-testid="menu-actions"]', {
-    zIndex: 50,
-    label: 'Actions menu',
-  });
+  await session.emitElementCue(
+    'editorial.stacking',
+    '[data-testid="menu-actions"]',
+    {
+      zIndex: 50,
+      label: 'Actions menu',
+    },
+  );
   await page.click('[data-testid="btn-export"]');
-  await session.emitElementCue('editorial.stacking', '[data-testid="menu-export"]', {
-    zIndex: 20,
-    label: 'Export submenu (losing)',
-  });
+  await session.emitElementCue(
+    'editorial.stacking',
+    '[data-testid="menu-export"]',
+    {
+      zIndex: 20,
+      label: 'Export submenu (losing)',
+    },
+  );
   await page.waitForTimeout(400);
   await page.click('[data-testid="btn-export-csv"]').catch(() => undefined);
   await page.waitForTimeout(300);
@@ -36,28 +44,28 @@ export async function driveConsoleSave(session: CaptureSession): Promise<void> {
 export async function driveTiming(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await session.emitSemantic('editorial.pause', { holdMs: 1400 });
+  session.emitSemantic('editorial.pause', { holdMs: 1400 });
   await page.waitForTimeout(200);
   await session.showChapter('Recalculate freeze');
   await page.click('[data-testid="btn-recalculate"]');
-  await session.emitSemantic('editorial.freeze', { durationMs: 1200 });
+  session.emitSemantic('editorial.freeze', { durationMs: 1200 });
   await page.waitForTimeout(400);
 }
 
 export async function driveHeavySort(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await session.emitSemantic('editorial.pause', { holdMs: 1000 });
+  session.emitSemantic('editorial.pause', { holdMs: 1000 });
   await session.showChapter('Heavy sort freeze');
   await page.click('[data-testid="btn-sort-heavy"]');
-  await session.emitSemantic('editorial.freeze', { durationMs: 900 });
+  session.emitSemantic('editorial.freeze', { durationMs: 900 });
   await page.waitForTimeout(400);
 }
 
 export async function driveCls(session: CaptureSession): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await session.emitSemantic('editorial.slowmo', { factor: 4 });
+  session.emitSemantic('editorial.slowmo', { factor: 4 });
   await session.showChapter('Wait for promo CLS');
   await page.waitForSelector('[data-testid="promo-banner"]', {
     timeout: 3_000,
@@ -81,15 +89,23 @@ export async function driveToastStack(session: CaptureSession): Promise<void> {
   await session.showChapter('Open Actions stacking');
   await page.click('[data-testid="chk-terms"]');
   await page.click('[data-testid="btn-actions"]');
-  await session.emitElementCue('editorial.stacking', '[data-testid="sticky-tip"]', {
-    zIndex: 15,
-    label: 'Sticky tip',
-  });
+  await session.emitElementCue(
+    'editorial.stacking',
+    '[data-testid="sticky-tip"]',
+    {
+      zIndex: 15,
+      label: 'Sticky tip',
+    },
+  );
   await page.click('[data-testid="btn-export"]');
-  await session.emitElementCue('editorial.stacking', '[data-testid="menu-export"]', {
-    zIndex: 10,
-    label: 'Export under tip',
-  });
+  await session.emitElementCue(
+    'editorial.stacking',
+    '[data-testid="menu-export"]',
+    {
+      zIndex: 10,
+      label: 'Export under tip',
+    },
+  );
   await page.waitForTimeout(500);
 }
 
@@ -98,8 +114,8 @@ export async function driveBadgeFlicker(
 ): Promise<void> {
   const page = session.page;
   await waitReady(page);
-  await session.emitSemantic('editorial.pause', { holdMs: 1400 });
-  await session.emitSemantic('editorial.slowmo', { factor: 4 });
+  session.emitSemantic('editorial.pause', { holdMs: 1400 });
+  session.emitSemantic('editorial.slowmo', { factor: 4 });
   await session.showChapter('Watch badge flicker');
   await page.locator('[data-testid="status-badge"]').waitFor({
     state: 'visible',
@@ -155,9 +171,13 @@ export async function driveA11y(session: CaptureSession): Promise<void> {
     '[data-testid="btn-row-menu"]',
     { label: '8×8 hit target' },
   );
-  await session.emitElementCue('editorial.zoom', '[data-testid="btn-row-menu"]', {
-    magnification: 2.5,
-  });
+  await session.emitElementCue(
+    'editorial.zoom',
+    '[data-testid="btn-row-menu"]',
+    {
+      magnification: 2.5,
+    },
+  );
   await page.click('[data-testid="btn-row-menu"]').catch(() => undefined);
   await session.showChapter('Keyboard trap');
   await page.click('[data-testid="btn-help"]');
@@ -181,9 +201,13 @@ export async function driveHitTarget(session: CaptureSession): Promise<void> {
     '[data-testid="btn-filter-chip"]',
     { label: 'Filter chip 8×8' },
   );
-  await session.emitElementCue('editorial.zoom', '[data-testid="btn-row-menu"]', {
-    magnification: 2.5,
-  });
+  await session.emitElementCue(
+    'editorial.zoom',
+    '[data-testid="btn-row-menu"]',
+    {
+      magnification: 2.5,
+    },
+  );
   await page.click('[data-testid="btn-row-menu"]').catch(() => undefined);
   await page.waitForTimeout(400);
 }
@@ -197,7 +221,7 @@ export async function drivePopup(session: CaptureSession): Promise<void> {
   const popup = await popupPromise;
   await popup.waitForLoadState('domcontentloaded');
   session.markFocusedPage(popup);
-  session.emitEditorialCut('invoice-popup');
+  await session.emitEditorialCut('invoice-popup');
   await popup.waitForTimeout(500);
   await popup.close();
 }
@@ -257,7 +281,10 @@ export async function driveMultiShape(
   await session.showChapter('Multi annotation targets');
   for (const hint of bug['Custom.AnnotationHints']) {
     const sel = `[data-testid="${hint.target}"]`;
-    await page.locator(sel).scrollIntoViewIfNeeded().catch(() => undefined);
+    await page
+      .locator(sel)
+      .scrollIntoViewIfNeeded()
+      .catch(() => undefined);
   }
   await page.click(testId(bug, 'terms'));
   await page.click(testId(bug, 'actions'));

@@ -17,6 +17,7 @@ export interface AdoClientOptions {
 
 export interface AdoAttachInput extends SizeBudget {
   readonly workItemId: number;
+  readonly idempotent?: boolean;
   readonly fileName: string;
   readonly bytes: Uint8Array | string;
   readonly comment?: string;
@@ -48,6 +49,33 @@ export class AdoClient {
     const bytes = artifactBytes(input.bytes);
     assertSizeBudget(bytes.byteLength, input);
 
+    if (input.idempotent) {
+      const response = await this.#fetch(
+        `${this.#workItemUrl(input.workItemId)}&$expand=relations`,
+        { headers: this.#authHeaders() },
+      );
+      assertOk(response, 'ADO attachment reconciliation failed');
+      const workItem = (await response.json()) as {
+        relations?: {
+          rel: string;
+          url: string;
+          attributes?: { name?: string };
+        }[];
+      };
+      const existing = workItem.relations?.find(
+        (r) =>
+          r.rel === 'AttachedFile' && r.attributes?.name === input.fileName,
+      );
+      if (existing) {
+        await verifyDownload({
+          expectedBytes: bytes,
+          fetchImpl: this.#fetch,
+          headers: this.#authHeaders(),
+          url: existing.url,
+        });
+        return { url: existing.url, bytes: bytes.byteLength };
+      }
+    }
     const attachment = await this.#uploadAttachment(input, bytes);
     const patch = attachedFilePatch(attachment.url, input.comment);
     await this.patchWorkItem(input.workItemId, patch);

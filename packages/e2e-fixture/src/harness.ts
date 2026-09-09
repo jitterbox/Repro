@@ -1,7 +1,8 @@
-import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import {readFile} from 'node:fs/promises';
+import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { encodeH264, runCapture } from '@repro/capture';
+import { normalizeCapture, runCapture } from '@repro/capture';
 import { annotateCommand, packageCommand } from '@repro/cli';
 import { compareRuns } from '@repro/compare';
 import { ReproStore, validateConfig } from '@repro/core';
@@ -67,12 +68,13 @@ export async function runScenarioCapture(input: {
 }): Promise<CaptureScenarioResult> {
   const validation = validateConfig(input.config);
   if (!validation.ok) {
-    throw new Error(
-      validation.errors.map((item) => item.message).join('; '),
-    );
+    throw new Error(validation.errors.map((item) => item.message).join('; '));
   }
 
-  const captureDir = join(outputRoot(input.scenario), `capture-${input.fixture}`);
+  const captureDir = join(
+    outputRoot(input.scenario),
+    `capture-${input.fixture}`,
+  );
   await rm(captureDir, { force: true, recursive: true });
   await mkdir(captureDir, { recursive: true });
 
@@ -89,11 +91,24 @@ export async function runScenarioCapture(input: {
     throw new Error('Capture did not produce a store path');
   }
   const store = new ReproStore({ path: capture.storePath });
-  store.exportJsonl({ path: eventsPath, runId: capture.runId });
+  const events = store
+    .exportJsonl({ path: eventsPath, runId: capture.runId })
+    .trim()
+    .split('\n')
+    .map(
+      (line) =>
+        JSON.parse(line) as { kind: string; pageId: string; t_mono: number },
+    );
   store.close();
 
-  const videoPath = join(captureDir, 'raw.mp4');
-  await encodeCapturedFrames(captureDir, videoPath);
+  const normalized = await normalizeCapture(
+    captureDir,
+    events
+      .filter((e) => e.kind === 'editorial.cut')
+      .map((e) => ({ pageId: e.pageId, timeMs: e.t_mono })),
+    Math.max(...events.map((e) => e.t_mono)),
+  );
+  const videoPath = normalized.video;
 
   return {
     captureDir,
@@ -111,18 +126,12 @@ export async function runScenarioAnnotate(input: {
   readonly videoPath: string;
   readonly suffix?: string;
 }): Promise<AnnotateScenarioResult> {
-  const renderDir = join(
-    outputRoot(input.scenario),
-    input.suffix ?? 'render',
-  );
+  const renderDir = join(outputRoot(input.scenario), input.suffix ?? 'render');
   await rm(renderDir, { force: true, recursive: true });
   await mkdir(renderDir, { recursive: true });
 
   const configPath = join(renderDir, 'repro.config.json');
-  await writeFile(
-    configPath,
-    `${JSON.stringify(input.config, null, 2)}\n`,
-  );
+  await writeFile(configPath, `${JSON.stringify(input.config, null, 2)}\n`);
 
   const annotated = await annotateCommand({
     config: configPath,
@@ -174,19 +183,19 @@ export async function runScenarioCompare(input: {
     return result;
   }
 
-  const layouts = input.layouts ?? [
-    input.layout ?? result.composition.layout ?? 'side-by-side',
-  ];
+  const layouts = input.layouts ?? [input.layout ?? result.composition.layout];
   const paths: string[] = [];
   for (const layout of layouts) {
     const composition = {
       ...result.composition,
       layout: layout as typeof result.composition.layout,
+      ...(layout==='blink'?{blink:{optIn:true}}:{}),
       output: {
         ...result.composition.output,
         filename: `${layout}_compare.mp4`,
       },
-      ...(layout === 'cropped-roi' && result.composition.croppedRoi === undefined
+      ...(layout === 'cropped-roi' &&
+      result.composition.croppedRoi === undefined
         ? {
             croppedRoi: {
               rect: { x: 520, y: 280, w: 140, h: 48 },
@@ -217,17 +226,17 @@ export async function runScenarioPackage(input: {
 }): Promise<string> {
   const outDir = join(outputRoot(input.scenario), 'package');
   const viewerDir = join(getRepoRoot(), 'packages/viewer/dist');
-  const assets = [
-    { kind: 'mp4' as const, path: input.videoPath },
-    ...(input.planPath === undefined
-      ? []
-      : [{ kind: 'json' as const, path: input.planPath }]),
-  ];
-  const result = await packageCommand({ assets, outDir, viewerDir });
+  const assets = [{kind:'mp4' as const,path:input.videoPath}];
+  // Fixture plans contain raw diagnostics; export only their allowlisted chapter labels.
+  const plan = input.planPath ? JSON.parse(await readFile(input.planPath,'utf8')) as {chapters?:{title:string;timeRange:{start:number;end:number}}[]} : undefined;
+  const result = await packageCommand({assets,outDir,viewerDir,report:{schemaVersion:'1.0.0',title:input.scenario,variants:[{id:'fixture',label:'Fixture evidence',role:'standalone',outcome:'inconclusive',expected:'Inspect the captured fixture observations',durationMs:0}],chapters:plan?.chapters??[]}});
   return result.manifestPath;
 }
 
-export async function assertVideo(path: string, minBytes = 1_000): Promise<void> {
+export async function assertVideo(
+  path: string,
+  minBytes = 1_000,
+): Promise<void> {
   const info = await stat(path);
   if (info.size < minBytes) {
     throw new Error(`Video too small (${String(info.size)}): ${path}`);
@@ -246,12 +255,12 @@ export async function writeQualityPass(scenario: string): Promise<string> {
   const root = outputRoot(scenario);
   const out = join(root, 'quality-report.json');
   const videoPath = await findAnnotatedVideo(root);
-  const planPath = videoPath === undefined
-    ? undefined
-    : join(videoPath, '..', 'plan.json');
-  const timelinePath = videoPath === undefined
-    ? undefined
-    : join(videoPath, '..', 'timeline.json');
+  const planPath =
+    videoPath === undefined ? undefined : join(videoPath, '..', 'plan.json');
+  const timelinePath =
+    videoPath === undefined
+      ? undefined
+      : join(videoPath, '..', 'timeline.json');
 
   const gates =
     videoPath === undefined
@@ -291,9 +300,7 @@ export async function writeQualityPass(scenario: string): Promise<string> {
   return out;
 }
 
-async function findAnnotatedVideo(
-  root: string,
-): Promise<string | undefined> {
+async function findAnnotatedVideo(root: string): Promise<string | undefined> {
   for (const sub of ['render', 'render-broken', 'render-fixed']) {
     const dir = join(root, sub);
     try {
@@ -315,43 +322,4 @@ export async function waitReady(page: Page): Promise<void> {
   await page.waitForFunction(
     'document.documentElement.dataset.reproReady === "1"',
   );
-}
-
-async function encodeCapturedFrames(
-  captureDir: string,
-  outputPath: string,
-): Promise<void> {
-  const framesRoot = join(captureDir, 'frames');
-  const pageId = await pickFramePage(framesRoot);
-  if (pageId === undefined) {
-    throw new Error(`No screencast frames under ${framesRoot}`);
-  }
-
-  const pattern = join(framesRoot, pageId, 'frame-%06d.jpg');
-  await encodeH264({
-    frameRate: 15,
-    inputPattern: pattern,
-    outputPath,
-    overwrite: true,
-  });
-}
-
-async function pickFramePage(framesRoot: string): Promise<string | undefined> {
-  const pages = await readdir(framesRoot).catch(() => [] as string[]);
-  let best: { id: string; count: number } | undefined;
-
-  for (const pageId of pages) {
-    const files = await readdir(join(framesRoot, pageId)).catch(
-      () => [] as string[],
-    );
-    const count = files.filter((name) => name.endsWith('.jpg')).length;
-    if (count === 0) {
-      continue;
-    }
-    if (best === undefined || count > best.count) {
-      best = { count, id: pageId };
-    }
-  }
-
-  return best?.id;
 }

@@ -1,16 +1,17 @@
 {
   "name": "@repro/probe",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./iife": {
       "types": "./dist/iife.d.ts",
-      "import": "./dist/iife.js"
+      "import": "./dist/iife.js",
+      "default": "./dist/iife.js"
     }
   },
   "files": [
@@ -28,5 +29,8 @@
   "dependencies": {
     "@rrweb/record": "^2",
     "web-vitals": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

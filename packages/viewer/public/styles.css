@@ -1,5 +1,4 @@
 @import url('../tokens/overlay-theme.css');
-@import url('https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap');
 
 :root {
   color-scheme: light;
@@ -225,6 +224,37 @@ video:focus-visible {
 .video-shell {
   position: relative;
 }
+.video-shell[data-layout='both'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: start;
+}
+.video-shell[data-layout='both'][data-visual-layout='onion'],
+.video-shell[data-layout='both'][data-visual-layout='wipe'],
+.video-shell[data-layout='both'][data-visual-layout='difference'] {
+  display: block;
+}
+.video-shell[data-layout='both'][data-visual-layout='onion'] video:last-child,
+.video-shell[data-layout='both'][data-visual-layout='wipe'] video:last-child,
+.video-shell[data-layout='both'][data-visual-layout='difference']
+  video:last-child {
+  position: absolute;
+  inset: 0;
+}
+.video-shell[data-layout='both'][data-visual-layout='onion'] video:last-child {
+  opacity: 0.5;
+}
+.video-shell[data-layout='both'][data-visual-layout='wipe'] video:last-child {
+  clip-path: inset(0 0 0 50%);
+}
+.video-shell[data-layout='both'][data-visual-layout='difference']
+  video:last-child {
+  mix-blend-mode: difference;
+}
+.video-shell[data-visual-layout='edge'] video {
+  filter: url(#portable-edges);
+}
 
 video {
   aspect-ratio: 16 / 9;
@@ -245,19 +275,30 @@ video {
 }
 
 .scrubber-markers {
-  height: 0.75rem;
-  pointer-events: none;
+  height: 1.5rem;
   position: relative;
 }
 
 .scrubber-marker {
-  background: var(--emphasis);
+  background: transparent;
+  border: 0;
+  padding: 0;
   border-radius: 0;
-  height: 0.55rem;
+  height: 1.5rem;
   position: absolute;
   top: 0.1rem;
   transform: translateX(-50%);
+  width: 1.5rem;
+  cursor: pointer;
+}
+
+.scrubber-marker::before {
+  content: '';
+  display: block;
+  height: 0.75rem;
   width: 0.18rem;
+  margin: auto;
+  background: var(--emphasis);
 }
 
 .timeline {
@@ -270,6 +311,15 @@ video {
 .annotation {
   border-inline-start: 0.2rem solid var(--emphasis);
   padding: 0.55rem 0.75rem;
+}
+
+button.chapter {
+  display: block;
+  width: 100%;
+  text-align: start;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
 }
 
 .annotation[data-active='true'] {

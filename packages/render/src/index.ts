@@ -12,4 +12,4 @@ export * from './redaction/source-mask.js';
 export * from './theme.js';
 export * from './voiceover.js';
 
-export const REPRO_RENDER_VERSION = '0.0.0' as const;
+export const REPRO_RENDER_VERSION = '0.1.0' as const;

@@ -29,13 +29,14 @@ export class MultiPageTracker {
   readonly #ids = new WeakMap<Page, string>();
   readonly #onContextPage: (page: Page) => void;
   readonly #onPage:
-    | ((registration: PageRegistration) => Promise<void> | void)
-    | undefined;
+    ((registration: PageRegistration) => Promise<void> | void) | undefined;
   readonly #pages = new Map<string, PageRegistration>();
   readonly #primaryPage: Page;
   readonly #sink: CaptureEventSink;
   #actionOwningId: string | undefined;
   #counter = 0;
+  readonly #pending = new Set<Promise<void>>();
+  readonly #errors: unknown[] = [];
   #focusedId: string | undefined;
   #primaryId: string | undefined;
 
@@ -57,6 +58,15 @@ export class MultiPageTracker {
     }
 
     this.#context.on('page', this.#onContextPage);
+  }
+
+  async ready(): Promise<void> {
+    while (this.#pending.size) await Promise.all(this.#pending);
+    if (this.#errors.length)
+      throw new AggregateError(
+        this.#errors,
+        'Page capture registration failed',
+      );
   }
 
   stop(): void {
@@ -152,13 +162,18 @@ export class MultiPageTracker {
       return;
     }
 
-    Promise.resolve(this.#onPage(registration)).catch((error: unknown) => {
-      this.#sink.emitEvent({
-        kind: 'capture.pageRegistrationError',
-        pageId: registration.pageId,
-        payload: { message: errorMessage(error) },
-      });
-    });
+    const pending = Promise.resolve()
+      .then(() => this.#onPage?.(registration))
+      .catch((error: unknown) => {
+        this.#errors.push(error);
+        this.#sink.emitEvent({
+          kind: 'capture.pageRegistrationError',
+          pageId: registration.pageId,
+          payload: { message: errorMessage(error) },
+        });
+      })
+      .finally(() => this.#pending.delete(pending));
+    this.#pending.add(pending);
   }
 
   #selectCut(reason: string): EditorialCut {

@@ -1,3 +1,8 @@
+---
+name: repro-file
+description: Use Repro to file browser bug evidence with committed scenarios, measured checkpoints, and verified outcomes.
+---
+
 # repro-file
 
 Use this skill when an agent needs to file Repro evidence into ADO or Jira after
@@ -45,3 +50,16 @@ Discovery may use an LLM once to summarize the issue. Commit the deterministic
 
 Never put credentials in agent context. Call the CLI so tokens remain in ALM
 configuration, vault, or environment variables.
+
+## Evidence workflow
+
+1. **Claim:** State what the evidence must prove. Give the scenario a descriptive title; use separate Before/After variant labels. Only label results “Bug reproduced” or “Fix verified” when designated outcome checks support them.
+2. **Recipe:** Run `repro capabilities --json`, `repro describe <capability> --json`, `repro recipes --json`, and `repro doctor`. Choose a recipe and commit its evidence specification alongside the executable Playwright test. Bind locators in code; reference target IDs in the evidence file.
+3. **Capture:** Use `test` from `@repro/playwright`, `repro.target`, `repro.step`, `repro.outcome`, and `repro.checkpoint`. Run `repro validate-evidence evidence.json` and `repro validate-config --config repro.config.json`, then `repro run scenario.spec.ts --evidence evidence.json --url "$URL"`. Repeated attempts must all be reported.
+4. **Inspect:** Use `repro frame <run> --checkpoint <id>` and `repro review <run>`. Inspect the actual image; check the title, variant, trigger, numbered steps, expected/observed result, framing, timestamps, uncertainty and crop transform. Keep a context image. Default crop padding is 24 CSS pixels. For positional comparisons, retain common bounds and scale.
+5. **Verify:** Rerun the same committed claim after the fix with an explicit baseline. Preserve unrelated test failures as errors. Never silently heal assertions. Capture transient behavior before its trigger; do not wait for stability when instability is the subject.
+6. **Export:** Only export inspected presentation media after required evidence and actual frame OCR pass. Missing OCR blocks strict export. Never include raw captures, traces, HAR or credentials in a shareable package.
+
+For hidden-hitbox claims, `repro.hitTest(checkpoint, target, point)` records a point sample, hit-test stack, styles and measured bounds. A box outline is not proof of the complete hit region. Label each diagnostic and reference its observation. Do not change CSS or force-click to manufacture evidence. An absent target is absent; a baseline footprint must be labelled as such.
+
+Built-in browser screenshots or exploration MCPs can help discover a scenario. Committed proof must use Repro's capture owner and clock. Do not run another screencast owner concurrently. Optional local diagnostics must disable external telemetry and CrUX requests. MCP resources `repro://capabilities`, `repro://recipes`, `repro://evidence-schema` and `repro://run-schema` expose on-demand guidance.

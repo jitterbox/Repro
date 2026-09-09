@@ -1,12 +1,41 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  compileTimeline,
-  mapTime,
-  timelineDurationMs,
-} from './timeline.js';
+import { compileTimeline, mapTime, timelineDurationMs } from './timeline.js';
 
 describe('compileTimeline', () => {
+  it.each([undefined, 2500])(
+    'keeps terminal hold knots monotone (outcome %s)',
+    (outcomeHoldMs) => {
+      const timeline = compileTimeline({
+        captureDurationMs: 1000,
+        includeSlate: false,
+        ...(outcomeHoldMs === undefined ? {} : { outcomeHoldMs }),
+      });
+      const knots = timeline.timeMap.knots;
+      for (let i = 1; i < knots.length; i++) {
+        expect(knots[i]?.[0]).toBeGreaterThanOrEqual(knots[i - 1]?.[0] ?? 0);
+        expect(knots[i]?.[1]).toBeGreaterThanOrEqual(knots[i - 1]?.[1] ?? 0);
+      }
+      const hold = timeline.beats.at(-1);
+      expect(hold?.captureAtMs).toBeCloseTo(1000 - 1000 / 30);
+      expect(mapTime(timeline, 999)).toBeCloseTo(999);
+      expect(mapTime(timeline, 1000)).toBe(1000);
+      expect(mapTime(timeline, 1001)).toBe(timelineDurationMs(timeline));
+    },
+  );
+  it('maps capture zero to the frame-aligned start of the slate dissolve', () => {
+    const timeline = compileTimeline({
+      captureDurationMs: 1000,
+      outcomeHoldMs: 2500,
+    });
+    const slate = timeline.beats[0];
+    if (!slate?.transitionOut) throw new Error('Missing slate transition');
+    expect(mapTime(timeline, 0)).toBe(
+      slate.outDurationMs - slate.transitionOut.ms,
+    );
+    expect(slate.transitionOut.ms / (1000 / 30)).toBeCloseTo(10);
+    expect(timelineDurationMs(timeline)).toBe(15000);
+  });
   it('prepends a slate beat and holds at the beat not the tail', () => {
     const timeline = compileTimeline({
       captureDurationMs: 5_000,

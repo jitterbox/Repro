@@ -5,6 +5,22 @@ import { generateAss } from './ass.js';
 import type { ReproPlan, Timeline } from '@repro/plan';
 
 describe('ASS generation', () => {
+  it('uses legible explicit text sizes and omits animation fades for checkpoint images', () => {
+    const fixture = planFixture();
+    const source = fixture.annotations[0];
+    if (!source) throw new Error('Missing annotation fixture');
+    const plan = {
+      ...fixture,
+      chapters: [],
+      annotations: [
+        { ...source, component: 'step-badge' as const, fontSize: 32 },
+      ],
+    };
+    const moving = generateAss({ plan });
+    expect(moving).toContain('\\fs32');
+    expect(moving).toContain('\\fad(');
+    expect(generateAss({ plan, staticFrame: true })).not.toContain('\\fad(');
+  });
   it('uses DejaVu Sans and severity-aware plate/ring styles', () => {
     const script = generateAss({ plan: planFixture() });
 
@@ -36,7 +52,13 @@ function emptyTimeline(): Timeline {
         outDurationMs: 2_000,
       },
     ],
-    timeMap: { kind: 'piecewise-linear', knots: [[0, 0], [2_000, 2_000]] },
+    timeMap: {
+      kind: 'piecewise-linear',
+      knots: [
+        [0, 0],
+        [2_000, 2_000],
+      ],
+    },
     warnings: [],
   };
 }

@@ -1,12 +1,12 @@
 {
   "name": "@repro/compositor",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -20,12 +20,16 @@
   },
   "dependencies": {
     "@repro/contracts": "workspace:*",
-    "playwright": "^1.62.0",
+    "playwright": "1.62.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@repro/core": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

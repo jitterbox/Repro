@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { BoundingRect, RoiMagnifierProps } from '../types.js';
 import { color } from '../theme.css.js';
 
-const defaultPip = (source: BoundingRect): BoundingRect => ({
+const defaultPip = (): BoundingRect => ({
   x: 24,
   y: 24,
   w: 320,
@@ -11,7 +11,7 @@ const defaultPip = (source: BoundingRect): BoundingRect => ({
 });
 
 export function RoiMagnifier(props: RoiMagnifierProps) {
-  const pip = props.pipRect ?? defaultPip(props.sourceRect);
+  const pip = props.pipRect ?? defaultPip();
   const src = props.sourceRect;
 
   return (

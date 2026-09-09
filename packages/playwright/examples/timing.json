@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "capture-timing",
+  "title": "Stationary intervals and a brief color change preserve elapsed time",
+  "variant": {
+    "id": "reference",
+    "role": "standalone",
+    "label": "Timing reference"
+  },
+  "claim": "A one-second hold and a quarter-second change remain correctly timed in normalized browser video",
+  "expected": "The screen returns to red and the recording preserves each observed interval",
+  "steps": [
+    { "id": "prepare", "title": "Open the red reference screen" },
+    { "id": "blue", "title": "Hold blue for one second", "trigger": true },
+    { "id": "pulse", "title": "Show green for a quarter second" },
+    { "id": "end", "title": "Return to red and preserve the stationary ending" }
+  ],
+  "checkpoints": [
+    {
+      "id": "result",
+      "step": "end",
+      "title": "Red ending retained",
+      "observations": ["screenshot", "assertion"]
+    }
+  ],
+  "outputs": ["png", "mp4", "review"],
+  "privacy": { "strict": true }
+}

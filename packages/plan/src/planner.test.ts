@@ -88,12 +88,13 @@ function event(
   return {
     id,
     kind,
+    runId: 'test',
     pageId: 'page-1',
+    seq: 1,
+    schemaVersion: 1,
+    hash: 'a'.repeat(64),
     payload,
     t_mono: tMono,
-    t_epoch: Date.now(),
-    seq: 1,
-    hash: '0'.repeat(64),
-    prevHash: null,
+    t_epoch: 0,
   } as EventRecord;
 }

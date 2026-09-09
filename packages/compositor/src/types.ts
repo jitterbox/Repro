@@ -1,12 +1,12 @@
-export type ViewportSpec = {
+export interface ViewportSpec {
   width: number;
   height: number;
   deviceScaleFactor?: number;
-};
+}
 
 export type SlateMode = 'repro' | 'demo' | 'compare';
 
-export type SlateProps = {
+export interface SlateProps {
   schemaVersion: string;
   mode: SlateMode;
   bugId: string;
@@ -30,49 +30,49 @@ export type SlateProps = {
   };
   holdMs?: number;
   dissolveMs?: number;
-};
+}
 
 export type ConsoleLevel = 'error' | 'warn' | 'info' | 'log';
 
-export type ConsoleToastProps = {
+export interface ConsoleToastProps {
   level: ConsoleLevel;
   message: string;
   timestamp?: string;
-};
+}
 
-export type BoundingRect = {
+export interface BoundingRect {
   x: number;
   y: number;
   w: number;
   h: number;
-};
+}
 
-export type RoiMagnifierProps = {
+export interface RoiMagnifierProps {
   sourceRect: BoundingRect;
   magnification: number;
   pipRect?: BoundingRect;
   label?: string;
-};
+}
 
-export type VitalsHudProps = {
+export interface VitalsHudProps {
   cls?: number;
   lcp?: number;
   inp?: number;
   slot?: 'tl' | 'tr' | 'bl' | 'br';
-};
+}
 
-export type OutcomePairProps = {
+export interface OutcomePairProps {
   expected: string;
   actual: string;
-};
+}
 
-export type ComparePaneChrome = {
+export interface ComparePaneChrome {
   label: string;
   build?: string;
   runId?: string;
-};
+}
 
-export type CompareChromeProps = {
+export interface CompareChromeProps {
   bugId: string;
   layout: string;
   paneA: ComparePaneChrome;
@@ -81,22 +81,17 @@ export type CompareChromeProps = {
   stepCount?: number;
   deltaCaption?: string;
   legend?: string;
-};
+}
 
-export type FreezeBannerProps = {
+export interface FreezeBannerProps {
   label?: string;
-};
+}
 
-export type DeltaCaptionProps = {
+export interface DeltaCaptionProps {
   caption: string;
   deltaClass?:
-    | 'geometry'
-    | 'color'
-    | 'typography'
-    | 'content'
-    | 'visibility'
-    | 'flow';
-};
+    'geometry' | 'color' | 'typography' | 'content' | 'visibility' | 'flow';
+}
 
 export type CardSpec =
   | { kind: 'slate'; props: SlateProps; id: string }
@@ -108,9 +103,9 @@ export type CardSpec =
   | { kind: 'freeze-banner'; props: FreezeBannerProps; id: string }
   | { kind: 'delta-caption'; props: DeltaCaptionProps; id: string };
 
-export type RenderResult = {
+export interface RenderResult {
   id: string;
   path: string;
   width: number;
   height: number;
-};
+}

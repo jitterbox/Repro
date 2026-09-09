@@ -1,42 +1,34 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/timeline.schema.json",
-  "title": "ReproTimeline",
-  "description": "Compiled BEFORE annotation planning. Owns output time: trimming, holds, slow-motion and inserted cards. Publishes a monotone timeMap; mapTime() is the only permitted capture->output conversion.",
+  "title": "Repro timeline",
+  "description": "Compiled output timing. parseTimeline additionally validates monotone time knots and capture ranges.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "readOnly": true,
   "type": "object",
-  "required": [
-    "schemaVersion",
-    "fps",
-    "beats",
-    "timeMap"
-  ],
-  "additionalProperties": false,
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "const": "1.0.0"
     },
     "fps": {
-      "type": "integer",
-      "const": 30,
-      "description": "Source is normalised to CFR immediately after redaction; concat on VFR input drifts."
+      "type": "number",
+      "const": 30
     },
     "targetDurationMs": {
-      "type": "integer"
+      "type": "number",
+      "minimum": 0
     },
     "beats": {
-      "type": "array",
+      "readOnly": true,
       "minItems": 1,
+      "type": "array",
       "items": {
+        "readOnly": true,
         "type": "object",
-        "required": [
-          "id",
-          "kind"
-        ],
-        "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "kind": {
             "type": "string",
@@ -48,42 +40,46 @@
             ]
           },
           "source": {
+            "default": "capture",
             "type": "string",
             "enum": [
               "capture",
               "composited"
-            ],
-            "default": "capture"
+            ]
           },
           "assetRef": {
-            "type": "string",
-            "description": "RGBA PNG from the compositor, for kind=insert."
+            "type": "string"
           },
           "captureStartMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "captureEndMs": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0
           },
           "captureAtMs": {
             "type": "number",
-            "description": "For kind=hold: the single frame to clone."
+            "minimum": 0
           },
           "rate": {
-            "type": "number",
-            "exclusiveMinimum": 0,
             "default": 1,
-            "description": "0.25 = quarter speed. Applied via setpts BEFORE the ass burn-in."
+            "type": "number",
+            "exclusiveMinimum": 0
           },
           "outStartMs": {
-            "type": "number"
+            "default": 0,
+            "type": "number",
+            "minimum": 0
           },
           "outDurationMs": {
-            "type": "number"
+            "default": 0,
+            "type": "number",
+            "minimum": 0
           },
           "minOutDurationMs": {
             "type": "number",
-            "description": "From overlay-theme.holdsMs; the compiler stretches rate until satisfied."
+            "minimum": 0
           },
           "chapterId": {
             "type": "string"
@@ -97,62 +93,108 @@
             ]
           },
           "transitionIn": {
-            "$ref": "#/$defs/transition"
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cut",
+                  "fade",
+                  "dissolve"
+                ]
+              },
+              "ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "ms"
+            ],
+            "additionalProperties": false
           },
           "transitionOut": {
-            "$ref": "#/$defs/transition"
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cut",
+                  "fade",
+                  "dissolve"
+                ]
+              },
+              "ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "ms"
+            ],
+            "additionalProperties": false
           }
-        }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "additionalProperties": false
       }
     },
     "timeMap": {
+      "readOnly": true,
       "type": "object",
-      "required": [
-        "kind",
-        "knots"
-      ],
       "properties": {
         "kind": {
           "type": "string",
           "const": "piecewise-linear"
         },
         "knots": {
+          "readOnly": true,
           "type": "array",
-          "description": "[captureMs, outMs] pairs, monotone non-decreasing in both axes. A hold is the one case where two knots share a capture value.",
           "items": {
+            "readOnly": true,
             "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "number",
+                "minimum": 0
+              }
+            ],
             "minItems": 2,
-            "maxItems": 2,
-            "items": {
-              "type": "number"
-            }
+            "maxItems": 2
           }
         }
-      }
+      },
+      "required": [
+        "kind",
+        "knots"
+      ],
+      "additionalProperties": false
     },
     "warnings": {
+      "default": [],
+      "readOnly": true,
       "type": "array",
       "items": {
         "type": "string"
       }
     }
   },
-  "$defs": {
-    "transition": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "enum": [
-            "cut",
-            "fade",
-            "dissolve"
-          ]
-        },
-        "ms": {
-          "type": "integer"
-        }
-      }
-    }
-  }
+  "required": [
+    "schemaVersion",
+    "fps",
+    "beats",
+    "timeMap"
+  ],
+  "additionalProperties": false
 }

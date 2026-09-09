@@ -1,3 +1,4 @@
+import { parsePlan } from '@repro/contracts';
 import { placeAnnotations } from './collision.js';
 import { emitFeatureAnnotations } from './features.js';
 import {
@@ -80,7 +81,7 @@ export function buildPlan(input: BuildPlanInput): ReproPlan {
     viewport: input.viewport,
   });
 
-  return {
+  return parsePlan({
     annotations: placed,
     chapters,
     metadata: {
@@ -94,7 +95,7 @@ export function buildPlan(input: BuildPlanInput): ReproPlan {
     segments: emitted.segments,
     timeline,
     viewport: input.viewport,
-  };
+  });
 }
 
 function stringMeta(
@@ -397,30 +398,6 @@ function bestAnnotationRegion(input: BuildPlanInput): Rect | null {
  * @deprecated Centre-seeding will be removed in P1 once anchors are required.
  * Kept temporarily so existing fixtures still place something.
  */
-function seedUnanchoredBounds(
-  annotations: readonly AnnotationBox[],
-  region: Rect | null,
-): readonly AnnotationBox[] {
-  if (region === null) {
-    return annotations;
-  }
-
-  return annotations.map((annotation) => {
-    if (hasObjectTarget(annotation) || annotation.anchor !== undefined) {
-      return annotation;
-    }
-
-    return {
-      ...annotation,
-      bounds: {
-        ...annotation.bounds,
-        x: region.x + 12,
-        y: region.y + 12,
-      },
-    };
-  });
-}
-
 function regionsOfInterest(
   annotations: readonly AnnotationBox[],
 ): readonly Rect[] {

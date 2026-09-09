@@ -1,0 +1,46 @@
+{
+  "name": "@repro/pipeline",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./commands/*": {
+      "types": "./dist/commands/*.d.ts",
+      "import": "./dist/commands/*.js",
+      "default": "./dist/commands/*.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@repro/core": "workspace:*",
+    "@repro/contracts": "workspace:*",
+    "@repro/capture": "workspace:*",
+    "@repro/compare": "workspace:*",
+    "@repro/plan": "workspace:*",
+    "@repro/render": "workspace:*",
+    "@repro/compositor": "workspace:*",
+    "@repro/evaluation": "workspace:*",
+    "@repro/alm": "workspace:*",
+    "@repro/vault": "workspace:*",
+    "@playwright/test": "1.62.0",
+    "playwright": "1.62.0",
+    "zod": "4.4.3",
+    "@repro/viewer": "workspace:*",
+    "esbuild": "0.28.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

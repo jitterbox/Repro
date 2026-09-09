@@ -1,5 +1,6 @@
-import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import { contentAddress } from './hash.js';
 import { StageNameSchema } from './schema.js';
@@ -23,6 +24,7 @@ export interface StageManifest extends HashRecord {
   readonly config: HashInput;
   readonly versions: Record<string, string>;
   readonly artifacts: readonly string[];
+  readonly artifactHashes?: Record<string, string>;
   readonly completedAtEpoch: number;
 }
 
@@ -34,6 +36,7 @@ export interface WriteStageAtomicInput {
 export interface ResumeInput {
   readonly rootDir: string;
   readonly stages: readonly StageName[];
+  readonly cacheKeys?: Partial<Record<StageName, string>>;
 }
 
 export interface ResumeResult {
@@ -60,18 +63,51 @@ export async function writeStageAtomic(
   StageNameSchema.parse(input.manifest.stage);
   const stagePath = stageDir(input.rootDir, input.manifest);
 
-  if (await isComplete(stagePath)) {
-    return stagePath;
+  await mkdir(dirname(stagePath), { recursive: true });
+  // Serialize the final verification/publication across processes. A crashed
+  // writer leaves an explicit lock error instead of reusing incomplete output.
+  const lockPath = `${stagePath}.lock`;
+  const deadline = Date.now() + 10_000;
+  let lock;
+  while (!lock) {
+    try {
+      lock = await open(lockPath, 'wx');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      if (Date.now() >= deadline)
+        throw new Error(`Stage publication locked: ${lockPath}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
   }
-
-  const tmpPath = `${stagePath}.tmp-${String(process.pid)}-` +
-    String(Date.now());
-  await rm(tmpPath, { force: true, recursive: true });
-  await mkdir(tmpPath, { recursive: true });
-  await writeManifest(tmpPath, input.manifest);
-  await rm(stagePath, { force: true, recursive: true });
-  await rename(tmpPath, stagePath);
-  return stagePath;
+  const tmpPath = `${stagePath}.tmp-${randomUUID()}`;
+  try {
+    await lock.writeFile(
+      JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }),
+    );
+    if (await readVerifiedManifest(stagePath)) return stagePath;
+    const artifactHashes: Record<string, string> = {};
+    for (const artifact of input.manifest.artifacts)
+      artifactHashes[resolve(artifact)] = contentAddress(
+        await readFile(artifact),
+      );
+    const manifest = {
+      ...input.manifest,
+      artifacts: input.manifest.artifacts.map((a) => resolve(a)),
+      artifactHashes,
+    };
+    await mkdir(tmpPath, { recursive: true });
+    await writeManifest(tmpPath, manifest);
+    // Only an invalid generation is removed, while holding the publication lock.
+    await rm(stagePath, { recursive: true, force: true });
+    await rename(tmpPath, stagePath);
+    if (!(await readVerifiedManifest(stagePath)))
+      throw new Error('Stage artifacts changed during publication');
+    return stagePath;
+  } finally {
+    await rm(tmpPath, { recursive: true, force: true });
+    await lock.close();
+    await rm(lockPath, { force: true });
+  }
 }
 
 export async function resumeFromLastVerified(
@@ -80,7 +116,11 @@ export async function resumeFromLastVerified(
   let last: ResumeResult = { manifest: null, path: null, stage: null };
 
   for (const stage of input.stages) {
-    const verified = await firstVerifiedStage(input.rootDir, stage);
+    const key = input.cacheKeys?.[stage];
+    const verified =
+      key === undefined
+        ? null
+        : await exactVerifiedStage(input.rootDir, stage, key);
     if (verified === null) {
       return last;
     }
@@ -123,47 +163,37 @@ async function writeManifest(
   await writeFile(join(directory, COMPLETE_MARKER), `${marker}\n`);
 }
 
-async function firstVerifiedStage(
+async function exactVerifiedStage(
   rootDir: string,
   stage: StageName,
+  key: string,
 ): Promise<ResumeResult | null> {
-  const stageRoot = join(rootDir, stage);
-  const entries = await readDirSafe(stageRoot);
+  if (!/^[a-f0-9]{64}$/.test(key)) return null;
+  const path = join(rootDir, stage, key);
+  const manifest = await readVerifiedManifest(path);
+  return manifest?.stage === stage && manifest.cacheKey === key
+    ? { manifest, path, stage }
+    : null;
+}
 
-  for (const entry of entries) {
-    const path = join(stageRoot, entry);
-    const manifest = await readVerifiedManifest(path);
-    if (manifest !== null) {
-      return { manifest, path, stage };
+export async function readVerifiedManifest(
+  path: string,
+): Promise<StageManifest | null> {
+  try {
+    const text = await readFile(join(path, MANIFEST_FILE), 'utf8');
+    const manifest = JSON.parse(text) as StageManifest;
+    const marker = (await readFile(join(path, COMPLETE_MARKER), 'utf8')).trim();
+    if (contentAddress(manifest) !== marker || !manifest.artifactHashes)
+      return null;
+    for (const artifact of manifest.artifacts) {
+      if (
+        contentAddress(await readFile(artifact)) !==
+        manifest.artifactHashes[artifact]
+      )
+        return null;
     }
-  }
-
-  return null;
-}
-
-async function readVerifiedManifest(path: string): Promise<StageManifest | null> {
-  if (!(await isComplete(path))) {
+    return manifest;
+  } catch {
     return null;
-  }
-
-  const text = await readFile(join(path, MANIFEST_FILE), 'utf8');
-  return JSON.parse(text) as StageManifest;
-}
-
-async function isComplete(path: string): Promise<boolean> {
-  try {
-    await readFile(join(path, COMPLETE_MARKER), 'utf8');
-    await readFile(join(path, MANIFEST_FILE), 'utf8');
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function readDirSafe(path: string): Promise<string[]> {
-  try {
-    return await readdir(path);
-  } catch {
-    return [];
   }
 }

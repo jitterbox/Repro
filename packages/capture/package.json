@@ -1,12 +1,12 @@
 {
   "name": "@repro/capture",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -21,7 +21,9 @@
   "dependencies": {
     "@repro/core": "workspace:*",
     "@repro/probe": "workspace:*",
-    "@repro/render": "workspace:*",
-    "playwright": "^1.62.0"
+    "playwright": "1.62.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

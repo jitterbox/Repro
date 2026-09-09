@@ -8,7 +8,9 @@ describe('contrast gate', () => {
       plan: { annotations: [] },
     });
     expect(result.pass).toBe(true);
-    expect(result.details?.skipped).toBeUndefined();
+    expect(
+      (result.details as Record<string, unknown> | undefined)?.skipped,
+    ).toBeUndefined();
   });
 
   it('fails closed when plates exist without video', async () => {
@@ -25,6 +27,8 @@ describe('contrast gate', () => {
       },
     });
     expect(result.pass).toBe(false);
-    expect(result.details?.skipped).toBeUndefined();
+    expect(
+      (result.details as Record<string, unknown> | undefined)?.skipped,
+    ).toBeUndefined();
   });
 });

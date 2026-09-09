@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "lib": ["ES2022", "DOM"] },
+  "include": ["**/*.config.ts", "packages/playwright/examples/*.ts"],
+  "exclude": ["node_modules", "**/dist", ".repro"]
+}

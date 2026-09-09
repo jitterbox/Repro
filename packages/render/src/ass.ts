@@ -11,6 +11,7 @@ import type { AnnotationBox, Chapter, Rect, ReproPlan } from '@repro/plan';
 export interface GenerateAssInput {
   readonly plan: ReproPlan;
   readonly title?: string;
+  readonly staticFrame?: boolean;
 }
 
 export function generateAss(input: GenerateAssInput): string {
@@ -36,7 +37,9 @@ export function generateAss(input: GenerateAssInput): string {
     '',
     '[Events]',
     eventFormat(),
-    ...events,
+    ...events.map((event) =>
+      input.staticFrame ? event.replace(/\\fad\(\d+,\d+\)/g, '') : event,
+    ),
     '',
   ].join('\n');
 }
@@ -98,11 +101,10 @@ function plateEvents(
   const platePath = rectPath({ height: h, width: w, x: 0, y: 0 });
   const barPath = rectPath({ height: h, width: 4, x: 0, y: 0 });
   const kicker = annotation.plate?.kicker;
-  const label =
-    annotation.plate?.label ??
-    annotation.label;
+  const label = annotation.plate?.label ?? annotation.label;
   const measurement = annotation.plate?.measurement;
-  const maxChars = annotation.plate?.maxChars ?? theme.type.calloutLabel.maxChars;
+  const maxChars =
+    annotation.plate?.maxChars ?? theme.type.calloutLabel.maxChars;
   const clipped = truncate(label, maxChars);
 
   const events = [
@@ -139,8 +141,7 @@ function plateEvents(
       3,
       range,
       'Plate',
-      `{\\pos(${String(x + 12)},${String(textY)})${fade}}` +
-        escapeAss(clipped),
+      `{\\pos(${String(x + 12)},${String(textY)})${fade}}` + escapeAss(clipped),
     ),
   );
 
@@ -176,7 +177,7 @@ function ringEvents(annotation: AnnotationBox): readonly string[] {
 
   const pad = annotation.anchor?.pad ?? 6;
   const ring = expand(target, pad);
-  const style = ringStyleForSeverity(annotation.severity as Severity);
+  const style = ringStyleForSeverity(annotation.severity);
   const path = strokedRectPath(ring, annotation.lineStyle ?? 'solid');
   const fade = fadeTags(getOverlayTheme());
   return [
@@ -204,7 +205,7 @@ function badgeEvents(
       4,
       outputRange(annotation),
       style,
-      `{\\pos(${String(x)},${String(y)})${fade}}${escapeAss(label)}`,
+      `{\\pos(${String(x)},${String(y)})${annotation.fontSize ? `\\fs${annotation.fontSize}` : ''}${fade}}${escapeAss(label)}`,
     ),
   ];
 }
@@ -263,7 +264,7 @@ function shapeAndLabelEvents(
   const target = targetRect(annotation);
 
   if (target !== null) {
-    const style = ringStyleForSeverity(annotation.severity as Severity);
+    const style = ringStyleForSeverity(annotation.severity);
     const path =
       annotation.shape === 'ellipse'
         ? ellipsePath(target.width / 2, target.height / 2)
@@ -273,9 +274,7 @@ function shapeAndLabelEvents(
         ? `\\pos(${String(Math.round(target.x + target.width / 2))},` +
           `${String(Math.round(target.y + target.height / 2))})`
         : '\\pos(0,0)';
-    events.push(
-      dialogue(1, range, style, `{${pos}${fade}\\p1}${path}`),
-    );
+    events.push(dialogue(1, range, style, `{${pos}${fade}\\p1}${path}`));
   }
 
   const x = Math.round(annotation.bounds.x + 12);
@@ -337,8 +336,7 @@ function leaderLineEvents(annotation: AnnotationBox): readonly string[] {
 function chapterEvent(chapter: Chapter): string {
   const theme = getOverlayTheme();
   const fade = fadeTags(theme);
-  const text =
-    `{\\an2\\pos(640,680)${fade}}${escapeAss(chapter.title)}`;
+  const text = `{\\an2\\pos(640,680)${fade}}${escapeAss(chapter.title)}`;
   return dialogue(
     3,
     chapter.outTimeRange ?? chapter.timeRange,
@@ -440,9 +438,10 @@ function dialogue(
   return `Dialogue: ${fields}`;
 }
 
-function outputRange(
-  annotation: AnnotationBox,
-): { readonly start: number; readonly end: number } {
+function outputRange(annotation: AnnotationBox): {
+  readonly start: number;
+  readonly end: number;
+} {
   return annotation.outTimeRange ?? annotation.timeRange;
 }
 
@@ -466,7 +465,12 @@ function targetRect(annotation: AnnotationBox): Rect | null {
 
 function bboxToRect(
   bbox:
-    | { readonly x: number; readonly y: number; readonly w: number; readonly h: number }
+    | {
+        readonly x: number;
+        readonly y: number;
+        readonly w: number;
+        readonly h: number;
+      }
     | undefined,
 ): Rect | null {
   if (bbox === undefined) {
@@ -526,7 +530,7 @@ function dashedRect(
   gap: number,
 ): string {
   const parts: string[] = [];
-  const edges: Array<[number, number, number, number]> = [
+  const edges: [number, number, number, number][] = [
     [x, y, x + w, y],
     [x + w, y, x + w, y + h],
     [x + w, y + h, x, y + h],

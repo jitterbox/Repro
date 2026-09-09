@@ -1,15 +1,29 @@
 {
   "name": "@repro/contracts",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./tokens/overlay-theme.tokens.json": "./tokens/overlay-theme.tokens.json",
-    "./schemas/*": "./schemas/*"
+    "./schemas/*": "./schemas/*",
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js",
+      "default": "./dist/config.js"
+    },
+    "./config-validator": {
+      "types": "./dist/config-validator.d.ts",
+      "import": "./dist/config-validator.js",
+      "default": "./dist/config-validator.js"
+    },
+    "./plan": {
+      "types": "./dist/plan.d.ts",
+      "import": "./dist/plan.js"
+    }
   },
   "files": [
     "dist",
@@ -19,16 +33,19 @@
   "scripts": {
     "build:tokens": "node scripts/build-tokens.mjs",
     "prebuild": "pnpm run build:tokens",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-schemas.mjs",
+    "generate:schemas": "tsc -p tsconfig.build.json && node scripts/build-schemas.mjs --write-source",
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "pretest": "pnpm run build:tokens"
   },
   "dependencies": {
-    "@repro/core": "workspace:*",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "zod": "^4.4.3"
+    "zod": "4.4.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

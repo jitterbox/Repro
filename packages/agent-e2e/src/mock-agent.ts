@@ -40,12 +40,7 @@ export async function runMockAgent(
   const config = configFromBug(bug);
   const runDir =
     input.runDir ??
-    join(
-      repoRoot,
-      '.repro/agent-runs',
-      bug.id,
-      timestampSlug(),
-    );
+    join(repoRoot, '.repro/agent-runs', bug.id, timestampSlug());
   await mkdir(runDir, { recursive: true });
 
   const configPath = join(runDir, 'repro.config.json');
@@ -59,8 +54,11 @@ export async function runMockAgent(
   };
   const startedAt = new Date().toISOString();
 
-  const validation = await runStep(steps, 'validate-config', { configPath }, () =>
-    tools.validateConfig(configPath),
+  const validation = await runStep(
+    steps,
+    'validate-config',
+    { configPath },
+    () => tools.validateConfig(configPath),
   );
   if (!validation.validation.ok) {
     return finalize({
@@ -241,7 +239,7 @@ async function runCompareBugFlow(input: {
         configPath: input.configPath,
         fixed: fixed.captureDir,
       },
-      async () => ({ broken, fixed }),
+      () => Promise.resolve({ broken, fixed }),
     );
 
     input.artifacts.captureDir = broken.captureDir;
@@ -333,12 +331,7 @@ async function runStep<T>(
     steps.push(step);
     return result;
   } catch (error) {
-    if (
-      error !== null &&
-      typeof error === 'object' &&
-      'step' in error &&
-      (error as { step: TranscriptStep }).step !== undefined
-    ) {
+    if (error !== null && typeof error === 'object' && 'step' in error) {
       steps.push((error as { step: TranscriptStep }).step);
     }
     throw error;

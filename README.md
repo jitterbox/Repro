@@ -1,145 +1,95 @@
 # Repro
 
-Monorepo for the **Repro AI** bug reproduction video pipeline.
+Repro turns a committed Playwright scenario into inspectable evidence of a browser bug and its fix. Capture original behavior, compare explicit before/after runs, review the pixels, and export audited screenshots, video, captions and a portable viewer. Execution and rendering require no LLM or hosted service.
 
-## Documentation
+## Start locally
 
-| Doc | Audience |
-| --- | --- |
-| [`AGENTS.md`](AGENTS.md) | Agent entrypoint (constraints + routing) |
-| [`docs/ai-usage.md`](docs/ai-usage.md) | Full AI playbook: modes, features, **bug-class → config matrix**, CLI playbooks |
-| [`docs/design-brief.md`](docs/design-brief.md) | **Claude Design brief** — video chrome, overlay language, theming, viewer UI, skills visuals |
-| [`docs/spikes.md`](docs/spikes.md) | Phase 0 spike results / design locks |
-| [`apps/shoplite/`](apps/shoplite/) | Broken/fixed fixture SPA for demos & E2E videos |
-| [`testdata/bugs/`](testdata/bugs/) | ADO-shaped bug work items for ShopLite |
-| `skills/repro-*/SKILL.md` | Thin CLI wrappers for capture / annotate / compare / file |
-
-## Packages
-
-| Package             | Description                          |
-| ------------------- | ------------------------------------ |
-| `@repro/contracts`  | Shared types and schemas             |
-| `@repro/core`       | Core pipeline orchestration          |
-| `@repro/probe`      | Environment and app probing          |
-| `@repro/capture`    | Session capture                      |
-| `@repro/plan`       | Reproduction plan generation         |
-| `@repro/render`     | Video rendering                      |
-| `@repro/compare`    | Visual / behavioral comparison       |
-| `@repro/alm`        | Application lifecycle management     |
-| `@repro/vault`      | Secrets and artifact storage         |
-| `@repro/cli`        | Command-line interface               |
-| `@repro/viewer`     | Accessible report viewer             |
-| `@repro/evaluation` | Quality gates / DiffSpot+WUICC stubs |
-| `@repro/agent-e2e` | Tier-3 agent E2E (mock + optional live) |
-
-## Requirements
-
-- Node.js 22 (`nvm use`)
-- [pnpm](https://pnpm.io/) 9+
-- ffmpeg 6+ (8.x recommended; `maskedmerge` / `gblur` / `pixelize`)
-
-Phase 0 spike results: [`docs/spikes.md`](docs/spikes.md).
-
-## Scripts
+Use Node 22 and pnpm 9.15.0. Install the lockfile-pinned Chromium plus FFmpeg, fonts and Tesseract for strict export.
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
+pnpm exec playwright install --with-deps chromium
 pnpm build
+node packages/cli/dist/bin.js doctor
+node packages/cli/dist/bin.js capabilities --json
+node packages/cli/dist/bin.js recipes --json
+```
+
+The examples below use the installed `repro` executable. In this workspace, replace `repro` with `node packages/cli/dist/bin.js`. Packages can be packed and installed locally; registry publication is separate.
+
+## Commit a scenario and its claim
+
+```bash
+repro init
+repro describe checkpoint --json
+repro describe hit-test --json
+repro validate-config --config repro.config.json
+repro validate-evidence evidence.json
+```
+
+Edit the generated Playwright spec with durable locators and assertions. In the evidence specification, name the scenario, explicit variant, meaningful numbered steps, trigger, expected result, targets, checkpoints and privacy requirements. Use `@repro/playwright` fixtures with ordinary Playwright setup, authentication, projects, retries and teardown.
+
+For transient bugs, start a committed capture segment before the trigger and select a calibrated event-linked frame afterward. For hidden obstructions, inspect the hit-test sample image, measured element bounds and actual pointer recipient. These measurements do not establish an entire hidden hit region. See the [AI playbook](docs/ai-usage.md) for recipes and timing/privacy constraints.
+
+## Capture, inspect and compare
+
+The public fixture example manages its own local server:
+
+```bash
+repro run packages/playwright/examples/scenario.spec.ts \
+  --playwright-config packages/playwright/examples/playwright.config.ts \
+  --evidence packages/playwright/examples/before.json \
+  --url http://127.0.0.1:3198 --out-dir .repro/before
+
+repro run packages/playwright/examples/scenario.spec.ts \
+  --playwright-config packages/playwright/examples/playwright.config.ts \
+  --evidence packages/playwright/examples/after.json \
+  --url 'http://127.0.0.1:3198?fixed=1' --out-dir .repro/after
+```
+
+Set `BEFORE_RUN` and `AFTER_RUN` to the respective `runs[0].directory` values returned by those commands. Each invocation has an isolated directory. Ordinary reruns observe the application again.
+
+```bash
+repro frame "$BEFORE_RUN" --checkpoint result --target target
+repro frame "$AFTER_RUN" --checkpoint result --target target
+repro compare "$BEFORE_RUN" "$AFTER_RUN"
+repro review "$AFTER_RUN" --baseline "$BEFORE_RUN"
+```
+
+Review opens a loopback server with original recordings, synchronized playback, semantic steps, checkpoint context/crops, measured targets, assertions and browser diagnostics. A before assertion mismatch qualifies as bug evidence only when explicitly designated; unrelated failures remain unsuccessful or inconclusive. Comparisons require compatible controlled environments and the same measured scenario source/test identity. Unmatched or uncertain evidence cannot silently become verified proof.
+
+## Render and export
+
+```bash
+repro render "$BEFORE_RUN"
+repro render "$AFTER_RUN"
+repro export "$AFTER_RUN" --baseline "$BEFORE_RUN" --out-dir .repro/bundle
+```
+
+Inspect the rendered stills and video before delivery. Presentation edits add reading holds, titles and highlights without changing execution timing. Unchanged renders reuse verified artifacts. Strict export audits actual media frames with local OCR and fails closed when evidence or OCR is missing. Share the resulting bundle; raw captures, events, HAR, traces and credentials stay local.
+
+The bundle includes captions, descriptive image labels, before/after roles and a viewer that works after relocation. Serve its directory locally and open `viewer/public/index.html`. Side-by-side is the default; onion, wipe, difference and edge views are available. Independent **presentation** timing includes reading holds; local review provides original capture timing.
+
+Existing `capture`, `annotate`, `render-compare`, `package`, `quality` and `file` verbs remain compatibility interfaces. Generic raw JSON is not a shareable package asset. Filing uses the existing Jira/ADO clients and outbox; keep ALM credentials outside prompts.
+
+## Verification
+
+```bash
 pnpm typecheck
 pnpm lint
-pnpm test
-pnpm test:e2e-fixture   # ShopLite feature-coverage videos
-pnpm --filter @repro/agent-e2e test   # mock agent E2E (no API keys)
-pnpm shoplite:dev       # http://localhost:5177/?fixture=broken
+pnpm test:milestone       # sequential browser/media checks; build first
+pnpm test:e2e-fixture     # ShopLite regression corpus
+pnpm test:clean-install  # packed packages in an unrelated consumer project
 ```
 
-## CLI Usage
+`test:milestone` records each check, duration, log and final result under `.repro/milestone` (override with `REPRO_MILESTONE_OUT`). It includes real captured pixels, synchronization negative controls, moving and network privacy canaries, all published recipes, relocated review and clean installation. Synthetic metadata/media controls are labeled explicitly. Optional live agent evaluation remains separate from deterministic CI.
 
-The `@repro/cli` package exposes the `repro` binary after build.
+## Architecture and guidance
 
-```bash
-pnpm --filter @repro/cli build
-pnpm --filter @repro/cli exec repro validate-config --config repro.config.json
-```
+- `@repro/contracts`: runtime Zod contracts, generated schemas, capability registry and visual tokens; independent of runtime core.
+- `@repro/pipeline`: shared application services used by CLI, Playwright and the stdio MCP adapter.
+- `@repro/playwright`: public fixtures and reporter; `@repro/cli`: developer interface; `@repro/mcp`: agent discovery and application-service adapter.
+- Focused capture, plan, render, compare, viewer, evaluation, core, vault and ALM packages retain their domain responsibilities.
+- [Agent entrypoint](AGENTS.md), [AI playbook](docs/ai-usage.md), [design brief](docs/design-brief.md), [spike decisions](docs/spikes.md), [implementation and acceptance ledger](docs/implementation-progress.md).
 
-Capture validates the config with the core mode/feature conflict validator
-before opening Playwright and writing a run store.
-
-```bash
-repro capture \
-  --config repro.config.json \
-  --url "https://example.test" \
-  --out-dir .repro/run
-```
-
-Annotation consumes committed capture artifacts and renders a deterministic
-video without another LLM pass.
-
-```bash
-repro annotate \
-  --config repro.config.json \
-  --events .repro/events.jsonl \
-  --video .repro/raw.mp4 \
-  --out-dir .repro/rendered
-```
-
-Comparison reads two JSON run manifests and reports structural differences.
-
-```bash
-repro compare .repro/baseline.json .repro/current.json
-```
-
-Render a compare composition MP4 from two captured videos (see
-[`docs/design-recs/video-system-spec.md`](docs/design-recs/video-system-spec.md)
-and `compare-composition.schema.json`):
-
-```bash
-repro render-compare \
-  --composition .repro/compare-composition.json \
-  --video-a .repro/before.mp4 \
-  --video-b .repro/after.mp4 \
-  -o .repro/compare-render
-```
-
-Filing runs the OCR redaction gate before preparing or uploading evidence to
-ADO or Jira. Keep credentials in the ALM environment or vault integration, not
-in agent context.
-
-```bash
-repro file \
-  --system jira \
-  --evidence .repro/rendered/rendered.mp4 \
-  --title "Bug reproduction"
-```
-
-Packaging copies the built viewer bundle plus external MP4, VTT, and JSON
-assets into a distributable evidence folder.
-
-```bash
-pnpm --filter @repro/viewer build
-repro package \
-  --out-dir .repro/package \
-  --asset mp4:.repro/rendered/rendered.mp4 \
-  --asset json:.repro/report.json
-```
-
-Quality evaluation treats pipeline completion as necessary but insufficient:
-required dimensions such as redaction leakage, determinism, and human
-usefulness must pass the gate.
-
-```bash
-repro quality \
-  --input testdata/golden/login-flow.manifest.json \
-  --out .repro/quality-report.json
-node scripts/evaluation/run-golden.mjs
-node scripts/e2e/smoke.mjs
-```
-
-## Layout
-
-```
-packages/
-  alm/        capture/    cli/        compare/
-  contracts/  core/       evaluation/ plan/
-  probe/      render/     vault/      viewer/
-```
+Generated capability documentation and schemas are in `packages/contracts/dist/discovery` after building. MCP exposes detailed schemas and recipes as on-demand resources. Commit discovery results as deterministic specs/configuration; CI executes them without an LLM.

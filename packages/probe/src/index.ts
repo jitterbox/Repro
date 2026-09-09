@@ -1,6 +1,7 @@
 import { PROBE_IIFE } from './iife.js';
 
 export { PROBE_IIFE };
+export { sampleDocumentClock } from './document-clock.js';
 
 export const PROBE_PROTOCOL = 1 as const;
 

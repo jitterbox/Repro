@@ -59,12 +59,8 @@ export interface BugDriverContext {
   readonly serverUrl: string;
 }
 
-export interface CaptureDriver {
-  (
-    ctx: BugDriverContext,
-  ): Promise<{
-    readonly eventsPath: string;
-    readonly videoPath: string;
-    readonly captureDir: string;
-  }>;
-}
+export type CaptureDriver = (ctx: BugDriverContext) => Promise<{
+  readonly eventsPath: string;
+  readonly videoPath: string;
+  readonly captureDir: string;
+}>;
