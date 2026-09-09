@@ -37,7 +37,15 @@ await exec(
   [
     '--input-type=module',
     '-e',
-    "import('@repro/playwright'); import('@repro/mcp');",
+    `import { createRequire } from 'node:module';
+     import { realpathSync } from 'node:fs';
+     import { pathToFileURL } from 'node:url';
+     import assert from 'node:assert/strict';
+     await import('@repro/playwright'); await import('@repro/mcp');
+     const cliRequire = createRequire(realpathSync(${JSON.stringify(cli)}));
+     const pipelineRequire = createRequire(cliRequire.resolve('@repro/pipeline'));
+     const { loadCoverageMatrix } = await import(pathToFileURL(pipelineRequire.resolve('@repro/evaluation')).href);
+     assert.equal((await loadCoverageMatrix()).compareLayouts.length, 7);`,
   ],
   { cwd: project },
 );

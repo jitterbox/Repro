@@ -8,7 +8,7 @@ import {
   enumerateFonts,
   implementationDigest,
 } from '../../packages/core/dist/index.js';
-import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, realpath, writeFile } from 'node:fs/promises';
 import { cpus, platform, release } from 'node:os';
 import { join, resolve } from 'node:path';
 const execute = promisify(execFile);
@@ -22,7 +22,7 @@ const source = resolve(
 const cli = resolve(
   process.env.REPRO_BENCHMARK_CLI ?? 'packages/cli/dist/bin.js',
 );
-const require = createRequire(cli);
+const require = createRequire(await realpath(cli));
 const pipelineRequire = createRequire(require.resolve('@repro/pipeline'));
 const root = resolve(
   process.env.REPRO_BENCHMARK_OUT ?? '.repro/annotation-benchmark',

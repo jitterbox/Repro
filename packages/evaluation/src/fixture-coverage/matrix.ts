@@ -39,7 +39,7 @@ export interface CoverageReport {
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_MATRIX = join(
   HERE,
-  '../../../../testdata/design-language/coverage-matrix.json',
+  '../../data/coverage-matrix.json',
 );
 
 export async function loadCoverageMatrix(

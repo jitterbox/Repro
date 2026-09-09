@@ -58,8 +58,8 @@ The **Phase 1–3 milestone is complete and verified locally**. The full five-ph
 The main remaining implementation items have now been delivered in the Phase 4–5
 continuation below. These acceptance/distribution items remain open:
 
-- Execute the newly added Windows process-tree/lock job on Windows; this host only
-  validates Linux behavior. No broad Windows capture compatibility is claimed.
+- Windows process-tree and SQLite lock recovery passed all four checks on the
+  Windows Server 2022 CI runner. This is not a broad Windows capture claim.
 - External registry publication awaits a chosen registry/owned namespace. Portable
   release tarballs and a relocatable installation manifest are available without it.
 - The 50% annotation-iteration improvement target lacks a recorded Phase 1 median.
@@ -146,3 +146,25 @@ recorded, so current export/cache timings do not establish the 50% annotation
 improvement target. Release tarballs passed installation after moving the distribution to an unrelated
 consumer path and verifying every checksum. Remote Windows CI and registry
 publication have not been performed.
+
+
+## Remote acceptance follow-through
+
+The Windows cancellation and crashed-writer lock gate passed **4 tests in 2 files**
+at commit `ae02eef`: [Windows job](https://github.com/jitterbox/Repro/actions/runs/34310454937/job/102335855398).
+Remote execution exposed and repaired three clean-machine assumptions: an ignored
+`coverage/` source directory, CRLF conversion of generated TypeScript, and FFmpeg
+tests assigned to the dependency-free job. The source module now uses
+`fixture-coverage/`, Git attributes preserve LF bytes, and synthetic encoding tests
+run in the media job. The Windows image is pinned to Server 2022 because pnpm 9's
+bundled node-gyp does not recognize the VS 2026 compiler in the moving image.
+
+The evaluation package now carries its canonical fixture coverage matrix with it;
+relocated installation exercises that exported loader without repository access.
+The annotation benchmark records seven actual title edits after one warmup, with
+capture hash preservation and OCR verification outside the timed render call.
+The current local median is **2.06 s** (`.repro/annotation-benchmark/attempt-k50nhV/benchmark.json`).
+This is a present-day measurement, not a historical Phase 1 median or a claim of
+50% improvement. CI records the same measurements with implementation, font, tool
+and machine identity. Registry destination/authentication and the missing approved
+performance baseline remain required to complete those two gates.
