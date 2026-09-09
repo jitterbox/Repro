@@ -178,12 +178,12 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'render-compare',
       'Render comparison',
       'repro render-compare --composition after-run/comparison.json --video-a before.mp4 --video-b after.mp4 --out-dir output',
-      'Render a compare report or legacy composition using every measured synchronization knot. Legacy inputs with fewer than two knots use explicitly reported original timing. Pane a must be Before and pane b After; all source and output knot times must increase. ROI requires measured shared bounds; blink requires explicit opt-in.',
+      'Render a compare report or legacy composition using every measured synchronization knot. Legacy inputs with fewer than two knots use explicitly reported original timing. Synchronized outputTiming reports the measured endpoint, encoded duration and up to one added terminal frame so the final cue is visible without advancing its timestamp. Pane a must be Before and pane b After; all source and output knot times must increase. ROI requires measured shared bounds; blink requires explicit opt-in.',
       [
         'comparison report or composition',
         'normalized before and after videos',
       ],
-      ['comparison MP4'],
+      ['comparison MP4', 'outputTiming for synchronized media'],
       'Measure checkpoint alignment within two output frames.',
     ],
     [

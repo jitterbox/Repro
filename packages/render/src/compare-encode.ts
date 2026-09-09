@@ -26,6 +26,7 @@ export interface RenderCompareResult {
   readonly outputPath: string;
   readonly compositionPath: string;
   readonly timing: 'synchronized' | 'original';
+  readonly outputTiming?: ReturnType<typeof comparisonOutputTiming>;
 }
 
 const BT709_ARGS = h264Profile;
@@ -79,6 +80,7 @@ export async function renderCompare(
     compositionPath,
     outputPath,
     timing: composition.sync.knots.length >= 2 ? 'synchronized' : 'original',
+    outputTiming: comparisonOutputTiming(composition),
   };
 }
 
@@ -257,11 +259,38 @@ function syncPrep(composition: CompareComposition): {
   // terminal image through the measured endpoint instead of letting the
   // shortest pane truncate a late checkpoint (or its label).
   const endMs = requireValue(knots.at(-1))[2];
-  const frameCount = Math.ceil((endMs * fps) / 1000);
+  const frameCount = requireValue(
+    comparisonOutputTiming(composition),
+  ).frameCount;
   const tail = `fps=${fps},tpad=stop_mode=clone:stop_duration=${endMs / 1000},trim=end_frame=${frameCount},settb=1/${fps}`;
   return {
     a: `[0:v]setpts='${piecewisePts(knots, 0)}',${tail}[aSync]`,
     b: `[1:v]setpts='${piecewisePts(knots, 1)}',${tail}[bSync]`,
+  };
+}
+
+/** Include a frame at or after every cue, even inside the final fractional interval. */
+export function comparisonOutputTiming(composition: CompareComposition) {
+  if (composition.sync.knots.length < 2) return undefined;
+  const measuredDurationMs = requireValue(composition.sync.knots.at(-1))[2];
+  const fps = composition.output.fps;
+  const latestCueMs = Math.max(
+    0,
+    ...comparisonCheckpointLabels(composition).map((label) => label.atMs),
+    ...comparisonScenarioLabels(composition).map((label) => label.startMs),
+  );
+  if (latestCueMs > measuredDurationMs)
+    throw new Error('Comparison cue falls outside measured synchronization');
+  const measuredFrames = Math.ceil((measuredDurationMs * fps) / 1000);
+  const frameCount = Math.max(
+    measuredFrames,
+    Math.ceil((latestCueMs * fps) / 1000) + 1,
+  );
+  return {
+    measuredDurationMs,
+    frameCount,
+    durationMs: (frameCount * 1000) / fps,
+    terminalPaddingFrames: frameCount - measuredFrames,
   };
 }
 

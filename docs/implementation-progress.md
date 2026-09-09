@@ -168,3 +168,15 @@ This is a present-day measurement, not a historical Phase 1 median or a claim of
 50% improvement. CI records the same measurements with implementation, font, tool
 and machine identity. Registry destination/authentication and the missing approved
 performance baseline remain required to complete those two gates.
+
+The first complete remote media pass reached synchronization and caught a final
+checkpoint inside the last output-frame interval. Its timestamp followed the last
+frame PTS, so its label was absent. Comparison rendering now includes the minimum
+extra frame needed to display every cue without advancing cue timestamps, and
+returns `outputTiming` with the measured endpoint, encoded duration and terminal
+padding. The retained failure was 4,028.083 ms / 121 frames; the corrected output
+is 122 frames with one explicitly reported extra frame. Actual-frame OCR and
+visual inspection confirm checkpoint 4/4 and both verified outcomes. Fresh
+uneven-delay acceptance and its negative controls pass at
+`/tmp/repro-terminal-sync/acceptance.json`; the two-frame alignment tolerance is
+unchanged. Four deterministic boundary cases cover fractional and exact endpoints.

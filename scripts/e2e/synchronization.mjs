@@ -244,10 +244,21 @@ assert.ok(
   JSON.stringify(alignment),
 );
 const expectedDurationMs = comparison.composition.sync.knots.at(-1)[2];
+// A final checkpoint after the last frame PTS needs one more displayed frame.
+// Keep the measured endpoint distinct from that explicitly reported presentation padding.
+const expectedFrames = Math.max(
+  Math.ceil((expectedDurationMs * 30) / 1000),
+  ...checkpoints.map(
+    (checkpoint) => Math.ceil((checkpoint.outMs * 30) / 1000) + 1,
+  ),
+);
 assert.ok(
-  frames.length === Math.ceil((expectedDurationMs * 30) / 1000),
+  frames.length === expectedFrames,
   `Comparison duration ${(frames.length * 1000) / 30} differs from ${expectedDurationMs}`,
 );
+assert.equal(rendered.outputTiming.frameCount, expectedFrames);
+assert.equal(rendered.outputTiming.measuredDurationMs, expectedDurationMs);
+assert.ok(rendered.outputTiming.terminalPaddingFrames <= 1);
 
 // Explicitly synthetic sync metadata is a negative control over the same real captures.
 // A first/last-only warp must fail at least one of the intermediate checkpoints.
