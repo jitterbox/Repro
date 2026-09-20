@@ -259,3 +259,28 @@ input-hardening changes. `/tmp/repro-discovery-final/acceptance.json` records th
 public CLI discovery → validation → actual Chromium before/after captures →
 frame inspection → rendered outcome OCR → comparison handoff. CI and the
 milestone runner now execute `test:discovery` and retain its artifacts.
+
+## CI and output-quality completion follow-through
+
+The September 20 continuation reproduced the remote public-proof failure: a
+required callout was truncated because planning used a character-count estimate
+while rendering measured its font. Planning/rendering now share installed-font
+measurement and round plate widths outward. Actual-image OCR caught and locked
+down both the original label and a fractional-width accessibility label.
+
+Dynamic kicker and measurement captions now fit their plates. Hit-target captions
+report measured dimensions instead of unconditionally claiming a target is below
+24×24, and missing bounds remain unavailable. Failed outcomes explicitly label
+the expected result; strategy examples use concrete expectations. Comparison
+captions use the shared Repro font. Label-region OCR supplements, and does not
+replace, whole-frame strict privacy auditing.
+
+Local public capture/compare/render/strict-export/relocated-viewer acceptance
+passed at `.repro/release-public/acceptance.json`. The 27-test fixture suite and
+nine compositor tests passed. The absence, passive-network and watch fixtures now
+clear inherited highlights when they intentionally have no measured target.
+The legacy index decodes every listed video, retains review frames/content hashes,
+and verifies role-caption pixels for all seven layouts. Its narrow T/I/L OCR
+normalization is explicit in the row checks; synthetic geometry is still labeled.
+Remote completion is recorded by the final branch CI run, not inferred from these
+local results. The review table remains available through `pnpm review:matrix`.

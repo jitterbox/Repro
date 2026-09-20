@@ -80,22 +80,47 @@ for (const [index, name] of names.entries()) {
       );
       assert.equal(video.width, 1280);
       assert.equal(video.height, 720);
-      const roi = image + '.labels.png';
-      await exec('ffmpeg', [
-        '-v',
-        'error',
-        '-y',
-        '-i',
-        image,
-        '-vf',
-        'crop=1240:25:20:80,scale=iw*3:ih*3',
-        roi,
-      ]);
-      const text = (await exec('tesseract', [roi, 'stdout', '--psm', '7']))
-        .stdout;
-      assert.match(text, /BEFORE/i, `${asset.path}: missing Before role`);
-      assert.match(text, /AFTER/i, `${asset.path}: missing After role`);
-      checks.push(`${asset.label}: decoded role labels verified by OCR`);
+      const regions = asset.path.endsWith('side-by-side_compare.mp4')
+        ? [
+            { x: 20, width: 180, roles: ['BEFORE'] },
+            { x: 656, width: 180, roles: ['AFTER'] },
+          ]
+        : [{ x: 20, width: 450, roles: ['BEFORE', 'AFTER'] }];
+      for (const region of regions) {
+        const recognized = [];
+        for (const binary of [false, true]) {
+          const roi = `${image}.labels-${region.x}-${binary}.png`;
+          await exec('ffmpeg', [
+            '-v',
+            'error',
+            '-y',
+            '-i',
+            image,
+            '-vf',
+            `crop=${region.width}:30:${region.x}:80,${binary ? "format=gray,lut=y='if(gt(val,200),0,255)'," : ''}scale=iw*3:ih*3`,
+            roi,
+          ]);
+          for (const psm of ['6', '7', '11'])
+            recognized.push(
+              (await exec('tesseract', [roi, 'stdout', '--psm', psm])).stdout,
+            );
+        }
+        // At small encoded sizes T can be recognized as I/L. This only
+        // disambiguates the known role word; missing or unrelated text still fails.
+        const text = recognized
+          .join(' ')
+          .toUpperCase()
+          .replace(/\s+/g, '')
+          .replace(/AF[IL]ER/g, 'AFTER');
+        for (const role of region.roles)
+          assert.ok(
+            text.includes(role),
+            `${asset.path}: missing ${role} role: ${text}`,
+          );
+      }
+      checks.push(
+        `${asset.label}: decoded role labels verified by OCR (T/I/L ambiguity normalized)`,
+      );
     }
     checks.push(
       `${asset.label}: all frames decode; SHA256 ${createHash('sha256')

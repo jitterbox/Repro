@@ -371,13 +371,17 @@ for (const [g, group] of groups.entries())
           `crop=${Math.floor(b.width)}:${Math.floor(b.height)}:${Math.floor(b.x)}:${Math.floor(b.y)},scale=iw*2:ih*2`,
           crop,
         ]);
-        const { stdout } = await exec('tesseract', [
-          crop,
-          'stdout',
-          '--psm',
-          '6',
-        ]);
-        words.push(stdout);
+        // Sparse and block segmentation see the same pixels differently,
+        // especially short numeric metric labels. Neither metadata nor captions count.
+        for (const psm of ['6', '11']) {
+          const { stdout } = await exec('tesseract', [
+            crop,
+            'stdout',
+            '--psm',
+            psm,
+          ]);
+          words.push(stdout);
+        }
       }
       const text = words.join(' ');
       const required = [

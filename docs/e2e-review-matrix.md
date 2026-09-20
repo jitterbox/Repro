@@ -77,6 +77,8 @@ After a successful fixture run, execute `node scripts/e2e/legacy-review-index.mj
 An optional fixture log argument also checks that its 27 tests passed. CI runs the
 pixel index immediately after the fixture suite. `LEG-02` and `LEG-03` cover all
 seven comparison layouts; every legacy row links its decoded review frames.
+Role OCR normalizes the specific T/I/L glyph ambiguity in AFTER and requires
+Before and After in their respective caption regions; absent roles still fail.
 
 ## Output-quality regression checks
 
