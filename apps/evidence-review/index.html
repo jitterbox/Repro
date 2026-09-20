@@ -94,6 +94,10 @@
     details {
       max-width: 450px;
     }
+    details li {
+      overflow-wrap: anywhere;
+      margin-bottom: 8px;
+    }
     pre {
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -206,10 +210,15 @@
           ),
         );
         const checks = el('td');
-        checks.append(
-          el('strong', r.level),
-          el('p', (r.checks || []).join('; ')),
+        checks.append(el('strong', r.level));
+        const checkDetails = el('details');
+        const checkList = el('ul');
+        for (const check of r.checks || []) checkList.append(el('li', check));
+        checkDetails.append(
+          el('summary', `${(r.checks || []).length} verification checks`),
+          checkList,
         );
+        checks.append(checkDetails);
         if (r.error) {
           const d = el('details');
           d.append(el('summary', 'Failure details'), el('pre', r.error));
