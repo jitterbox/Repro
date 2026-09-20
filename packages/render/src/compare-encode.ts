@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runProcess, h264Profile } from '@repro/core';
 import { parseCompareComposition } from '@repro/contracts';
+import { burnInFont } from './theme.js';
 
 import {
   blinkLayout,
@@ -93,7 +94,11 @@ function buildCompareFilterGraph(
   composition: CompareComposition,
 ): CompareFilterGraph {
   return {
-    filterComplex: `${buildLayoutFilter(composition)};${checkpointOverlay(composition)};${scenarioOverlay(composition)}`,
+    filterComplex:
+      `${buildLayoutFilter(composition)};${checkpointOverlay(composition)};${scenarioOverlay(composition)}`.replaceAll(
+        'drawtext=',
+        `drawtext=font='${escapeDrawtext(burnInFont())}':`,
+      ),
     videoLabel: '[proof]',
   };
 }
@@ -117,13 +122,13 @@ function buildLayoutFilter(composition: CompareComposition): string {
         `[aPane]pad=${String(FRAME_W)}:${String(FRAME_H)}:${String(PANE_A_X)}:` +
           `${String(PANE_Y)}:color=0x101319[withA]`,
         `[withA][bPane]overlay=x=${String(PANE_B_X)}:y=${String(PANE_Y)}:shortest=1[panes]`,
-        `[panes]drawtext=text='${labelA}':x=${String(PANE_A_X)}:y=84:` +
+        `[panes]drawtext=font='${escapeDrawtext(burnInFont())}':text='${labelA}':x=${String(PANE_A_X)}:y=84:` +
           `fontsize=18:fontcolor=white:box=1:boxcolor=0x5B6B8C@0.85[lA]`,
-        `[lA]drawtext=text='${labelB}':x=${String(PANE_B_X)}:y=84:` +
+        `[lA]drawtext=font='${escapeDrawtext(burnInFont())}':text='${labelB}':x=${String(PANE_B_X)}:y=84:` +
           `fontsize=18:fontcolor=white:box=1:boxcolor=0x1B7F4A@0.85[lB]`,
-        `[lB]drawtext=text='${bugId}':x=24:y=24:fontsize=20:fontcolor=white[id]`,
+        `[lB]drawtext=font='${escapeDrawtext(burnInFont())}':text='${bugId}':x=24:y=24:fontsize=20:fontcolor=white[id]`,
         `[id]null[step]`,
-        `[step]drawtext=text='${delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
+        `[step]drawtext=font='${escapeDrawtext(burnInFont())}':text='${delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
           `box=1:boxcolor=black@0.55[delta]`,
         `[delta]drawbox=x=24:y=h-12:w=iw-48:h=4:color=white@0.75:t=fill[v]`,
       ].join(';');
@@ -366,7 +371,7 @@ function checkpointOverlay(composition: CompareComposition): string {
       const enable = next
         ? `gte(t,${label.atMs / 1000})*lt(t,${next.atMs / 1000})`
         : `gte(t,${label.atMs / 1000})`;
-      return `${input}drawtext=text='${escapeDrawtext(label.text)}':x=24:y=h-96:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.55:enable='${enable}'${output}`;
+      return `${input}drawtext=font='${escapeDrawtext(burnInFont())}':text='${escapeDrawtext(label.text)}':x=24:y=h-96:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.55:enable='${enable}'${output}`;
     })
     .join(';');
 }
@@ -428,7 +433,7 @@ function scenarioOverlay(composition: CompareComposition): string {
         (label.endMs === undefined ? '' : `*lt(t,${label.endMs / 1000})`);
       const text =
         label.text.length > 66 ? label.text.slice(0, 63) + '...' : label.text;
-      return `${input}drawtext=text='${escapeDrawtext(text)}':x=${label.x}:y=${label.y}:fontsize=16:fontcolor=white:box=1:boxcolor=black@0.75:enable='${enable}'${output}`;
+      return `${input}drawtext=font='${escapeDrawtext(burnInFont())}':text='${escapeDrawtext(text)}':x=${label.x}:y=${label.y}:fontsize=16:fontcolor=white:box=1:boxcolor=black@0.75:enable='${enable}'${output}`;
     })
     .join(';');
 }
@@ -454,11 +459,11 @@ function chromeOverlay(
   },
 ): string {
   return [
-    `${input}drawtext=text='${labels.layout} · ${labels.labelA} / ${labels.labelB}':` +
+    `${input}drawtext=font='${escapeDrawtext(burnInFont())}':text='${labels.layout} · ${labels.labelA} / ${labels.labelB}':` +
       `x=24:y=84:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.9[c0]`,
-    `[c0]drawtext=text='${labels.bugId}':x=24:y=24:fontsize=20:fontcolor=white[c1]`,
+    `[c0]drawtext=font='${escapeDrawtext(burnInFont())}':text='${labels.bugId}':x=24:y=24:fontsize=20:fontcolor=white[c1]`,
     `[c1]null[c2]`,
-    `[c2]drawtext=text='${labels.delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
+    `[c2]drawtext=font='${escapeDrawtext(burnInFont())}':text='${labels.delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +
       `box=1:boxcolor=black@0.55[c3]`,
     `[c3]drawbox=x=24:y=h-12:w=iw-48:h=4:color=white@0.75:t=fill${output}`,
   ].join(';');
