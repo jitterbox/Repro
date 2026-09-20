@@ -75,7 +75,7 @@ rows. These counts are case counts, not claims of exhaustive Cartesian coverage.
 Run `node scripts/e2e/review-matrix-gates.mjs` to refresh the extra public gates.
 After a successful fixture run, execute `node scripts/e2e/legacy-review-index.mjs`.
 An optional fixture log argument also checks that its 27 tests passed. CI runs the
-pixel index immediately after the fixture suite. `LEG-01` and `LEG-02` cover all
+pixel index immediately after the fixture suite. `LEG-02` and `LEG-03` cover all
 seven comparison layouts; every legacy row links its decoded review frames.
 
 ## Output-quality regression checks
