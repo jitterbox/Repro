@@ -133,6 +133,7 @@ jobs:
           include-hidden-files: true
           path: |
             .repro/ci
+            .repro/annotation-benchmark
             .repro/review-matrix
             .repro/discovery
             .repro/delivery

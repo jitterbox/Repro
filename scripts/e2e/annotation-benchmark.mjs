@@ -125,12 +125,39 @@ for (const label of [
   await verifyInputs();
   const image = current.artifacts.find((a) => a.kind === 'presentation-image');
   assert.ok(image);
-  const { stdout: text } = await execute('tesseract', [
+  const planArtifact = current.artifacts.find((a) =>
+    a.kind.startsWith('presentation-key:'),
+  );
+  assert.ok(planArtifact);
+  const plan = JSON.parse(
+    await readFile(join(directory, planArtifact.path), 'utf8'),
+  );
+  const title = plan.annotations.find(
+    (annotation) => annotation.id === 'title',
+  );
+  assert.ok(title?.bounds);
+  const { x, y, width, height } = title.bounds;
+  const titlePixels = join(attempt, `${label}-title.png`);
+  // Inspect the rendered title region; whole-page segmentation can omit a slate.
+  await execute('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
     join(directory, image.path),
+    '-vf',
+    `crop=${Math.floor(width)}:${Math.floor(height)}:${Math.floor(x)}:${Math.floor(y)},scale=iw*2:ih*2`,
+    '-frames:v',
+    '1',
+    titlePixels,
+  ]);
+  const { stdout: text } = await execute('tesseract', [
+    titlePixels,
     'stdout',
     '--psm',
-    '11',
+    '7',
   ]);
+  await writeFile(join(attempt, `${label}-title.txt`), text);
   assert.ok(
     text.includes(label),
     `Actual checkpoint pixels must contain ${label}`,
