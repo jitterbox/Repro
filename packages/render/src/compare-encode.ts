@@ -94,11 +94,7 @@ function buildCompareFilterGraph(
   composition: CompareComposition,
 ): CompareFilterGraph {
   return {
-    filterComplex:
-      `${buildLayoutFilter(composition)};${checkpointOverlay(composition)};${scenarioOverlay(composition)}`.replaceAll(
-        'drawtext=',
-        `drawtext=font='${escapeDrawtext(burnInFont())}':`,
-      ),
+    filterComplex: `${buildLayoutFilter(composition)};${checkpointOverlay(composition)};${scenarioOverlay(composition)}`,
     videoLabel: '[proof]',
   };
 }
