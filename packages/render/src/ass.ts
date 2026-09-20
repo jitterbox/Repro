@@ -160,7 +160,13 @@ function plateEvents(
         range,
         'Kicker',
         `{\\pos(${String(x + 12)},${String(textY)})${fade}}` +
-          escapeAss(kicker.toUpperCase()),
+          escapeAss(
+            fitOverlayText(
+              kicker.toUpperCase(),
+              w - 24,
+              theme.type.calloutKicker.size,
+            ),
+          ),
       ),
     );
     textY += 14;
@@ -182,7 +188,9 @@ function plateEvents(
         range,
         'Meta',
         `{\\pos(${String(x + 12)},${String(textY + 18)})${fade}}` +
-          escapeAss(measurement),
+          escapeAss(
+            fitOverlayText(measurement, w - 24, theme.type.slateMeta.size),
+          ),
       ),
     );
   }

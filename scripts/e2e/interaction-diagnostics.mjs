@@ -52,6 +52,7 @@ for (const mode of ['passthrough', 'absent', 'scroll', 'frame']) {
     evidence.steps[1].title = 'Reload the cart';
     evidence.steps[2].title = 'Check whether Checkout is present';
     evidence.checkpoints[0].observations = ['screenshot', 'assertion'];
+    evidence.checkpoints[0].highlights = []; // Absent controls have no measured outline.
   }
   const path = join(output, `${mode}.json`);
   await writeFile(path, JSON.stringify(evidence, null, 2));
@@ -67,7 +68,7 @@ for (const mode of ['passthrough', 'absent', 'scroll', 'frame']) {
     '--out-dir',
     join(output, mode),
   );
-  assert.equal(captured.result.runs.length, 1, JSON.stringify(captured));
+  assert.equal(captured.result.runs?.length, 1, JSON.stringify(captured));
   const directory = captured.result.runs[0].directory;
   const run = JSON.parse(await readFile(join(directory, 'run.json'), 'utf8'));
   const bounds = run.observations.find(

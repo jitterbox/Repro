@@ -35,8 +35,11 @@ schemas so new features cannot disappear from the review requirements.
   **VO-02** records audible narration as unsupported: the CLI currently does not
   synthesize/mux it. The legacy silence mock is not speech verification.
 
-The existing fixture corpus remains useful, but its design-language ledger counts
-**planned annotations and output files**, not visible pixels. Its tests now say so.
+The legacy design-language ledger still counts **planned annotations and output
+files**. A separate blocking `legacy-review-index.mjs` pass now decodes every
+listed MP4, retains a decoded review frame and content hash, and checks actual
+Before/After role text for all seven encoded comparison layouts. These checks
+do not promote synthetic fixture geometry into measured bug proof.
 The existing public timing, high-DPI, privacy, synchronization, diagnostics, recipe,
 export and viewer suites remain required in CI. Their negative controls complement
 the new matrix; a plan-only test cannot satisfy a pixel or timing obligation.
@@ -70,5 +73,17 @@ caption case), plus the explicit unsupported speech row. The review page can
 also include five public regression gate reports and 19 original fixture output
 rows. These counts are case counts, not claims of exhaustive Cartesian coverage.
 Run `node scripts/e2e/review-matrix-gates.mjs` to refresh the extra public gates.
-To index a successful legacy fixture run, save its test log and pass that path to
-`node scripts/e2e/legacy-review-index.mjs <log>`.
+After a successful fixture run, execute `node scripts/e2e/legacy-review-index.mjs`.
+An optional fixture log argument also checks that its 27 tests passed. CI runs the
+pixel index immediately after the fixture suite. `LEG-01` and `LEG-02` cover all
+seven comparison layouts; every legacy row links its decoded review frames.
+
+## Output-quality regression checks
+
+Required checkpoint labels are measured with the same installed-font function in
+planning and rendering. Their complete wording is checked by OCR in the actual
+label region of both checkpoint PNGs and decoded video holds. Full-frame privacy
+OCR remains separate and mandatory. Kicker and measurement text fit their plates;
+long optional text uses Unicode-safe ellipsis. Hit-target captions report actual
+CSS dimensions, label missing bounds explicitly, and only flag dimensions below
+24×24 when measured values support that statement.

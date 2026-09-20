@@ -21,6 +21,29 @@ describe('ASS generation', () => {
     expect(moving).toContain('\\fad(');
     expect(generateAss({ plan, staticFrame: true })).not.toContain('\\fad(');
   });
+  it('fits dynamic kicker and measurement text inside their planned plate', () => {
+    const fixture = planFixture();
+    const a = fixture.annotations[0];
+    if (!a) throw new Error('Missing annotation fixture');
+    const script = generateAss({
+      plan: {
+        ...fixture,
+        annotations: [
+          {
+            ...a,
+            plate: {
+              label: 'Target',
+              kicker: 'K'.repeat(200),
+              measurement: 'W'.repeat(200),
+            },
+          },
+        ],
+      },
+    });
+    expect(script).not.toContain('K'.repeat(200));
+    expect(script).not.toContain('W'.repeat(200));
+    expect(script).toContain('…');
+  });
   it('uses DejaVu Sans and severity-aware plate/ring styles', () => {
     const script = generateAss({ plan: planFixture() });
 

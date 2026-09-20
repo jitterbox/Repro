@@ -1,3 +1,5 @@
+import { measureOverlayTextWidth } from '@repro/plan';
+import { overlayTheme } from '@repro/contracts';
 import { intersects } from '@repro/plan';
 import { expect, it } from 'vitest';
 import { validateEvidence } from '@repro/contracts';
@@ -131,6 +133,9 @@ it('seats selected callouts outside measured targets and ties every cue to the c
   const callout = result.annotations.find((a) => a.component === 'callout');
   if (!callout || !bounds.bounds) throw new Error('Missing measured callout');
   expect(callout.label).toBe('Intended Checkout control');
+  expect(callout.bounds.width - 24).toBeGreaterThanOrEqual(
+    measureOverlayTextWidth(callout.label, overlayTheme.type.calloutLabel.size),
+  );
   expect(callout.anchor).toMatchObject({
     evidenceRef: 'bounds',
     pageId: 'cart',
@@ -205,4 +210,21 @@ it('seats selected callouts outside measured targets and ties every cue to the c
       0,
     ).annotations.some((a) => a.component === 'target-ring'),
   ).toBe(false);
+});
+
+it('labels an unmet expectation as expected rather than reporting it as the observed failure', () => {
+  const result = compileEvidencePresentation(
+    spec,
+    {
+      steps: [],
+      durationMs: 1000,
+      observations: [],
+      scenarioOutcome: 'bug-reproduced',
+    },
+    { width: 1280, height: 720, deviceScaleFactor: 1 },
+    0,
+  );
+  expect(result.annotations.find((a) => a.id === 'outcome')?.label).toBe(
+    `Bug reproduced: Expected: ${spec.expected}`,
+  );
 });

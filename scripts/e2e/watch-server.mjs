@@ -35,6 +35,7 @@ try {
   );
   spec.targets = [];
   spec.checkpoints[0].targets = [];
+  spec.checkpoints[0].highlights = [];
   spec.checkpoints[0].observations = ['assertion', 'screenshot'];
   await writeFile(join(root, 'evidence.json'), JSON.stringify(spec));
   const scenario = `import {test,expect} from '@repro/playwright';test('isolated watch context',async({page,repro})=>{await repro.step('prepare',async()=>{await page.goto(process.env.REPRO_URL!);await expect(page.locator('#visits')).toHaveText('1');});await repro.step('trigger',async()=>{await page.getByRole('button').click();});await repro.step('verify',async()=>{await repro.outcome('result',()=>expect(page.getByRole('heading')).toHaveText('Checkout'));await repro.checkpoint('result');});});`;

@@ -120,6 +120,7 @@ jobs:
         run: |
           pnpm --filter @repro/compositor test
           pnpm test:e2e-fixture
+          node scripts/e2e/legacy-review-index.mjs
       - name: Clean project installation and public scenario
         run: pnpm test:clean-install
       - name: Agent mock evaluation (no model or API keys)

@@ -68,6 +68,8 @@ const jobs = [
   ],
   ['compositor', null, {}, ['--filter', '@repro/compositor', 'test']],
   ['shoplite', null, {}, ['test:e2e-fixture']],
+  ['legacy-pixels', 'legacy-review-index', {}],
+  ['matrix-verification', 'verify-review-matrix', {}],
   ['clean-install', null, {}, ['test:clean-install']],
   ['agent-mock', null, {}, ['--filter', '@repro/agent-e2e', 'test']],
 ];

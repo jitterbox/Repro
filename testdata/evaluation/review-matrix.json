@@ -121,7 +121,8 @@
       "TIME-01"
     ],
     "all-comparison-layouts": [
-      "LEGACY-01"
+      "LEG-01",
+      "LEG-02"
     ],
     "context-selection": [
       "SEL-01"

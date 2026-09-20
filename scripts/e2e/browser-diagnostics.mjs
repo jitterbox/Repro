@@ -85,6 +85,7 @@ for (const role of ['before', 'after']) {
   };
   spec.targets = [];
   spec.checkpoints[0].targets = [];
+  spec.checkpoints[0].highlights = [];
   spec.checkpoints[0].observations = ['screenshot', 'assertion'];
   spec.privacy.patterns = ['PRIVATE_QUERY_CANARY'];
   const evidence = join(output, role + '.json');

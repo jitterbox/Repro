@@ -41,6 +41,20 @@ const kinds = [
   'network',
   'text',
 ];
+const expectations = {
+  interaction: 'Run check completes',
+  geometry: 'Result stays aligned with the reference edge',
+  appearance: 'Result stays visible after the action',
+  transient: 'No red error flash appears',
+  console: 'Action completes without a console error',
+  performance: 'Action completes within 200 ms',
+  accessibility: 'Action has the accessible name Run check',
+  keyboard: 'Tab moves focus to Next control',
+  multipage: 'Invoice popup shows total 84.50',
+  privacy: 'Private field displays masked characters',
+  network: 'Valid response is accepted',
+  text: 'Long result stays inside its box with ellipsis',
+};
 const save = () =>
   writeFile(
     join(root, 'strategies.json'),
@@ -83,14 +97,14 @@ for (const [index, kind] of kinds.entries()) {
       const evidence = {
         schemaVersion: '1.0.0',
         id,
-        title: `ShopLite ${kind} reproduction`,
+        title: expectations[kind],
         variant: {
           id: role,
           role,
           label: role === 'before' ? 'Before' : 'After',
         },
         claim: `The natural ${kind} scenario fails its designated condition before the fix and meets it afterward`,
-        expected: `The ${kind} acceptance condition passes`,
+        expected: expectations[kind],
         targets: [
           { id: 'action', description: 'Natural trigger' },
           { id: 'affected', description: 'Affected application result' },

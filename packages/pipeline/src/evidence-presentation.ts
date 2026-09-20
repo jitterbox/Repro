@@ -4,6 +4,7 @@ import {
   mapTime,
   annotationsToVisualCues,
   placeAnnotations,
+  measureOverlayTextWidth,
 } from '@repro/plan';
 import type { AnnotationBox } from '@repro/plan';
 import { overlayTheme, visualCueSchema } from '@repro/contracts';
@@ -155,7 +156,7 @@ export function compileEvidencePresentation(
   annotations.push(
     annotation({
       id: 'outcome',
-      label: `${{ 'bug-reproduced': 'Bug reproduced', 'fix-verified': 'Fix verified', passed: 'Passed', failed: 'Failed', inconclusive: 'Inconclusive' }[run.scenarioOutcome]}: ${spec.expected}`,
+      label: `${{ 'bug-reproduced': 'Bug reproduced', 'fix-verified': 'Fix verified', passed: 'Passed', failed: 'Failed', inconclusive: 'Inconclusive' }[run.scenarioOutcome]}: ${run.scenarioOutcome === 'bug-reproduced' || run.scenarioOutcome === 'failed' ? 'Expected: ' : ''}${spec.expected}`,
       bounds: {
         x: 24,
         y: viewport.height - 166,
@@ -222,7 +223,15 @@ export function compileEvidencePresentation(
               y: 0,
               width: Math.min(
                 viewport.width - 48,
-                Math.max(180, highlight.label.length * 9 + 28),
+                Math.max(
+                  180,
+                  Math.ceil(
+                    measureOverlayTextWidth(
+                      highlight.label,
+                      overlayTheme.type.calloutLabel.size,
+                    ),
+                  ) + 24,
+                ),
               ),
               height: 42,
             },

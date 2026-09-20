@@ -455,7 +455,7 @@ function chromeOverlay(
 ): string {
   return [
     `${input}drawtext=text='${labels.layout} · ${labels.labelA} / ${labels.labelB}':` +
-      `x=24:y=84:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.55[c0]`,
+      `x=24:y=84:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.9[c0]`,
     `[c0]drawtext=text='${labels.bugId}':x=24:y=24:fontsize=20:fontcolor=white[c1]`,
     `[c1]null[c2]`,
     `[c2]drawtext=text='${labels.delta}':x=24:y=h-56:fontsize=16:fontcolor=white:` +

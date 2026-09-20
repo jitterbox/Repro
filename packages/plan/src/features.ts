@@ -2,7 +2,7 @@ import { overlayTheme } from '@repro/contracts';
 import { motionMaskEnvelopes } from '@repro/core';
 import type { MaskSample } from '@repro/core';
 
-import { measureTextWidth } from './text.js';
+import { measureTextWidth, measureOverlayTextWidth } from './text.js';
 
 import type {
   AnnotationBox,
@@ -455,16 +455,24 @@ function hitTargetAnnotations(event: EventRecord): readonly AnnotationBox[] {
 
   const label = eventLabel(event, 'Hit target');
   const actual = rectFromPayload(event);
-  const width = actual?.width ?? 8;
-  const height = actual?.height ?? 8;
+  const width = actual?.width;
+  const height = actual?.height;
   return [
     annotation(event, 'hitTargets', label, actual, 88, 'rect', {
       component: 'hit-target-guide',
       renderer: 'ass',
-      severity: 'critical',
+      severity:
+        width !== undefined &&
+        height !== undefined &&
+        (width < 24 || height < 24)
+          ? 'medium'
+          : 'info',
       lineStyle: 'dashed',
       kicker: 'HIT',
-      measurement: `${String(Math.round(width))}×${String(Math.round(height))} < 24×24`,
+      measurement:
+        width === undefined || height === undefined
+          ? 'Bounds unavailable'
+          : `${String(Math.round(width))}×${String(Math.round(height))} CSS px${width < 24 || height < 24 ? '; below 24×24' : ''}`,
     }),
   ];
 }
@@ -1051,7 +1059,19 @@ function annotation(
           ? 260
           : Math.max(
               120,
-              measureTextWidth({ fontSize, text: label.slice(0, 42) }) + 64,
+              Math.min(
+                456,
+                Math.max(
+                  measureOverlayTextWidth(
+                    Array.from(label).slice(0, 42).join(''),
+                    fontSize,
+                  ) + 24,
+                  measureOverlayTextWidth(
+                    options.measurement ?? '',
+                    overlayTheme.type.slateMeta.size,
+                  ) + 24,
+                ),
+              ),
             );
   const height =
     options.component === 'roi-magnifier'
@@ -1073,7 +1093,7 @@ function annotation(
       target === null
         ? overlayTheme.safeZones.inset
         : Math.max(0, target.y - height - 8),
-    width,
+    width: Math.ceil(width),
     height,
     ...options,
     plateLabel: options.plateLabel ?? label,

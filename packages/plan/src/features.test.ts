@@ -1,3 +1,4 @@
+import { measureOverlayTextWidth } from './text.js';
 import { describe, expect, it } from 'vitest';
 
 import { emitFeatureAnnotations } from './features.js';
@@ -147,3 +148,44 @@ function event(
     t_mono: 100,
   };
 }
+
+it('reports actual hit-target dimensions without inventing undersizing or missing geometry', () => {
+  for (const [payload, expected] of [
+    [{ x: 10, y: 10, width: 100, height: 40 }, '100×40 CSS px'],
+    [{ x: 10, y: 10, width: 8, height: 12 }, '8×12 CSS px; below 24×24'],
+    [{}, 'Bounds unavailable'],
+  ] as const) {
+    const result = emitFeatureAnnotations({
+      config,
+      frames: [],
+      viewport: config.viewport,
+      events: [event('hit', 'probe.elementsFromPoint', payload)],
+    });
+    expect(
+      result.annotations.find((a) => a.feature === 'hitTargets')?.plate
+        ?.measurement,
+    ).toBe(expected);
+  }
+});
+
+it('rounds plate widths outward so integer pixel rendering preserves complete short labels', () => {
+  const result = emitFeatureAnnotations({
+    config,
+    frames: [],
+    viewport: config.viewport,
+    events: [
+      event('a11y', 'probe.axe.violation', {
+        rule: 'ACCESSIBILITY',
+        x: 500,
+        y: 280,
+        width: 100,
+        height: 40,
+      }),
+    ],
+  });
+  const plate = result.annotations.find((a) => a.feature === 'a11yOverlay');
+  if (!plate) throw new Error('Missing accessibility plate');
+  expect(Math.round(plate.bounds.width) - 24).toBeGreaterThanOrEqual(
+    measureOverlayTextWidth('ACCESSIBILITY', 17),
+  );
+});

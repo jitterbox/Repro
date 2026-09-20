@@ -199,7 +199,7 @@ const stillPath = join(
 );
 // Layout OCR can merge a small callout with its nearby control. Verify its
 // complete text in the actual pixel ROI as well as auditing whole frames below.
-async function verifyCalloutText(imagePath, suffix) {
+async function verifyCalloutText(imagePath, suffix, step = false) {
   const plan = JSON.parse(
     await readFile(
       join(
@@ -211,12 +211,18 @@ async function verifyCalloutText(imagePath, suffix) {
       'utf8',
     ),
   );
-  const callout = plan.annotations.find((a) => a.component === 'callout');
+  const callout = plan.annotations.find((a) =>
+    step
+      ? a.label === '3. Verify the Checkout heading'
+      : a.component === 'callout',
+  );
   assert.ok(
     callout,
     'Required callout is missing from the shared presentation',
   );
   const { x, y, width, height } = callout.bounds;
+  const insetX = step ? 4 : 12;
+  const insetY = step ? 0 : 6;
   const crop = join(root, `callout-${suffix}.png`);
   await execute('ffmpeg', [
     '-v',
@@ -225,13 +231,16 @@ async function verifyCalloutText(imagePath, suffix) {
     '-i',
     imagePath,
     '-vf',
-    `crop=${Math.floor(width - 24)}:${Math.floor(height - 12)}:${Math.floor(x + 12)}:${Math.floor(y + 6)},scale=iw*2:ih*2`,
+    `crop=${Math.floor(width - insetX * 2)}:${Math.floor(height - insetY * 2)}:${Math.floor(x + insetX)}:${Math.floor(y + insetY)},scale=iw*2:ih*2`,
     '-frames:v',
     '1',
     crop,
   ]);
   const { stdout } = await execute('tesseract', [crop, 'stdout', '--psm', '7']);
-  assert.match(stdout, /Intended Checkout control/);
+  assert.match(
+    stdout,
+    step ? /3\. Verify the Checkout heading/ : /Intended Checkout control/,
+  );
 }
 const still = PNG.sync.read(await readFile(stillPath));
 const context = PNG.sync.read(await readFile(frame.context));
@@ -270,7 +279,7 @@ await assert.rejects(
   }),
   /OCR audit found text/,
 );
-assert.match(visibleText, /3\. Verify the Checkout heading/);
+await verifyCalloutText(stillPath, 'step-still', true);
 console.log(
   'Inspecting the exact checkpoint reading hold in decoded video pixels',
 );
@@ -320,7 +329,7 @@ const { stdout: holdText } = await execute('tesseract', [
 assert.match(holdText, /Checkout proof revised/);
 assert.match(holdText, /Fix verified/);
 await verifyCalloutText(heldFrame, 'hold');
-assert.match(holdText, /3\. Verify the Checkout heading/);
+await verifyCalloutText(heldFrame, 'step-hold', true);
 const editedRepeat = await repro(
   'render',
   after.directory,
@@ -390,20 +399,25 @@ for (const captured of [before, after]) {
       a.path.endsWith(`diagnostic-${sample.id}.png`),
   );
   assert.ok(image, 'Measured diagnostic image was not rendered');
-  const recognized = [];
-  for (const psm of ['3', '11'])
-    recognized.push(
-      (
-        await execute('tesseract', [
-          join(captured.directory, image.path),
-          'stdout',
-          '--psm',
-          psm,
-        ])
-      ).stdout,
-    );
-  assert.ok(
-    recognized.join(' ').includes('Sampled recipient'),
+  const labelCrop = join(root, `diagnostic-label-${run.variant.role}.png`);
+  await execute('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
+    join(captured.directory, image.path),
+    '-vf',
+    'crop=1232:32:24:568,scale=iw*2:ih*2',
+    '-frames:v',
+    '1',
+    labelCrop,
+  ]);
+  const recognized = (
+    await execute('tesseract', [labelCrop, 'stdout', '--psm', '7'])
+  ).stdout;
+  assert.match(
+    recognized,
+    /Sampled recipient/,
     'Diagnostic outline label missing from actual pixels',
   );
   diagnosticReviews.push(

@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import { overlayTheme } from '@repro/contracts';
 import { readFileSync } from 'node:fs';
 import opentype from 'opentype.js';
 
@@ -52,4 +54,34 @@ function getFont(fontPath: string | undefined): opentype.Font | null {
 
 function fallbackWidth(text: string, fontSize: number): number {
   return text.length * fontSize * averageGlyphWidth;
+}
+
+let overlayFontPath: string | undefined;
+let overlayFontResolved = false;
+/** Shared conservative width for planning and libass text fitting. */
+export function measureOverlayTextWidth(
+  text: string,
+  fontSize: number,
+): number {
+  if (!overlayFontResolved) {
+    overlayFontResolved = true;
+    try {
+      overlayFontPath =
+        execFileSync(
+          'fc-match',
+          ['-f', '%{file}', `${overlayTheme.burnInFont.family}:style=Bold`],
+          { encoding: 'utf8' },
+        ).trim() || undefined;
+    } catch {
+      /* Keep a conservative width without fontconfig. */
+    }
+  }
+  const normalized = text.replace(/\s+/gu, ' ').trim();
+  return overlayFontPath
+    ? measureTextWidth({
+        text: normalized,
+        fontSize,
+        fontPath: overlayFontPath,
+      }) * 1.08
+    : Array.from(normalized).length * fontSize * 1.2;
 }

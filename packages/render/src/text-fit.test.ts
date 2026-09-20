@@ -10,3 +10,16 @@ it('preserves short text and truncates wide, multiline and Unicode text without 
   expect(value).toMatch(/…$/u);
   expect(Array.from(value).every((c) => c === '😀' || c === '…')).toBe(true);
 });
+
+it('preserves required callout wording in the planned plate', async () => {
+  const { measureOverlayTextWidth } = await import('@repro/plan');
+  const label = 'Intended Checkout control';
+  expect(
+    fitOverlayText(
+      label,
+      Math.ceil(measureOverlayTextWidth(label, 17)),
+      17,
+      64,
+    ),
+  ).toBe(label);
+});
