@@ -39,6 +39,7 @@ jobs:
         if: always()
         with:
           name: windows-acceptance
+          include-hidden-files: true
           path: |
             .repro/portable-install.json
             .repro/portable-artifacts/
