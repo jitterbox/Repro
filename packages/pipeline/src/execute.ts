@@ -97,7 +97,11 @@ export async function runScenario(options: RunOptions) {
     status: 'inconclusive';
     detail: string;
   }[] = [];
-  for (const entry of (await readdir(out)).sort()) {
+  const attempts = (await readdir(out, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  for (const entry of attempts) {
     try {
       const run = await readRun(join(out, entry));
       runs.push({ directory: join(out, entry), run });

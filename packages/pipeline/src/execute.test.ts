@@ -53,6 +53,10 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
       if (!output) throw new Error('No output directory');
       expect(output).toMatch(/DASH2R-949-[^/\\]+$/);
       await mkdir(join(output, name));
+      await writeFile(
+        join(output, '.repro-lock-example.sqlite'),
+        'internal lock',
+      );
       if (name === 'complete')
         await writeFile(
           join(output, name, 'run.json'),
