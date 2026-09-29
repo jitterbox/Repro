@@ -326,7 +326,10 @@ function label(index: number): string {
 }
 
 function quote(value: string): string {
-  return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
+  // FFmpeg parses the graph first, then the filter's colon-separated options.
+  // Preserve option escapes through graph quoting, including drive letters.
+  const option = value.replace(/[\\':]/g, (char) => `\\${char}`);
+  return `'${option.replaceAll("'", "'\\''")}'`;
 }
 
 function requireValue<T>(value: T | null | undefined): T {

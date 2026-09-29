@@ -1,3 +1,7 @@
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { runProcess } from '@repro/core';
 import { describe, expect, it } from 'vitest';
 
 import { buildFilterGraph } from './filtergraph.js';
@@ -5,6 +9,59 @@ import { buildFilterGraph } from './filtergraph.js';
 import type { ReproPlan, Timeline } from '@repro/plan';
 
 describe('filtergraph builder', () => {
+  it('opens subtitle paths with spaces, quotes and filter delimiters', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'repro-filter-'));
+    // The absolute path includes a drive colon and backslashes on Windows.
+    // A colon is also a legal filename character on Linux.
+    const filename =
+      process.platform === 'win32'
+        ? "team's [review],draft;.ass"
+        : "C:\\team's [review],draft;.ass";
+    const assPath = join(directory, filename);
+    try {
+      await writeFile(
+        assPath,
+        `[Script Info]
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,Path verified
+`,
+      );
+      const plan = planFixture();
+      const graph = buildFilterGraph({
+        assPath,
+        plan,
+        timeline: { ...plan.timeline, beats: [] },
+      });
+      await runProcess('ffmpeg', [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=black:s=1280x720:d=0.1',
+        '-filter_complex',
+        graph.filterComplex,
+        '-map',
+        graph.videoLabel,
+        '-frames:v',
+        '1',
+        '-f',
+        'null',
+        '-',
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 20000);
+
   it('applies time surgery before ASS burn-in', () => {
     const graph = buildFilterGraph({
       assPath: '/tmp/overlay.ass',
