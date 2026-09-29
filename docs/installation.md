@@ -1,6 +1,6 @@
 # Install Repro
 
-Repro 0.2.0 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
+Repro 0.2.1 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
 
 ## Install the skills first
 
@@ -20,7 +20,7 @@ npx skills@latest add jitterbox/Repro --skill repro-setup repro-capture repro-an
 
 Add `--global` for user-wide skills. `--copy` avoids requiring Windows symlink privileges. Other supported harnesses can be selected interactively. A local checkout or unpacked CLI package works too: `npx skills@latest add ./skills --copy`. See the [installer's official reference](https://github.com/vercel-labs/skills#readme) for discovery, update and removal. This uses the same open installer approach as [Matt Pocock's skills](https://github.com/mattpocock/skills#readme).
 
-**Release status:** the 0.2.0 package/release machinery is prepared in this repository. Publication is a separate maintainer action. Until the package exists in npm and these files are pushed to GitHub, use the source or tarball route below; remote skill installation reads the pushed repository.
+**Release status:** the 0.2.1 package/release machinery is prepared in this repository. Publication is a separate maintainer action. Until the package exists in npm and these files are pushed to GitHub, use the source or tarball route below; remote skill installation reads the pushed repository.
 
 ## npm installation after publication
 
@@ -30,7 +30,7 @@ These commands work in PowerShell and Linux shells:
 mkdir repro-evidence
 cd repro-evidence
 npm init -y
-npm install --save-dev @repro/cli@0.2.0 @repro/playwright@0.2.0 @repro/mcp@0.2.0
+npm install --save-dev @repro/cli@0.2.1 @repro/playwright@0.2.1 @repro/mcp@0.2.1
 npx repro setup --system
 npx repro doctor
 npx repro init
@@ -56,8 +56,8 @@ For skills from this checkout, run `npx skills@latest add ./skills --copy`. Invo
 
 ```sh
 pnpm release:prepare
-pnpm release:pack .repro/release-0.2.0
-cd .repro/release-0.2.0
+pnpm release:pack .repro/release-0.2.1
+cd .repro/release-0.2.1
 pnpm install
 pnpm exec repro setup
 pnpm exec repro init

@@ -14,7 +14,7 @@ export * from './geometry-diff.js';
 export * from './layouts.js';
 export * from './sync.js';
 
-export const REPRO_COMPARE_VERSION = '0.2.0' as const;
+export const REPRO_COMPARE_VERSION = '0.2.1' as const;
 
 export interface EnvironmentViewport {
   readonly width: number;

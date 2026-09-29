@@ -21,11 +21,11 @@ test('Open report settings', async ({ page, repro }) => {
 });
 ```
 
-Declare `open`/`verify` steps, the `settings` target and `result` checkpoint in `evidence.json`. This example is a scenario fragment, not a complete claim/config. Use `repro init` and [the evidence schema](reference/schemas/evidence-schema.json) for the required structure. Real examples are in [Web-Dash](https://github.com/jitterbox/Repro/blob/main/packages/playwright/examples/web-dash/README.md) and [the fixture scenarios](https://github.com/jitterbox/Repro/blob/main/packages/playwright/examples/).
+Declare `open`/`verify` steps, the `settings` target and `result` checkpoint in `evidence.json`. This example is a scenario fragment, not a complete claim/config. Use `repro init` and [the evidence schema](reference/schemas/evidence-schema.json) for the required structure. Real examples are in [Web-Dash](https://github.com/jitterbox/Repro/blob/master/packages/playwright/examples/web-dash/README.md) and [the fixture scenarios](https://github.com/jitterbox/Repro/blob/master/packages/playwright/examples/).
 
 ## API reference
 
-The shipped TypeScript declarations provide exact argument and return types; the [implementation's exported class](https://github.com/jitterbox/Repro/blob/main/packages/playwright/src/index.ts) is the complete method reference. Supported methods include:
+The shipped TypeScript declarations provide exact argument and return types; the [implementation's exported class](https://github.com/jitterbox/Repro/blob/master/packages/playwright/src/index.ts) is the complete method reference. Supported methods include:
 
 | Method | Purpose and important constraint |
 | --- | --- |

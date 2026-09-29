@@ -47,7 +47,7 @@ const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });
 export function createReproMcpServer() {
-  const server = new McpServer({ name: 'repro', version: '0.2.0' });
+  const server = new McpServer({ name: 'repro', version: '0.2.1' });
   server.registerTool(
     'defaults',
     {

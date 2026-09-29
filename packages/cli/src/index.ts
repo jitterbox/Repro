@@ -46,7 +46,7 @@ export * from './commands/quality.js';
 export * from './commands/render-compare.js';
 export * from './commands/validate-config.js';
 
-export const REPRO_CLI_VERSION = '0.2.0' as const;
+export const REPRO_CLI_VERSION = '0.2.1' as const;
 
 type Writer = (text: string) => void;
 

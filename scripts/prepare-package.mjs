@@ -11,7 +11,7 @@ export async function preparePackages() {
     await cp(join(root, 'LICENSE'), join(path, 'LICENSE'));
     await writeFile(
       join(path, 'README.md'),
-      `# ${pkg.name}\n\n${pkg.description}\n\nVersion ${pkg.version}. Node.js 22+. Windows x64 / Linux x64.\n\nSee the [Repro README](https://github.com/jitterbox/Repro#readme), [installation](https://github.com/jitterbox/Repro/blob/main/docs/installation.md), and [complete reference](https://github.com/jitterbox/Repro/blob/main/docs/README.md).\n\nRepro uses your existing AI harness; no AI API key is required to capture, render or replay committed scenarios.\n\nLicense: Apache-2.0. Third-party dependencies retain their own licenses.\n`,
+      `# ${pkg.name}\n\n${pkg.description}\n\nVersion ${pkg.version}. Node.js 22+. Windows x64 / Linux x64.\n\nSee the [Repro README](https://github.com/jitterbox/Repro#readme), [installation](https://github.com/jitterbox/Repro/blob/master/docs/installation.md), and [complete reference](https://github.com/jitterbox/Repro/blob/master/docs/README.md).\n\nRepro uses your existing AI harness; no AI API key is required to capture, render or replay committed scenarios.\n\nLicense: Apache-2.0. Third-party dependencies retain their own licenses.\n`,
     );
   }
   await cp(join(root, 'skills'), join(root, 'packages/cli/skills'), {

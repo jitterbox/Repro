@@ -24,7 +24,7 @@
 ## Maintain and ship
 
 - [Release guide](releasing.md): versioning, reproducible package contents, npm scope/authentication, CI and publication.
-- [Changelog](https://github.com/jitterbox/Repro/blob/main/CHANGELOG.md).
-- [Repository contributor instructions](https://github.com/jitterbox/Repro/blob/main/AGENTS.md).
+- [Changelog](https://github.com/jitterbox/Repro/blob/master/CHANGELOG.md).
+- [Repository contributor instructions](https://github.com/jitterbox/Repro/blob/master/AGENTS.md).
 
 Run `pnpm docs:generate` after changing CLI/MCP/schema interfaces, then commit the generated reference updates. `pnpm docs:check` detects drift. Installed CLI tarballs include these guides and skills for local discovery.

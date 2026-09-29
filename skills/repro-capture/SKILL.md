@@ -36,7 +36,7 @@ repro capture --config repro.config.json --url "https://qa.example.com" --out-di
 | Visual compare / demo    | `controlled` | Required for mode `compare`                    |
 | PII / auth               | either       | Always enable `redaction` (+ `strict` to file) |
 
-See [`docs/ai-usage.md`](https://github.com/jitterbox/Repro/blob/main/docs/ai-usage.md) for the full matrix and example
+See [`docs/ai-usage.md`](https://github.com/jitterbox/Repro/blob/master/docs/ai-usage.md) for the full matrix and example
 `repro.config.json` files.
 
 ## Discipline
@@ -87,11 +87,11 @@ committed example lives in `packages/playwright/examples/discovery-assessment.js
 
 ## Scene presentation acceptance
 
-For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/main/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. This opt-in slice keeps the legacy renderer as default and does not yet provide the full diagnostics or automatic repair system.
+For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/master/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. This opt-in slice keeps the legacy renderer as default and does not yet provide the full diagnostics or automatic repair system.
 
 ## Installation and visual preferences
 
-If `repro` is unavailable, follow [installation](https://github.com/jitterbox/Repro/blob/main/docs/installation.md). Skills are workflow instructions; the local CLI performs capture and rendering. No Repro AI API key is required. Run `repro defaults --json` to discover visual/timing/encoding preferences; put overrides in the treatment file, validate with `repro validate-treatment`, and re-render without recapturing. Use `repro <command> --help` for installed-version options.
+If `repro` is unavailable, follow [installation](https://github.com/jitterbox/Repro/blob/master/docs/installation.md). Skills are workflow instructions; the local CLI performs capture and rendering. No Repro AI API key is required. Run `repro defaults --json` to discover visual/timing/encoding preferences; put overrides in the treatment file, validate with `repro validate-treatment`, and re-render without recapturing. Use `repro <command> --help` for installed-version options.
 
 ## Work-item naming and diagnostic export
 
@@ -99,4 +99,4 @@ Store each issue's ID/description in `evidence.workItem` or supply `--work-item`
 
 Diagnostics export remains on by default; honor `export.devtools: false` or `--no-devtools`. This does not disable local capture. Inspect coverage; raw traces, HAR, DOM serialization and credentials stay local.
 
-Known target-app version/build metadata appears in a persistent textbox by default. Supply per-run `--app-version` / `--build-id` or use the site's declared metadata; configure `versionOverlay` selectors/paths when necessary. Do not infer the app version from Repro's package, Node, or the evidence repository. Honor `--no-version-overlay`; render overrides need no recapture. For selectors, precedence, privacy and limitations, read [configuration](https://github.com/jitterbox/Repro/blob/main/docs/configuration.md).
+Known target-app version/build metadata appears in a persistent textbox by default. Supply per-run `--app-version` / `--build-id` or use the site's declared metadata; configure `versionOverlay` selectors/paths when necessary. Do not infer the app version from Repro's package, Node, or the evidence repository. Honor `--no-version-overlay`; render overrides need no recapture. For selectors, precedence, privacy and limitations, read [configuration](https://github.com/jitterbox/Repro/blob/master/docs/configuration.md).

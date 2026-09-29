@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Separate reusable artifact naming policy from each scenario's work-item ID and description; preserve matching video and DevTools filenames.
+- Show supplied or discovered target application version/build metadata throughout a video by default, with configurable discovery and CLI overrides.
+- Export synchronized, sanitized browser diagnostics by default, with an explicit opt-out.
+- Resolve Windows browser paths, FFmpeg subtitle paths, SQLite lock limits, and stalled font inventory; validate packed installation, capture, rendering, strict OCR export, and review on GitHub-hosted Windows.
+- Update CLI, MCP, schemas, skills, installation, and configuration documentation.
+
 ## 0.2.0
 
 - Add an opt-in deterministic Hyperframes scene pipeline with source-frame mappings, synchronized diagnostics, measured treatments and reviewed standalone/paired demos.
