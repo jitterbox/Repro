@@ -207,13 +207,13 @@ const exported = await invoke(
 );
 assert.equal(exported.code, 0, JSON.stringify(exported));
 for (const asset of exported.result.manifest.assets) {
-  assert.ok(['mp4', 'png', 'vtt', 'json'].includes(asset.kind));
+  assert.ok(['mp4', 'png', 'vtt', 'json', 'devtools'].includes(asset.kind));
   assert.ok(
     !asset.path.includes('capture.mp4') &&
       !asset.path.includes('events.jsonl') &&
       !asset.path.includes('trace.zip'),
   );
-  if (['vtt', 'json'].includes(asset.kind)) {
+  if (['vtt', 'json', 'devtools'].includes(asset.kind)) {
     assert.ok(
       !(await readFile(join(output, 'bundle', asset.path), 'utf8')).includes(
         'moving.canary@example.test',
