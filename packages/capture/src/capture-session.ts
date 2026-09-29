@@ -194,6 +194,21 @@ export class CaptureSession {
     return this.#storePath;
   }
 
+  /** Opt-in startup breadcrumbs contain phase names/timing only, never page data. */
+  async #initialize<T>(phase: string, work: () => Promise<T>): Promise<T> {
+    const started = performance.now();
+    const trace = process.env.REPRO_CAPTURE_DEBUG === '1';
+    if (trace) process.stderr.write(`[repro:init] ${phase} start\n`);
+    try {
+      return await work();
+    } finally {
+      if (trace)
+        process.stderr.write(
+          `[repro:init] ${phase} end ${Math.round(performance.now() - started)}ms\n`,
+        );
+    }
+  }
+
   async start(): Promise<void> {
     try {
       await this.#prepareArtifactDirectories();
@@ -203,19 +218,27 @@ export class CaptureSession {
         status: 'running',
       });
 
-      this.#resources = await this.#createResources();
-      await this.#installContextHooks();
-      await this.#installHarStub();
-      await this.#startTracing();
+      this.#resources = await this.#initialize('browser-resources', () =>
+        this.#createResources(),
+      );
+      await this.#initialize('context-hooks', () =>
+        this.#installContextHooks(),
+      );
+      await this.#initialize('har', () => this.#installHarStub());
+      await this.#initialize('trace', () => this.#startTracing());
       this.#startTracker();
-      await this.#tracker?.ready();
+      await this.#initialize('page-registration', async () =>
+        this.#tracker?.ready(),
+      );
 
       if (this.#options.url !== undefined) {
         await this.page.goto(this.#options.url);
       }
 
-      await this.#calibrateClock(this.page);
-      await this.#writeEnvironmentManifest('start');
+      await this.#initialize('clock', () => this.#calibrateClock(this.page));
+      await this.#initialize('environment', () =>
+        this.#writeEnvironmentManifest('start'),
+      );
     } catch (error) {
       try {
         await this.fail(error);
@@ -557,10 +580,12 @@ export class CaptureSession {
 
   async #startPageCapture(registration: PageRegistration): Promise<void> {
     this.#telemetry.push(
-      await startSceneDiagnostics(
-        registration.page,
-        registration.pageId,
-        this.#sink,
+      await this.#initialize('diagnostics', () =>
+        startSceneDiagnostics(
+          registration.page,
+          registration.pageId,
+          this.#sink,
+        ),
       ),
     );
     this.#telemetry.push(
@@ -570,9 +595,11 @@ export class CaptureSession {
         this.#sink,
       ),
     );
-    await applyProfileToPage(
-      registration.page,
-      profileOptions(this.#options, this.#config),
+    await this.#initialize('page-profile', () =>
+      applyProfileToPage(
+        registration.page,
+        profileOptions(this.#options, this.#config),
+      ),
     );
     await registration.page.setViewportSize({
       height: this.#config.viewport.height,
@@ -585,7 +612,7 @@ export class CaptureSession {
     await this.#calibrateClock(registration.page);
     const screencast = await this.#screencastFor(registration);
     this.#screencasts.push(screencast);
-    await screencast.ready();
+    await this.#initialize('initial-frame', () => screencast.ready());
     await this.#showActions(registration.page);
   }
 
