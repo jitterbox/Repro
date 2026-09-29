@@ -50,7 +50,7 @@ repro annotate \
 | Demo / walkthrough     | mode `demo`; `voiceover`, `steps`, `cursor`, `specCard`            |
 
 Full matrix, conflict rules, and example configs:
-[`docs/ai-usage.md`](../../docs/ai-usage.md).
+[`docs/ai-usage.md`](https://github.com/jitterbox/Repro/blob/main/docs/ai-usage.md).
 
 ## Discipline
 
@@ -64,7 +64,7 @@ environment, or ALM integrations.
 
 1. **Claim:** State what the evidence must prove. Give the scenario a descriptive title; use separate Before/After variant labels. Only label results “Bug reproduced” or “Fix verified” when designated outcome checks support them.
 2. **Recipe:** Run `repro capabilities --json`, `repro describe <capability> --json`, `repro recipes --json`, and `repro doctor`. Choose a recipe and commit its evidence specification alongside the executable Playwright test. Bind locators in code; reference target IDs in the evidence file.
-3. **Capture:** Use `test` from `@repro/playwright`, `repro.target`, `repro.step`, `repro.outcome`, and `repro.checkpoint`. Run `repro validate-evidence evidence.json` and `repro validate-config --config repro.config.json`, then `repro run scenario.spec.ts --evidence evidence.json --url "$URL"`. Repeated attempts must all be reported.
+3. **Capture:** Use `test` from `@repro/playwright`, `repro.target`, `repro.step`, `repro.outcome`, and `repro.checkpoint`. Run `repro validate-evidence evidence.json` and `repro validate-config --config repro.config.json`, then `repro run scenario.spec.ts --evidence evidence.json --url "https://qa.example.com"`. Repeated attempts must all be reported.
 4. **Inspect:** Use `repro frame <run> --checkpoint <id>` and `repro review <run>`. Inspect the actual image; check the title, variant, trigger, numbered steps, expected/observed result, framing, timestamps, uncertainty and crop transform. Keep a context image. Default crop padding is 24 CSS pixels. For positional comparisons, retain common bounds and scale.
 5. **Verify:** Rerun the same committed claim after the fix with an explicit baseline. Preserve unrelated test failures as errors. Never silently heal assertions. Capture transient behavior before its trigger; do not wait for stability when instability is the subject.
 6. **Export:** Only export inspected presentation media after required evidence and actual frame OCR pass. Missing OCR blocks strict export. Never include raw captures, traces, HAR or credentials in a shareable package.
@@ -96,3 +96,11 @@ contradicts it. The draft itself is not reproduction evidence.
 Use `repro://discovery-guide`, `repro://bug-brief-schema`, and
 `repro://discovery-assessment-schema` through MCP for on-demand guidance. The
 committed example lives in `packages/playwright/examples/discovery-assessment.json`.
+
+## Scene presentation acceptance
+
+For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/main/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. This opt-in slice keeps the legacy renderer as default and does not yet provide the full diagnostics or automatic repair system.
+
+## Installation and visual preferences
+
+If `repro` is unavailable, follow [installation](https://github.com/jitterbox/Repro/blob/main/docs/installation.md). Skills are workflow instructions; the local CLI performs capture and rendering. No Repro AI API key is required. Run `repro defaults --json` to discover visual/timing/encoding preferences; put overrides in the treatment file, validate with `repro validate-treatment`, and re-render without recapturing. Use `repro <command> --help` for installed-version options.

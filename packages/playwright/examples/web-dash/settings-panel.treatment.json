@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "actionAudio": false,
+  "cursorGlow": true,
+  "steps": [
+    {
+      "step": "menu",
+      "sequence": "workflow",
+      "text": "Open the application navigation."
+    },
+    {
+      "step": "destination",
+      "sequence": "workflow"
+    },
+    {
+      "step": "inspect",
+      "sequence": "workflow",
+      "text": "Open Settings."
+    }
+  ],
+  "treatments": [
+    {
+      "id": "observed-detail",
+      "kind": "callout",
+      "checkpoint": "result",
+      "target": "detail",
+      "title": "Theme controls",
+      "detail": "The Settings sheet is open. Its Light and Dark options are visible; no preference is changed.",
+      "severity": "normal",
+      "rationale": "Describe only the observed live workflow, without claiming a defect or fix."
+    },
+    {
+      "id": "observed-state",
+      "kind": "data-panel",
+      "eventKind": "scenario.state",
+      "eventMatch": {
+        "name": "page"
+      },
+      "valuePath": "value",
+      "format": "object",
+      "title": "Observed page state",
+      "rationale": "Read explicit DOM state without application mutation; values follow the recorded source clock."
+    }
+  ]
+}

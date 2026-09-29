@@ -1,3 +1,4 @@
+import { packageManagerInvocation } from '../package-manager.mjs';
 import { createHash } from 'node:crypto';
 import { packRelease } from '../release.mjs';
 /** Install packed release artifacts in an unrelated project; never resolve workspace sources. */
@@ -25,11 +26,14 @@ assert.ok(
   ),
 );
 console.log(`Installing packed packages in ${project}`);
-await exec(
-  'pnpm',
-  ['install', ...(process.env.REPRO_OFFLINE ? ['--offline'] : [])],
-  { cwd: project, maxBuffer: 8 * 1024 * 1024 },
-);
+const install = packageManagerInvocation('pnpm', [
+  'install',
+  ...(process.env.REPRO_OFFLINE ? ['--offline'] : []),
+]);
+await exec(install.command, install.args, {
+  cwd: project,
+  maxBuffer: 8 * 1024 * 1024,
+});
 const cli = join(project, 'node_modules/@repro/cli/dist/bin.js');
 // A nested evidence project must not inherit its host app's compiler setup.
 await writeFile(
@@ -115,3 +119,153 @@ const external = await exec(
 );
 assert.equal(JSON.parse(external.stdout).ok, true);
 console.log(`Clean installation passed: ${project}`);
+
+// Exercise the packaged scene compositor with non-default typography/layout/encoding.
+async function consumerCli(...args) {
+  const { stdout } = await exec(process.execPath, [cli, ...args], {
+    cwd: project,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  return JSON.parse(stdout);
+}
+const run = JSON.parse(captured.stdout).runs[0].directory;
+const defaultsFile = join(project, 'treatment.json');
+await consumerCli('defaults', '--out', defaultsFile);
+const treatment = JSON.parse(await readFile(defaultsFile, 'utf8'));
+treatment.style = {
+  ...treatment.style,
+  bodyFontSize: 20,
+  headingFontSize: 24,
+  cardWidth: 400,
+  cardPadding: 16,
+  outerInset: 32,
+  gutterGap: 32,
+  background: '#182536',
+  criticalAccent: '#f5a56b',
+};
+treatment.encoding = { crf: 22, preset: 'fast' };
+treatment.treatments = [
+  {
+    id: 'detail',
+    kind: 'callout',
+    checkpoint: 'result',
+    target: 'target',
+    severity: 'critical',
+    title: 'Pointer recipient',
+    detail: 'The measured checkpoint preserves the browser result.',
+    rationale: 'Explain the actual interaction',
+    expected: 'The intended control receives the click.',
+  },
+  {
+    id: 'zoom',
+    kind: 'magnifier',
+    checkpoint: 'result',
+    target: 'target',
+    title: 'Measured control',
+    rationale: 'Inspect the actual captured pixels',
+    magnification: 2,
+  },
+];
+await writeFile(defaultsFile, JSON.stringify(treatment));
+await consumerCli('validate-treatment', defaultsFile);
+const rendered = await consumerCli(
+  'render',
+  run,
+  '--renderer',
+  'hyperframes',
+  '--treatment',
+  defaultsFile,
+);
+assert.equal(rendered.receipt.encoding.crf, 22);
+assert.equal(rendered.receipt.encoding.preset, 'fast');
+assert.equal(rendered.receipt.randomSeekPassed, true);
+assert.equal(rendered.receipt.layoutFramesChecked, rendered.receipt.frameCount);
+const scene = JSON.parse(
+  await readFile(join(rendered.directory, 'scene.json'), 'utf8'),
+);
+assert.equal(scene.output.width, scene.viewport.width + 400 + 64 + 32);
+assert.equal(scene.style.bodyFontSize, 20);
+assert.equal(scene.encoding.crf, 22);
+const layout = JSON.parse(
+  await readFile(join(rendered.directory, 'layout.json'), 'utf8'),
+);
+assert.ok(layout.every((card) => card.width === 400));
+const bundle = await consumerCli(
+  'export',
+  run,
+  '--draft',
+  '--out-dir',
+  join(project, 'share'),
+);
+assert.ok(bundle.manifest.assets.some((asset) => asset.kind === 'mp4'));
+await consumerCli('frame', run, '--checkpoint', 'result');
+const { spawn } = await import('node:child_process');
+const reviewer = spawn(
+  process.execPath,
+  [cli, 'review', run, '--presentation'],
+  { cwd: project, stdio: ['ignore', 'pipe', 'pipe'] },
+);
+try {
+  const address = await new Promise((resolve, reject) => {
+    let output = '';
+    const timeout = setTimeout(
+      () => reject(new Error('Review server timeout')),
+      20000,
+    );
+    reviewer.once('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
+    reviewer.stdout.on('data', (chunk) => {
+      output += chunk;
+      try {
+        const parsed = JSON.parse(output);
+        clearTimeout(timeout);
+        resolve(parsed.url);
+      } catch {
+        /* Wait for complete JSON. */
+      }
+    });
+    reviewer.once('exit', (code) => {
+      clearTimeout(timeout);
+      reject(new Error(`Review exited ${code}`));
+    });
+  });
+  assert.match(
+    await (await fetch(address)).text(),
+    /Synchronized evidence review/,
+  );
+} finally {
+  reviewer.kill();
+}
+const { mkdir, copyFile } = await import('node:fs/promises');
+await mkdir('.repro', { recursive: true });
+await writeFile(
+  '.repro/portable-install.json',
+  JSON.stringify(
+    {
+      platform: process.platform,
+      project,
+      version: '0.2.0',
+      capture: true,
+      scene: true,
+      strictExport: true,
+      review: true,
+      receipt: rendered.receipt,
+    },
+    null,
+    2,
+  ),
+);
+console.log(`Packed scene/strict export/review passed: ${project}`);
+
+await mkdir('.repro/portable-artifacts', { recursive: true });
+await copyFile(rendered.outputPath, '.repro/portable-artifacts/proof.mp4');
+await copyFile(
+  join(rendered.directory, 'result.png'),
+  '.repro/portable-artifacts/checkpoint.png',
+);
+await copyFile(
+  join(rendered.directory, 'render-receipt.json'),
+  '.repro/portable-artifacts/render-receipt.json',
+);

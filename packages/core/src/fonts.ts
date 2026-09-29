@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { join, basename } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
@@ -11,6 +12,21 @@ export interface FontManifestEntry {
 
 export async function enumerateFonts(): Promise<readonly FontManifestEntry[]> {
   try {
+    if (process.platform === 'win32') {
+      const directory = join(process.env.WINDIR ?? 'C:/Windows', 'Fonts');
+      const files = (await readdir(directory))
+        .filter((name) => /\.(ttf|otf|ttc)$/i.test(name))
+        .sort();
+      return await Promise.all(
+        files.map(async (name) => ({
+          family: basename(name),
+          source: 'windows-font-directory',
+          sha256: createHash('sha256')
+            .update(await readFile(join(directory, name)))
+            .digest('hex'),
+        })),
+      );
+    }
     const { stdout } = await execFileAsync(
       'fc-list',
       ['-f', '%{family[0]}\t%{file}\n'],

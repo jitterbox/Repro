@@ -45,6 +45,7 @@ it('does not invent a crop when a target moves across the screenshot interval', 
   });
   const locator = {
     page: () => page,
+    evaluate: () => Promise.resolve({ text: 'Control' }),
     count: () => Promise.resolve(1),
     boundingBox: vi
       .fn()

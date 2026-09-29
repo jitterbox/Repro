@@ -1,6 +1,10 @@
 import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@repro/render';
 import { readFile } from 'node:fs/promises';
-import { validateEvidence, shareReportSchema } from '@repro/contracts';
+import {
+  validateEvidence,
+  shareReportSchema,
+  parseScenePlan,
+} from '@repro/contracts';
 import { mapTime, type ReproPlan } from '@repro/plan';
 import { join, basename } from 'node:path';
 import { verifyRun } from './evidence-run.js';
@@ -8,13 +12,21 @@ import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { packageCommand, type EvidenceAssetInput } from './commands/package.js';
 
-async function presentation(directory: string) {
+async function presentation(directory: string, draft = false) {
   const run = await verifyRun(directory);
   if (
     run.pipelineOutcome !== 'passed' ||
     !['bug-reproduced', 'fix-verified', 'passed'].includes(run.scenarioOutcome)
   )
     throw new Error('Required evidence or designated outcome is missing');
+  if (run.stages.presentation?.status !== 'passed')
+    throw new Error(
+      'Presentation is incomplete or failed; inspect and rerender before export',
+    );
+  if (run.artifacts.some((a) => a.kind === 'presentation-scene') && !draft)
+    throw new Error(
+      'Scene renderer awaits visual acceptance. Use --draft for an OCR-audited acceptance bundle; final-quality scene export is not promoted yet.',
+    );
   const media = run.artifacts.find((a) => a.kind === 'presentation-video');
   const planArtifact = run.artifacts.find((a) =>
     a.kind.startsWith('presentation-key:'),
@@ -29,9 +41,28 @@ async function presentation(directory: string) {
   const spec = validateEvidence(
     JSON.parse(await readFile(join(directory, source), 'utf8')),
   );
-  const plan = JSON.parse(
+  let plan = JSON.parse(
     await readFile(join(directory, planArtifact.path), 'utf8'),
   ) as ReproPlan;
+  const sceneRef = run.artifacts.find((a) => a.kind === 'presentation-scene');
+  if (sceneRef) {
+    const scene = parseScenePlan(
+      JSON.parse(await readFile(join(directory, sceneRef.path), 'utf8')),
+    );
+    plan = {
+      ...plan,
+      annotations: plan.annotations.map((annotation) => {
+        const cue = scene.cues.find(
+          (c) =>
+            ['step', 'marker'].includes(c.kind) &&
+            [`step-${annotation.id}`, `marker-${annotation.id}`].includes(c.id),
+        );
+        return cue
+          ? { ...annotation, timeRange: { start: cue.startMs, end: cue.endMs } }
+          : annotation;
+      }),
+    };
+  }
   assertCurrentPrivacyPresentation(spec, plan);
   const assets: EvidenceAssetInput[] = run.artifacts.flatMap((a) => {
     const kind =
@@ -97,12 +128,20 @@ export async function exportEvidence(
   directory: string,
   outDir: string,
   baseline?: string,
+  draft = false,
 ) {
-  const current = await presentation(directory);
-  const previous = baseline ? await presentation(baseline) : undefined;
+  const current = await presentation(directory, draft);
+  const previous = baseline ? await presentation(baseline, draft) : undefined;
   const items = previous ? [previous, current] : [current];
   let compare: { syncMap: [number, number, number, number][] } | undefined;
   if (previous && baseline) {
+    if (
+      current.run.artifacts.some((a) => a.kind === 'presentation-scene') ||
+      previous.run.artifacts.some((a) => a.kind === 'presentation-scene')
+    )
+      throw new Error(
+        'Scene paired export requires occurrence-aware synchronization; export each reviewed scene separately until that capability is available',
+      );
     const measured = await compareEvidence(baseline, directory);
     if (!measured.ok)
       throw new Error(
@@ -143,7 +182,7 @@ export async function exportEvidence(
   const primary = items[0] ?? current;
   const report = shareReportSchema.parse({
     schemaVersion: '1.0.0',
-    title: primary.spec.title,
+    title: draft ? `[DRAFT] ${primary.spec.title}` : primary.spec.title,
     variants: items.map(({ run, spec, originalDurationMs }) => ({
       id: run.variant.id,
       label: spec.variant.label,

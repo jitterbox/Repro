@@ -1,0 +1,47 @@
+name: Scene renderer acceptance
+on:
+  workflow_dispatch:
+env:
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+jobs:
+  visual-slice:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg tesseract-ocr fonts-liberation time
+      - run: pnpm build
+      - run: pnpm test:scene-polish
+      - run: node scripts/e2e/scene-review.mjs
+      - run: node scripts/e2e/scene-benchmark.mjs
+      - run: pnpm test:bug-corpus
+      - run: REPRO_CORPUS_KIND=alignment,dark REPRO_CORPUS_ROLE=after pnpm test:bug-corpus
+      - run: pnpm test:bug-corpus-review
+      - run: node scripts/e2e/bug-corpus-finalize.mjs
+      - run: node scripts/e2e/bug-corpus-polish-check.mjs
+      - run: node scripts/e2e/bug-corpus-gallery.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scene-acceptance
+          path: |
+            .repro/scene-polish/acceptance/
+            .repro/scene-polish/benchmark.json
+            .repro/scene-polish/results.json
+            .repro/bug-corpus/*.mp4
+            .repro/bug-corpus/*.png
+            .repro/bug-corpus/*.html
+            .repro/bug-corpus/*.json
+            .repro/bug-corpus/transitions/
+            .repro/bug-corpus/bundles/
+          retention-days: 14

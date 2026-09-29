@@ -40,7 +40,15 @@
     "review:matrix": "node scripts/e2e/review-matrix-server.mjs",
     "test:overlay-matrix": "node scripts/e2e/overlay-matrix.mjs",
     "test:voiceover-matrix": "node scripts/e2e/voiceover-matrix.mjs",
-    "test:review-matrix": "pnpm test:strategy-matrix && pnpm test:overlay-matrix && pnpm test:voiceover-matrix && node scripts/e2e/verify-review-matrix.mjs"
+    "test:review-matrix": "pnpm test:strategy-matrix && pnpm test:overlay-matrix && pnpm test:voiceover-matrix && node scripts/e2e/verify-review-matrix.mjs",
+    "test:scene-polish": "node scripts/e2e/scene-polish.mjs",
+    "test:bug-corpus": "node scripts/e2e/bug-corpus.mjs",
+    "test:bug-corpus-review": "node scripts/e2e/bug-corpus-review.mjs",
+    "test:web-dash-demos": "node scripts/e2e/web-dash-demos.mjs",
+    "docs:generate": "node scripts/generate-reference.mjs",
+    "docs:check": "node scripts/generate-reference.mjs --check",
+    "release:prepare": "pnpm build && pnpm docs:check && node scripts/prepare-package.mjs",
+    "release:check": "node scripts/check-release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
@@ -59,5 +67,7 @@
     "typescript-eslint": "^8.20.0",
     "vitest": "^3.0.2",
     "zod": "4.4.3"
-  }
+  },
+  "version": "0.2.0",
+  "license": "Apache-2.0"
 }

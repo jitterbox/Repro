@@ -381,3 +381,8 @@ button.chapter {
     width: 100%;
   }
 }
+
+/* Author display rules must not expose comparison controls for a single film. */
+[data-viewer-compare-toggle][hidden] {
+  display: none;
+}

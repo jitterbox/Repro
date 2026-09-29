@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "webdash-sales-calendar",
+  "title": "Web-Dash: inspect the Sales calendar",
+  "variant": {
+    "id": "walkthrough",
+    "role": "standalone",
+    "label": "Recorded live application"
+  },
+  "claim": "The existing Sales date picker opens its calendar above the report.",
+  "expected": "The existing Sales date picker opens its calendar above the report.",
+  "targets": [
+    {
+      "id": "detail",
+      "description": "Recorded calendar"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open the authenticated dashboard"
+    },
+    {
+      "id": "menu",
+      "title": "Open navigation"
+    },
+    {
+      "id": "destination",
+      "title": "Open Sales"
+    },
+    {
+      "id": "inspect",
+      "title": "Open the calendar",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Observe the recorded result"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Observed application state",
+      "targets": ["detail"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    }
+  ],
+  "outputs": ["png", "mp4", "review", "package"],
+  "presentation": {
+    "readingHoldMs": 5400
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [],
+    "patterns": []
+  }
+}

@@ -2,7 +2,7 @@ import type { JudgeVerdict, VideoJudge } from './judge/index.js';
 import { anthropicJudge, mockJudge } from './judge/index.js';
 export { compareDecodedPng } from './gates/determinism.js';
 
-export const REPRO_EVALUATION_VERSION = '0.1.0' as const;
+export const REPRO_EVALUATION_VERSION = '0.2.0' as const;
 
 export type QualityMetricName =
   | 'alignment-error'

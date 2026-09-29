@@ -1,0 +1,200 @@
+{
+  "$id": "https://repro.dev/schemas/timeline.schema.json",
+  "title": "Repro timeline",
+  "description": "Compiled output timing. parseTimeline additionally validates monotone time knots and capture ranges.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "readOnly": true,
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "fps": {
+      "type": "number",
+      "const": 30
+    },
+    "targetDurationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "beats": {
+      "readOnly": true,
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "readOnly": true,
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "play",
+              "hold",
+              "insert",
+              "trim"
+            ]
+          },
+          "source": {
+            "default": "capture",
+            "type": "string",
+            "enum": [
+              "capture",
+              "composited"
+            ]
+          },
+          "assetRef": {
+            "type": "string"
+          },
+          "captureStartMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "captureEndMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "captureAtMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "rate": {
+            "default": 1,
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "outStartMs": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "outDurationMs": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "minOutDurationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "chapterId": {
+            "type": "string"
+          },
+          "badge": {
+            "type": "string",
+            "enum": [
+              "PAUSED",
+              "FREEZE",
+              "SLOWMO"
+            ]
+          },
+          "transitionIn": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cut",
+                  "fade",
+                  "dissolve"
+                ]
+              },
+              "ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "ms"
+            ],
+            "additionalProperties": false
+          },
+          "transitionOut": {
+            "readOnly": true,
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cut",
+                  "fade",
+                  "dissolve"
+                ]
+              },
+              "ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "ms"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "timeMap": {
+      "readOnly": true,
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "piecewise-linear"
+        },
+        "knots": {
+          "readOnly": true,
+          "type": "array",
+          "items": {
+            "readOnly": true,
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "number",
+                "minimum": 0
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "knots"
+      ],
+      "additionalProperties": false
+    },
+    "warnings": {
+      "default": [],
+      "readOnly": true,
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "fps",
+    "beats",
+    "timeMap"
+  ],
+  "additionalProperties": false
+}

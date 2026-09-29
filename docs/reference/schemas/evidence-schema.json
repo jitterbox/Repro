@@ -1,0 +1,354 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "before",
+            "after",
+            "standalone"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "label"
+      ]
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targets": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "description"
+        ]
+      }
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "trigger": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      }
+    },
+    "segments": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "step": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "required": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "step"
+        ]
+      }
+    },
+    "checkpoints": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "step": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targets": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+            }
+          },
+          "required": {
+            "default": true,
+            "type": "boolean"
+          },
+          "highlights": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "target",
+                "label"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "observations": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "screenshot",
+                "bounds",
+                "assertion",
+                "hit-test",
+                "accessibility",
+                "visibility",
+                "network"
+              ]
+            }
+          },
+          "timing": {
+            "default": "stable",
+            "type": "string",
+            "enum": [
+              "stable",
+              "transient"
+            ]
+          },
+          "frame": {
+            "type": "object",
+            "properties": {
+              "segment": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+              },
+              "event": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "match": {
+                    "default": {},
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    }
+                  },
+                  "occurrence": {
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              "offsetMs": {
+                "default": 0,
+                "type": "number"
+              },
+              "maxOffsetMs": {
+                "default": 66.66666666666667,
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "segment",
+              "event"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "step",
+          "title",
+          "observations"
+        ]
+      }
+    },
+    "outputs": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "png",
+          "mp4",
+          "review",
+          "package"
+        ]
+      }
+    },
+    "presentation": {
+      "default": {
+        "padding": 24,
+        "readingHoldMs": 1200,
+        "context": true
+      },
+      "type": "object",
+      "properties": {
+        "padding": {
+          "default": 24,
+          "type": "number",
+          "minimum": 0
+        },
+        "readingHoldMs": {
+          "default": 1200,
+          "type": "number",
+          "minimum": 0
+        },
+        "context": {
+          "default": true,
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "privacy": {
+      "default": {
+        "strict": true,
+        "selectors": [],
+        "patterns": []
+      },
+      "type": "object",
+      "properties": {
+        "strict": {
+          "default": true,
+          "type": "boolean"
+        },
+        "selectors": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "patterns": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "variant",
+    "claim",
+    "expected",
+    "steps",
+    "checkpoints",
+    "outputs"
+  ],
+  "additionalProperties": false
+}

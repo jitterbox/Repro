@@ -1,3 +1,5 @@
+import { headlessShellPath } from '@repro/compositor';
+import { createRequire } from 'node:module';
 import { access } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import {
@@ -125,6 +127,7 @@ export async function doctor() {
       await access(chromium.executablePath());
       return chromium.executablePath();
     }),
+    check('headless-shell', () => headlessShellPath(chromium.executablePath())),
     check('ffmpeg', () => runProcess('ffmpeg', ['-version'])),
     check('ffprobe', () => runProcess('ffprobe', ['-version'])),
     check('filters', async () => {
@@ -142,8 +145,28 @@ export async function doctor() {
           throw new Error(`Missing ${name} filter`);
       return 'overlay, subtitles, fps, crop, scale, interleave, drawbox';
     }),
-    check('fonts', () => runProcess('fc-match', ['sans-serif'])),
-    check('ocr', () => runProcess('tesseract', ['--version'])),
+    check('fonts', async () => {
+      if (process.platform !== 'win32')
+        return runProcess('fc-match', ['sans-serif']);
+      const resolver = createRequire(
+        createRequire(import.meta.url).resolve('@repro/compositor'),
+      );
+      await access(
+        resolver.resolve(
+          '@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2',
+        ),
+      );
+      return 'Bundled Source Sans 3; Windows system fonts for legacy ASS';
+    }),
+    check('ocr', async () => {
+      const version = await runProcess('tesseract', ['--version']);
+      const languages = await runProcess('tesseract', ['--list-langs']);
+      if (!/^eng$/m.test(languages))
+        throw new Error(
+          'English OCR data missing; install tesseract-ocr-eng / eng.traineddata',
+        );
+      return version;
+    }),
   ]);
   return {
     checks,

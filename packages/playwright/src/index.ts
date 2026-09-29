@@ -16,6 +16,7 @@ import {
 } from '@repro/pipeline';
 
 export { expect };
+export { humanPointer, humanApproach } from './human-pointer.js';
 export class EvidenceRecorder {
   readonly observations: Observation[] = [];
   readonly steps: RunManifest['steps'] = [];
@@ -27,6 +28,82 @@ export class EvidenceRecorder {
     readonly spec: EvidenceSpec,
     readonly directory: string,
   ) {}
+  readonly stateSubscriptions: (() => Promise<void>)[] = [];
+  /** Read explicit page state. The returned object is snapshotted immediately. */
+  async observe<T>(
+    name: string,
+    reader: () => T | Promise<T>,
+    page: Page = this.session.page,
+  ): Promise<T> {
+    const start = this.session.clock.nowMono();
+    const value = await page.evaluate(reader);
+    await this.session.observeValue(
+      page,
+      name,
+      value,
+      start,
+      this.session.clock.nowMono(),
+    );
+    return value;
+  }
+  /** Opt-in sampling with bounded overhead, automatic teardown and coverage reporting. */
+  watch<T>(
+    name: string,
+    reader: () => T | Promise<T>,
+    options: { intervalMs?: number; page?: Page } = {},
+  ) {
+    const intervalMs = options.intervalMs ?? 100;
+    if (intervalMs < 50 || !Number.isFinite(intervalMs))
+      throw new Error('State sampling requires an interval of at least 50ms');
+    let active = true,
+      samples = 0;
+    let stopped = false,
+      partial = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let pending: Promise<void> = Promise.resolve();
+    const sample = () => {
+      pending = (async () => {
+        try {
+          await this.observe(name, reader, options.page);
+          samples++;
+        } catch (error) {
+          partial = true;
+          this.session.emitSemantic('diagnostic.coverage', {
+            collector: `state:${name}`,
+            status: 'partial',
+            reason: String(error),
+          });
+        }
+        if (active && samples < 2000) timer = setTimeout(sample, intervalMs);
+        else if (active)
+          this.session.emitSemantic('diagnostic.coverage', {
+            collector: `state:${name}`,
+            status: 'dropped',
+            reason: '2000 sample limit',
+          });
+      })();
+    };
+    sample();
+    const stop = async () => {
+      if (stopped) return;
+      stopped = true;
+      active = false;
+      if (timer) clearTimeout(timer);
+      await pending;
+      this.session.emitSemantic('diagnostic.coverage', {
+        collector: `state:${name}`,
+        status: samples >= 2000 ? 'dropped' : partial ? 'partial' : 'captured',
+        samples,
+        intervalMs,
+        timing: 'host-observation-window',
+      });
+    };
+    this.stateSubscriptions.push(stop);
+    return stop;
+  }
+  async dispose() {
+    await Promise.all(this.stateSubscriptions.map((stop) => stop()));
+  }
   target(id: string, locator: Locator) {
     if (!this.spec.targets.some((t) => t.id === id))
       throw new Error(`Unknown target ${id}`);
@@ -109,6 +186,25 @@ export class EvidenceRecorder {
         throw new Error(
           `Target ${target} belongs to another page; capture a checkpoint on that page`,
         );
+      const computed = await requireValue(locator).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          color: style.color,
+          backgroundColor: style.backgroundColor,
+          fontSize: style.fontSize,
+          lineHeight: style.lineHeight,
+          zIndex: style.zIndex,
+          position: style.position,
+          overflow: style.overflow,
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          clientHeight: element.clientHeight,
+          scrollHeight: element.scrollHeight,
+          role: element.getAttribute('role'),
+          ariaLabel: element.getAttribute('aria-label'),
+          text: element.textContent.slice(0, 2000),
+        };
+      });
       const measuredAfter = await requireValue(locator).boundingBox();
       const measuredBefore = before.get(target) ?? null;
       const stable = sameBounds(measuredBefore, measuredAfter);
@@ -131,6 +227,7 @@ export class EvidenceRecorder {
         data: {
           measuredBefore,
           measuredAfter,
+          computed,
           coordinateSpace: 'viewport-css',
           deviceScaleFactor: this.session.config.viewport.deviceScaleFactor,
         },
@@ -563,6 +660,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         fixtureError = error;
       }
       {
+        await recorder.dispose();
         const scenarioCompletedAt = performance.now();
         const durationMs = session.clock.nowMono();
         let capture;

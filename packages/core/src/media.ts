@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 
 export class ProcessError extends Error {
@@ -24,20 +26,25 @@ export class ProcessCancelledError extends Error {
 export function runProcess(
   command: string,
   args: readonly string[],
-  options: { signal?: AbortSignal; cwd?: string; env?: NodeJS.ProcessEnv } = {},
+  options: {
+    signal?: AbortSignal;
+    cwd?: string;
+    env?: NodeJS.ProcessEnv;
+    stdin?: 'ignore' | 'inherit';
+  } = {},
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const { signal, ...spawnOptions } = options;
+    const { signal, stdin = 'ignore', ...spawnOptions } = options;
     if (signal?.aborted) {
       reject(new ProcessCancelledError(command));
       return;
     }
     // Isolate cancellable runs so browsers and web servers inherit a group we own.
     const processGroup = signal !== undefined && process.platform !== 'win32';
-    const child = spawn(command, args, {
+    const child = spawn(resolveMediaCommand(command), args, {
       ...spawnOptions,
       detached: processGroup,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [stdin, 'pipe', 'pipe'],
     });
     let output = '';
     let cancelled = false;
@@ -156,3 +163,35 @@ export const h264Profile = [
   '-movflags',
   '+faststart',
 ] as const;
+
+/** Explicit overrides also support portable installations without changing PATH. */
+export function resolveMediaCommand(command: string): string {
+  const variable = (
+    {
+      ffmpeg: 'REPRO_FFMPEG',
+      ffprobe: 'REPRO_FFPROBE',
+      tesseract: 'REPRO_TESSERACT',
+    } as Record<string, string>
+  )[command];
+  if (!variable) return command;
+  const override = process.env[variable];
+  if (override) return override;
+  if (process.platform !== 'win32') return command;
+  const candidates = [
+    ...(process.env.LOCALAPPDATA
+      ? [
+          join(
+            process.env.LOCALAPPDATA,
+            'Microsoft',
+            'WinGet',
+            'Links',
+            `${command}.exe`,
+          ),
+        ]
+      : []),
+    ...(command === 'tesseract' && process.env.ProgramFiles
+      ? [join(process.env.ProgramFiles, 'Tesseract-OCR', 'tesseract.exe')]
+      : []),
+  ];
+  return candidates.find(existsSync) ?? command;
+}

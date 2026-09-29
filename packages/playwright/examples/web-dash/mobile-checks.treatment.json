@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "actionAudio": false,
+  "cursorGlow": true,
+  "steps": [
+    {
+      "step": "menu",
+      "sequence": "workflow",
+      "text": "Open the application navigation."
+    },
+    {
+      "step": "destination",
+      "sequence": "workflow"
+    },
+    {
+      "step": "inspect",
+      "sequence": "workflow",
+      "text": "Search for DM."
+    }
+  ],
+  "treatments": [
+    {
+      "id": "observed-detail",
+      "kind": "callout",
+      "checkpoint": "result",
+      "target": "detail",
+      "title": "Filtered check types",
+      "detail": "Typing DM narrows the existing check-type list. No check is created or submitted.",
+      "severity": "normal",
+      "rationale": "Describe only the observed live workflow, without claiming a defect or fix."
+    },
+    {
+      "id": "observed-state",
+      "kind": "data-panel",
+      "eventKind": "scenario.state",
+      "eventMatch": {
+        "name": "page"
+      },
+      "valuePath": "value",
+      "format": "object",
+      "title": "Observed page state",
+      "rationale": "Read explicit DOM state without application mutation; values follow the recorded source clock."
+    }
+  ]
+}

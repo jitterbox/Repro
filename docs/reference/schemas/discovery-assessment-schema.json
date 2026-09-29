@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "claim": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected": {
+      "type": "string",
+      "minLength": 1
+    },
+    "concerns": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "interaction",
+              "geometry",
+              "appearance",
+              "transient",
+              "console",
+              "performance",
+              "accessibility",
+              "keyboard",
+              "multipage",
+              "privacy",
+              "network",
+              "native"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceRefs": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "rationale",
+          "sourceRefs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "triggerStep": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "targets": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "action",
+              "affected",
+              "reference"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "role"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "transientFrame": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "match": {
+          "default": {},
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "offsetMs": {
+          "type": "number"
+        },
+        "maxOffsetMs": {
+          "default": 66.66666666666667,
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "kind",
+        "offsetMs"
+      ],
+      "additionalProperties": false
+    },
+    "uncertainties": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "claim",
+    "expected",
+    "concerns",
+    "triggerStep",
+    "targets"
+  ],
+  "additionalProperties": false
+}

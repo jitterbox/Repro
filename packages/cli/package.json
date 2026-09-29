@@ -1,6 +1,6 @@
 {
   "name": "@repro/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "bin": {
     "repro": "./dist/bin.js"
@@ -13,7 +13,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "docs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -24,9 +26,24 @@
   "dependencies": {
     "commander": "^13.1.0",
     "zod": "4.4.3",
-    "@repro/pipeline": "workspace:*"
+    "@repro/pipeline": "workspace:*",
+    "@repro/contracts": "workspace:*"
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jitterbox/Repro.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/jitterbox/Repro#readme",
+  "bugs": {
+    "url": "https://github.com/jitterbox/Repro/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "@repro/cli \u2014 Repro browser evidence and annotated video pipeline"
 }

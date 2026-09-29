@@ -1,3 +1,4 @@
+import { renderSceneEvidence } from './scene-presentation.js';
 import { screenshotForBounds } from './checkpoint-geometry.js';
 import { readFile, mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
@@ -31,10 +32,18 @@ import {
 
 export async function renderEvidence(
   directory: string,
-  options: { evidence?: string } = {},
+  options: {
+    evidence?: string;
+    renderer?: 'legacy' | 'hyperframes';
+    treatment?: string;
+  } = {},
 ) {
+  if (options.treatment && options.renderer !== 'hyperframes')
+    throw new Error('Treatments require the hyperframes renderer');
   return withFileLock(join(directory, 'render.lock'), () =>
-    renderEvidenceLocked(directory, options),
+    options.renderer === 'hyperframes'
+      ? renderSceneEvidence(directory, options)
+      : renderEvidenceLocked(directory, options),
   );
 }
 async function renderEvidenceLocked(

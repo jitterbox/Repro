@@ -59,3 +59,5 @@ export * from './sync-time.js';
 export * from './watch.js';
 
 export * from './bug-discovery.js';
+
+export * from './scene.js';

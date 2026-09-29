@@ -40,6 +40,8 @@ try {
     outputDir: join(workDir, 'capture'),
     run: async (session) => {
       await session.page.click('#save');
+      if ((await session.page.locator('#status').textContent()) !== 'Saved')
+        throw new Error('Save did not update the visible status');
       await session.showChapter('Clicked Save');
     },
     url: server.url,
@@ -78,10 +80,22 @@ try {
   );
 
   const packaged = await packageCommand({
-    assets: [
-      { kind: 'mp4', path: render.outputPath },
-      { kind: 'json', path: planPath },
-    ],
+    assets: [{ kind: 'mp4', path: render.outputPath }],
+    report: {
+      schemaVersion: '1.0.0',
+      title: 'Capture and render smoke test',
+      variants: [
+        {
+          id: 'smoke',
+          label: 'Smoke test',
+          role: 'standalone',
+          outcome: 'passed',
+          expected: 'Save updates the visible status',
+          durationMs: 1000,
+        },
+      ],
+      chapters: [],
+    },
     outDir: join(workDir, 'package'),
     viewerDir,
   });

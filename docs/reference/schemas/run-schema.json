@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+    },
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "executableHash": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "testCase": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "specHash",
+        "executableHash",
+        "testCase"
+      ],
+      "additionalProperties": false
+    },
+    "variant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "before",
+            "after",
+            "standalone"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "url"
+      ],
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    },
+    "tools": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "scenarioOutcome": {
+      "type": "string",
+      "enum": [
+        "bug-reproduced",
+        "fix-verified",
+        "passed",
+        "failed",
+        "inconclusive"
+      ]
+    },
+    "pipelineOutcome": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "inconclusive"
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "index": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "startMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endMs": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "index",
+          "startMs",
+          "endMs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "checkpoint": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "screenshot",
+              "bounds",
+              "assertion",
+              "hit-test",
+              "accessibility",
+              "visibility",
+              "network"
+            ]
+          },
+          "pageId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "frameId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "timeMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "bounds": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "skipped",
+              "unsupported"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "data": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "id",
+          "checkpoint",
+          "kind",
+          "pageId",
+          "timeMs",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "segments": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "step": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+          },
+          "pageId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "startMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "skipped",
+              "unsupported"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "step",
+          "pageId",
+          "startMs",
+          "endMs",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "diagnostics": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "console",
+              "exception",
+              "request-failure",
+              "http-error"
+            ]
+          },
+          "pageId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timeMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "timing": {
+            "type": "string",
+            "const": "host-receipt"
+          },
+          "uncertaintyMs": {
+            "type": "null"
+          },
+          "stepId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "requestStartedMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "url": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "eventId",
+          "kind",
+          "pageId",
+          "timeMs",
+          "timing",
+          "uncertaintyMs",
+          "stepId",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "shareable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "bytes",
+          "kind",
+          "shareable"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "stages": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "skipped",
+              "unsupported"
+            ]
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cacheHit": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "durationMs",
+          "cacheHit"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "scenario",
+    "variant",
+    "build",
+    "environment",
+    "tools",
+    "startedAt",
+    "endedAt",
+    "durationMs",
+    "scenarioOutcome",
+    "pipelineOutcome",
+    "steps",
+    "observations",
+    "segments",
+    "diagnostics",
+    "artifacts",
+    "stages",
+    "errors"
+  ],
+  "additionalProperties": false
+}

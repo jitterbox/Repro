@@ -1,0 +1,43 @@
+name: Windows acceptance
+on:
+  push:
+    branches: [codex/windows-validation]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm docs:check
+      - name: Provision Windows media and OCR tools
+        shell: pwsh
+        run: |
+          choco install ffmpeg tesseract --no-progress -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content $env:GITHUB_PATH 'C:\Program Files\Tesseract-OCR'
+          node packages/cli/dist/bin.js setup
+      - name: Process, setup, defaults and renderer platform tests
+        run: pnpm exec vitest run packages/core/src/media.test.ts packages/core/src/lock.test.ts packages/pipeline/src/setup.test.ts packages/cli/src/defaults.test.ts packages/compositor/src/browser-path.test.ts
+      - name: Packed consumer capture, custom scene, strict OCR export and review
+        run: pnpm test:clean-install
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-acceptance
+          path: |
+            .repro/portable-install.json
+            .repro/portable-artifacts/
+          retention-days: 14

@@ -18,6 +18,7 @@ import { createPresidioLikeRedactor } from '@repro/core/redactor';
 import { chromium } from 'playwright';
 
 import { captureAnchor } from './anchors.js';
+import { startSceneDiagnostics } from './scene-diagnostics.js';
 import { startBrowserDiagnostics } from './browser-diagnostics.js';
 import { collectEnvironmentManifest } from './environment.js';
 import { StoreEventSink } from './events.js';
@@ -107,7 +108,7 @@ interface ExperimentalActionScreencast {
   readonly showChapter?: (title: string) => Promise<void> | void;
 }
 
-const REPRO_CAPTURE_STAGE_VERSION = '0.1.0';
+const REPRO_CAPTURE_STAGE_VERSION = '0.2.0';
 
 export class CaptureSession {
   readonly #clock: MonotonicClockBridge;
@@ -323,6 +324,49 @@ export class CaptureSession {
     });
   }
 
+  async observeValue(
+    page: Page,
+    name: string,
+    value: unknown,
+    startMs: number,
+    endMs: number,
+  ) {
+    const pageId = await this.ready(page);
+    const snapshot: unknown = JSON.stringify(value);
+    if (
+      typeof snapshot !== 'string' ||
+      Buffer.byteLength(snapshot, 'utf8') > 65536
+    ) {
+      this.#sink.emitEvent({
+        pageId,
+        kind: 'diagnostic.coverage',
+        payload: {
+          collector: `state:${name}`,
+          status: 'dropped',
+          reason: 'Snapshot exceeds 64 KiB or is not JSON serializable',
+        },
+        tMono: endMs,
+      });
+      throw new Error(
+        'State observation must be JSON serializable and at most 64 KiB',
+      );
+    }
+    this.#sink.emitEvent({
+      pageId,
+      kind: 'scenario.state',
+      tMono: endMs,
+      payload: jsonValueFrom({
+        name,
+        value: JSON.parse(snapshot) as unknown,
+        source: 'scenario-reader',
+        timing: 'host-observation-window',
+        startMs,
+        endMs,
+        uncertaintyMs: endMs - startMs,
+      }),
+    });
+  }
+
   async emitElementCue(
     kind: string,
     selector: string,
@@ -512,7 +556,20 @@ export class CaptureSession {
   }
 
   async #startPageCapture(registration: PageRegistration): Promise<void> {
-    this.#telemetry.push(startBrowserDiagnostics(registration.page, registration.pageId, this.#sink));
+    this.#telemetry.push(
+      await startSceneDiagnostics(
+        registration.page,
+        registration.pageId,
+        this.#sink,
+      ),
+    );
+    this.#telemetry.push(
+      startBrowserDiagnostics(
+        registration.page,
+        registration.pageId,
+        this.#sink,
+      ),
+    );
     await applyProfileToPage(
       registration.page,
       profileOptions(this.#options, this.#config),
@@ -901,7 +958,11 @@ export function captureStageCacheKey(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
-      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
+      harReplayHash: input.config.capture?.har
+        ? createHash('sha256')
+            .update(readFileSync(input.config.capture.har))
+            .digest('hex')
+        : null,
     },
     versions: captureStageVersions(),
   });
@@ -920,7 +981,11 @@ export function captureStageManifest(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
-      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
+      harReplayHash: input.config.capture?.har
+        ? createHash('sha256')
+            .update(readFileSync(input.config.capture.har))
+            .digest('hex')
+        : null,
     },
     stage: 'capture',
     versions: captureStageVersions(),

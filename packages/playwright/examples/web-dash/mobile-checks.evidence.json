@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "webdash-mobile-checks",
+  "title": "Web-Dash: filter check types on mobile",
+  "variant": {
+    "id": "walkthrough",
+    "role": "standalone",
+    "label": "Recorded live application"
+  },
+  "claim": "The real check-type list filters to DM at a 393px viewport.",
+  "expected": "The real check-type list filters to DM at a 393px viewport.",
+  "targets": [
+    {
+      "id": "detail",
+      "description": "Filtered check types"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open the authenticated dashboard"
+    },
+    {
+      "id": "menu",
+      "title": "Open navigation"
+    },
+    {
+      "id": "destination",
+      "title": "Open Checks"
+    },
+    {
+      "id": "inspect",
+      "title": "Search for DM",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Observe the recorded result"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Observed application state",
+      "targets": ["detail"],
+      "observations": ["screenshot", "bounds", "assertion"]
+    }
+  ],
+  "outputs": ["png", "mp4", "review", "package"],
+  "presentation": {
+    "readingHoldMs": 5400
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [],
+    "patterns": []
+  }
+}

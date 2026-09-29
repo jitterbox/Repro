@@ -1,4 +1,9 @@
-import { readFile } from 'node:fs/promises';
+import { setup } from '@repro/pipeline';
+import { treatmentPlanSchema } from '@repro/contracts';
+import { importJiraIssue } from '@repro/pipeline';
+import { renderScenePair } from '@repro/pipeline';
+import { treatmentCatalog, parseTreatmentPlan } from '@repro/pipeline';
+import { readFile, writeFile } from 'node:fs/promises';
 import {
   discoverBug,
   discoveryGuide,
@@ -41,7 +46,7 @@ export * from './commands/quality.js';
 export * from './commands/render-compare.js';
 export * from './commands/validate-config.js';
 
-export const REPRO_CLI_VERSION = '0.1.0' as const;
+export const REPRO_CLI_VERSION = '0.2.0' as const;
 
 type Writer = (text: string) => void;
 
@@ -55,6 +60,76 @@ export function createReproProgram(writer: Writer = console.log): Command {
     .description('Repro AI capture, annotation, and evidence CLI')
     .version(REPRO_CLI_VERSION);
 
+  program
+    .command('setup')
+    .description(
+      'Install pinned Chromium; optionally provision Windows/Ubuntu system dependencies',
+    )
+    .option(
+      '--system',
+      'Install FFmpeg, OCR and system browser dependencies (may require elevation)',
+    )
+    .option('--no-browser', 'Skip browser download')
+    .option('--dry-run', 'Print commands without installing anything')
+    .action(
+      async (options: {
+        system?: boolean;
+        browser?: boolean;
+        dryRun?: boolean;
+      }) => {
+        const result = await setup(options);
+        writer(JSON.stringify(result, null, 2));
+        if ('ok' in result && !result.ok) process.exitCode = 1;
+      },
+    );
+  program
+    .command('defaults')
+    .description(
+      'Print a complete editable treatment plan with visual, timing and encoding defaults',
+    )
+    .option('--json', 'Machine-readable JSON (also the default)')
+    .option(
+      '--out <file>',
+      'Create a UTF-8 treatment file; fails if it already exists',
+    )
+    .action(async (options: { out?: string }) => {
+      const text = JSON.stringify(
+        treatmentPlanSchema.parse({ schemaVersion: '1.0.0' }),
+        null,
+        2,
+      );
+      if (options.out) {
+        await writeFile(options.out, text + '\n', {
+          encoding: 'utf8',
+          flag: 'wx',
+        });
+        writer(JSON.stringify({ written: options.out }));
+      } else writer(text);
+    });
+  program
+    .command('import')
+    .description('Import source-linked ticket context')
+    .command('jira <file>')
+    .requiredOption('--out-dir <directory>')
+    .option('--attachments-dir <directory>')
+    .action(
+      async (
+        file: string,
+        options: { outDir: string; attachmentsDir?: string },
+      ) => {
+        writer(JSON.stringify(await importJiraIssue(file, options), null, 2));
+      },
+    );
+  program
+    .command('treatments')
+    .option('--json')
+    .action(() => {
+      writer(JSON.stringify(treatmentCatalog, null, 2));
+    });
+  program.command('validate-treatment <file>').action(async (file: string) => {
+    parseTreatmentPlan(JSON.parse(await readFile(file, 'utf8')));
+    writer(JSON.stringify({ ok: true }));
+  });
   program
     .command('discovery-guide')
     .option('--json')
@@ -74,22 +149,92 @@ export function createReproProgram(writer: Writer = console.log): Command {
     });
   program
     .command('render <run>')
+    .option('--renderer <backend>', 'legacy or hyperframes', 'legacy')
+    .option('--treatment <file>', 'Evidence-referenced scene treatments')
+    .option(
+      '--baseline <run>',
+      'Compare two previously rendered scene compositions',
+    )
+    .option(
+      '--observational',
+      'Label faithful paired playback without controlled proof',
+    )
     .option(
       '--evidence <file>',
       'Presentation-only revision of the committed evidence specification',
     )
-    .action(async (run: string, options: { evidence?: string }) => {
-      writer(JSON.stringify(await renderEvidence(run, options), null, 2));
-    });
+    .action(
+      async (
+        run: string,
+        options: {
+          evidence?: string;
+          renderer: string;
+          treatment?: string;
+          baseline?: string;
+          observational?: boolean;
+        },
+      ) => {
+        if (options.renderer !== 'legacy' && options.renderer !== 'hyperframes')
+          throw new Error('Unknown renderer');
+        if (options.treatment && options.renderer !== 'hyperframes')
+          throw new Error('Treatments require --renderer hyperframes');
+        if (options.baseline) {
+          if (
+            options.renderer !== 'hyperframes' ||
+            options.treatment ||
+            options.evidence
+          )
+            throw new Error(
+              'Render each scene first, then compare with --renderer hyperframes --baseline',
+            );
+          writer(
+            JSON.stringify(
+              await renderScenePair(
+                options.baseline,
+                run,
+                options.observational,
+              ),
+              null,
+              2,
+            ),
+          );
+          return;
+        }
+        if (options.observational)
+          throw new Error('--observational requires --baseline');
+        writer(
+          JSON.stringify(
+            await renderEvidence(run, {
+              ...options,
+              renderer: options.renderer,
+            }),
+            null,
+            2,
+          ),
+        );
+      },
+    );
   program
     .command('export <run>')
     .requiredOption('--out-dir <path>')
+    .option(
+      '--draft',
+      'Create an audited acceptance bundle for an unpromoted scene renderer',
+    )
     .option('--baseline <run>', 'Include an audited before/after pair')
     .action(
-      async (run: string, options: { outDir: string; baseline?: string }) => {
+      async (
+        run: string,
+        options: { outDir: string; baseline?: string; draft?: boolean },
+      ) => {
         writer(
           JSON.stringify(
-            await exportEvidence(run, options.outDir, options.baseline),
+            await exportEvidence(
+              run,
+              options.outDir,
+              options.baseline,
+              options.draft,
+            ),
             null,
             2,
           ),
@@ -244,11 +389,20 @@ export function createReproProgram(writer: Writer = console.log): Command {
     );
   program
     .command('review <run>')
+    .option('--presentation', 'Review the rendered scene with source timing')
     .option('--baseline <run>')
     .option('--port <number>', 'Loopback port', Number)
     .action(
-      async (run: string, options: { port?: number; baseline?: string }) => {
-        const review = await reviewRun(run, options.port, options.baseline);
+      async (
+        run: string,
+        options: { port?: number; baseline?: string; presentation?: boolean },
+      ) => {
+        const review = await reviewRun(
+          run,
+          options.port,
+          options.baseline,
+          options.presentation,
+        );
         writer(JSON.stringify({ url: review.url }));
       },
     );
