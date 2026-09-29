@@ -710,7 +710,9 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
           throw new Error(`Evidence incomplete: ${directory}/run.json`);
       }
     },
-    { auto: true },
+    // Host inventory and capture finalization have their own finite budget;
+    // they must not consume the scenario's normal Playwright action/test time.
+    { auto: true, timeout: 120_000 },
   ],
 });
 function failed(info: TestInfo) {

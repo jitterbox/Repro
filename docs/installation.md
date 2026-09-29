@@ -75,6 +75,8 @@ The release directory contains local tarball dependencies and checksums. Move th
 
 The compatibility workflow exercises packed consumer installation, process cancellation, capture, rendering, OCR and scene seeking on Ubuntu 24.04 and Windows Server 2022. A configured CI job is not evidence of a successful run: inspect the latest [CI result](https://github.com/jitterbox/Repro/actions) for a particular release. Real GUI interactions beyond browser content are not captured.
 
+The evidence fixture has a separate 120-second setup/teardown budget for host inventory and capture finalization. Your Playwright test timeout still controls the reproduction steps. Font inventory streams up to four files at a time and reuses hashes only while file identity, size and modification metadata remain unchanged.
+
 For explicit portable paths, set `REPRO_FFMPEG`, `REPRO_FFPROBE`, and `REPRO_TESSERACT` to absolute executable filenames. For example, in PowerShell:
 
 ```powershell
