@@ -91,6 +91,8 @@ export REPRO_TESSERACT=/opt/tesseract/bin/tesseract
 npx repro doctor
 ```
 
+Host font hashing has a 10-second inventory budget. Unreadable or stalled files retain `sha256: null` in environment metadata and are not retried during that recording. Ordinary capture can proceed; verified comparison rejects unknown font provenance. This does not change the renderer’s bundled fonts.
+
 Use `TESSDATA_PREFIX` when English OCR data is in a custom location. `PLAYWRIGHT_BROWSERS_PATH` must have the same value during setup and execution. FFmpeg, OCR and browser assets retain their upstream licenses; Repro does not redistribute system binaries. Native npm dependencies may need a compiler if your Node/OS combination has no prebuilt binary; the pinned x64 CI environment is the supported starting point.
 
 ## MCP
