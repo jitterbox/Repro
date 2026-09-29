@@ -122,10 +122,15 @@ console.log(`Clean installation passed: ${project}`);
 
 // Exercise the packaged scene compositor with non-default typography/layout/encoding.
 async function consumerCli(...args) {
+  const started = performance.now();
+  console.log(`Consumer ${args[0]} started`);
   const { stdout } = await exec(process.execPath, [cli, ...args], {
     cwd: project,
     maxBuffer: 16 * 1024 * 1024,
   });
+  console.log(
+    `Consumer ${args[0]} passed in ${Math.round(performance.now() - started)}ms`,
+  );
   return JSON.parse(stdout);
 }
 const run = JSON.parse(captured.stdout).runs[0].directory;

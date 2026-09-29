@@ -320,11 +320,9 @@ export async function renderCheckpointImage(input: {
       warnings: [],
     },
   };
-  const assPath = `${input.output}.ass`;
-  await writeFile(assPath, generateAss({ plan, staticFrame: true }));
-  await withAssSource(assPath, async (stagedPath) => {
+  const render = async (stagedPath?: string) => {
     const graph = buildFilterGraph({
-      assPath: stagedPath,
+      ...(stagedPath === undefined ? {} : { assPath: stagedPath }),
       plan,
       progressBar: false,
     });
@@ -347,5 +345,14 @@ export async function renderCheckpointImage(input: {
         input.output,
       ],
     });
-  });
+  };
+  // Sanitized source pixels have no presentation text. Do not initialize libass
+  // and scan the host font library again for every source frame.
+  if (plan.annotations.length === 0 && plan.chapters.length === 0) {
+    await render();
+  } else {
+    const assPath = `${input.output}.ass`;
+    await writeFile(assPath, generateAss({ plan, staticFrame: true }));
+    await withAssSource(assPath, render);
+  }
 }

@@ -62,6 +62,35 @@ Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,Path verified
     }
   }, 20000);
 
+  it('retains pixel redaction without loading subtitles for a source-only frame', async () => {
+    const plan = planFixture();
+    const graph = buildFilterGraph({
+      plan: {
+        ...plan,
+        redactionRects: [{ x: 0, y: 0, width: 1280, height: 720 }],
+      },
+      timeline: { ...plan.timeline, beats: [] },
+    });
+    expect(graph.filterComplex).not.toContain('ass=');
+    const input = ['-v', 'error', '-f', 'lavfi', '-i'];
+    const output = ['-frames:v', '1', '-pix_fmt', 'yuv420p', '-f', 'md5', '-'];
+    const masked = await runProcess('ffmpeg', [
+      ...input,
+      'color=red:s=1280x720:d=0.1',
+      '-filter_complex',
+      graph.filterComplex,
+      '-map',
+      graph.videoLabel,
+      ...output,
+    ]);
+    const black = await runProcess('ffmpeg', [
+      ...input,
+      'color=black:s=1280x720:d=0.1',
+      ...output,
+    ]);
+    expect(masked.trim()).toBe(black.trim());
+  }, 20000);
+
   it('applies time surgery before ASS burn-in', () => {
     const graph = buildFilterGraph({
       assPath: '/tmp/overlay.ass',

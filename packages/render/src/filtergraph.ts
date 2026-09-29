@@ -15,7 +15,7 @@ export interface CompositorOverlayInput {
 export type SkiaOverlayInput = CompositorOverlayInput;
 
 export interface BuildFilterGraphInput {
-  readonly assPath: string;
+  readonly assPath?: string;
   readonly plan: ReproPlan;
   readonly timeline?: Timeline;
   readonly slateStreamIndex?: number;
@@ -143,10 +143,12 @@ export function buildFilterGraph(input: BuildFilterGraphInput): FilterGraph {
     current = next;
   }
 
-  const assLabel = label(labelIndex);
-  labelIndex += 1;
-  chains.push(`${current}ass=${quote(input.assPath)}${assLabel}`);
-  current = assLabel;
+  if (input.assPath !== undefined) {
+    const assLabel = label(labelIndex);
+    labelIndex += 1;
+    chains.push(`${current}ass=${quote(input.assPath)}${assLabel}`);
+    current = assLabel;
+  }
 
   const overlays = [
     ...(input.compositorOverlays ?? []),
