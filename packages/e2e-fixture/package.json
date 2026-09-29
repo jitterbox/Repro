@@ -1,5 +1,5 @@
 {
-  "name": "@repro/e2e-fixture",
+  "name": "@jitterbox/repro-e2e-fixture",
   "version": "0.2.1",
   "private": true,
   "type": "module",
@@ -18,13 +18,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/capture": "workspace:*",
-    "@repro/cli": "workspace:*",
-    "@repro/compare": "workspace:*",
-    "@repro/core": "workspace:*",
-    "@repro/evaluation": "workspace:*",
-    "@repro/plan": "workspace:*",
-    "@repro/render": "workspace:*",
+    "@jitterbox/repro-capture": "workspace:*",
+    "@jitterbox/repro-cli": "workspace:*",
+    "@jitterbox/repro-compare": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-evaluation": "workspace:*",
+    "@jitterbox/repro-plan": "workspace:*",
+    "@jitterbox/repro-render": "workspace:*",
     "playwright": "1.62.0"
   },
   "devDependencies": {

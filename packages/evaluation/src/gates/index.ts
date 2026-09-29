@@ -1,5 +1,5 @@
 import { withFrameAnalysis } from '../analysis.js';
-import { normalizeQualityResult, type QualityResult } from '@repro/contracts';
+import { normalizeQualityResult, type QualityResult } from '@jitterbox/repro-contracts';
 import { readComposition, readPlan, readTimeline } from './plan-io.js';
 import { checkBottomBand } from './bottom-band.js';
 import { checkCompare } from './compare.js';

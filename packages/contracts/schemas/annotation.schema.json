@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/annotation.schema.json",
   "title": "ReproAnnotation",
-  "description": "Annotation v2. Runtime time ranges use {start,end} to match @repro/core.",
+  "description": "Annotation v2. Runtime time ranges use {start,end} to match @jitterbox/repro-core.",
   "type": "object",
   "required": ["id", "component", "severity"],
   "additionalProperties": false,

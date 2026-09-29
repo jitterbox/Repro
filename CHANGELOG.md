@@ -2,6 +2,8 @@
 
 ## 0.2.1
 
+- Publish packages under `@jitterbox/repro-*`; the CLI command remains `repro`.
+
 - Separate reusable artifact naming policy from each scenario's work-item ID and description; preserve matching video and DevTools filenames.
 - Show supplied or discovered target application version/build metadata throughout a video by default, with configurable discovery and CLI overrides.
 - Export synchronized, sanitized browser diagnostics by default, with an explicit opt-out.

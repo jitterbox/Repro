@@ -1,4 +1,4 @@
-import { enforceOcrAudit } from '@repro/render';
+import { enforceOcrAudit } from '@jitterbox/repro-render';
 import type { GateResult } from '../types/gate.js';
 import type { PlanDocument } from './plan-types.js';
 

@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { parseCompareComposition } from '@repro/contracts';
+import { parseCompareComposition } from '@jitterbox/repro-contracts';
 import {
   piecewisePts,
   comparisonOutputTiming,

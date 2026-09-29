@@ -20,9 +20,8 @@ npx skills@latest add jitterbox/Repro --skill repro-setup repro-capture repro-an
 
 Add `--global` for user-wide skills. `--copy` avoids requiring Windows symlink privileges. Other supported harnesses can be selected interactively. A local checkout or unpacked CLI package works too: `npx skills@latest add ./skills --copy`. See the [installer's official reference](https://github.com/vercel-labs/skills#readme) for discovery, update and removal. This uses the same open installer approach as [Matt Pocock's skills](https://github.com/mattpocock/skills#readme).
 
-**Release status:** the 0.2.1 package/release machinery is prepared in this repository. Publication is a separate maintainer action. Until the package exists in npm and these files are pushed to GitHub, use the source or tarball route below; remote skill installation reads the pushed repository.
 
-## npm installation after publication
+## npm installation
 
 These commands work in PowerShell and Linux shells:
 
@@ -30,13 +29,13 @@ These commands work in PowerShell and Linux shells:
 mkdir repro-evidence
 cd repro-evidence
 npm init -y
-npm install --save-dev @repro/cli@0.2.1 @repro/playwright@0.2.1 @repro/mcp@0.2.1
+npm install --save-dev @jitterbox/repro-cli@0.2.1 @jitterbox/repro-playwright@0.2.1 @jitterbox/repro-mcp@0.2.1
 npx repro setup --system
 npx repro doctor
 npx repro init
 ```
 
-`@repro/mcp` is optional. Keep the CLI and fixture at the same version. Use the project's `npx repro` in subsequent examples; `repro` alone works when installed globally or inside an npm/pnpm script. Project-local installation keeps scenario dependencies available to Playwright. A global CLI alone is insufficient to import `@repro/playwright` in a scenario.
+`@jitterbox/repro-mcp` is optional. Keep the CLI and fixture at the same version. Use the project's `npx repro` in subsequent examples; `repro` alone works when installed globally or inside an npm/pnpm script. Project-local installation keeps scenario dependencies available to Playwright. A global CLI alone is insufficient to import `@jitterbox/repro-playwright` in a scenario.
 
 ## Install from source now
 
@@ -63,7 +62,7 @@ pnpm exec repro setup
 pnpm exec repro init
 ```
 
-The release directory contains local tarball dependencies and checksums. Move the whole directory together. External dependencies still need registry access or a populated package cache; it is not a fully offline browser/system installer. To install skills from this toolchain, use `npx skills@latest add ./node_modules/@repro/cli/skills --copy`.
+The release directory contains local tarball dependencies and checksums. Move the whole directory together. External dependencies still need registry access or a populated package cache; it is not a fully offline browser/system installer. To install skills from this toolchain, use `npx skills@latest add ./node_modules/@jitterbox/repro-cli/skills --copy`.
 
 ## Native dependencies and supported hosts
 
@@ -97,19 +96,19 @@ Use `TESSDATA_PREFIX` when English OCR data is in a custom location. `PLAYWRIGHT
 
 ## MCP
 
-Install `@repro/mcp` beside the CLI. Register its **stdio** executable in the harness's MCP configuration. A shell-independent configuration that works on both operating systems is:
+Install `@jitterbox/repro-mcp` beside the CLI. Register its **stdio** executable in the harness's MCP configuration. A shell-independent configuration that works on both operating systems is:
 
 ```json
 {
   "mcpServers": {
     "repro": {
       "command": "node",
-      "args": ["/absolute/path/to/evidence/node_modules/@repro/mcp/dist/bin.js"]
+      "args": ["/absolute/path/to/evidence/node_modules/@jitterbox/repro-mcp/dist/bin.js"]
     }
   }
 }
 ```
 
-Use a Windows absolute path such as `C:/work/evidence/node_modules/@repro/mcp/dist/bin.js` on Windows. The outer configuration format varies by harness; retain the same command and args. Avoid relying on `npx.cmd` execution through a shell. Tools and resources are enumerated in the [generated MCP reference](reference/mcp.md). The MCP setup tool defaults to dry-run, while the CLI setup command performs the requested installation.
+Use a Windows absolute path such as `C:/work/evidence/node_modules/@jitterbox/repro-mcp/dist/bin.js` on Windows. The outer configuration format varies by harness; retain the same command and args. Avoid relying on `npx.cmd` execution through a shell. Tools and resources are enumerated in the [generated MCP reference](reference/mcp.md). The MCP setup tool defaults to dry-run, while the CLI setup command performs the requested installation.
 
 No AI API key is needed by Repro for capture, render, review or replay. The external harness supplies its model access. ALM upload credentials are independent and needed only for delivery; never place them in scenarios or prompts.

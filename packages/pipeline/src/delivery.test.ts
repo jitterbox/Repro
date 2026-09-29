@@ -1,4 +1,4 @@
-import type * as Alm from '@repro/alm';
+import type * as Alm from '@jitterbox/repro-alm';
 import { mkdtemp, readFile, writeFile, rm, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -9,7 +9,7 @@ const state = vi.hoisted(() => ({
   corrupt: false,
   sent: [] as Uint8Array[],
 }));
-vi.mock('@repro/render', () => ({
+vi.mock('@jitterbox/repro-render', () => ({
   enforceOcrAudit: async ({ path }: { path: string }) => {
     const sha256 = createHash('sha256')
       .update(await readFile(path))
@@ -25,7 +25,7 @@ vi.mock('@repro/render', () => ({
     );
   },
 }));
-vi.mock('@repro/alm', async (original) => ({
+vi.mock('@jitterbox/repro-alm', async (original) => ({
   ...(await original<typeof Alm>()),
   JiraClient: class {
     attachFile({ bytes }: { bytes: Uint8Array }) {

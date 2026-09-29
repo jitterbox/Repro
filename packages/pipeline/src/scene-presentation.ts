@@ -8,17 +8,17 @@ import {
   validatePresentationEdit,
   parsePlan,
   sceneSourceAt,
-} from '@repro/contracts';
-import { ReproConfigSchema } from '@repro/contracts/config';
-import { compileScene, type SceneEvent } from '@repro/plan';
+} from '@jitterbox/repro-contracts';
+import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
+import { compileScene, type SceneEvent } from '@jitterbox/repro-plan';
 import {
   renderScene,
   selectSceneFrame,
   type SceneSourceFrame,
-} from '@repro/compositor';
-import { renderCheckpointImage, PRIVACY_RENDER_METHOD } from '@repro/render';
-import { motionMaskEnvelopes } from '@repro/core';
-import { redactText } from '@repro/core/redactor';
+} from '@jitterbox/repro-compositor';
+import { renderCheckpointImage, PRIVACY_RENDER_METHOD } from '@jitterbox/repro-render';
+import { motionMaskEnvelopes } from '@jitterbox/repro-core';
+import { redactText } from '@jitterbox/repro-core/redactor';
 import {
   verifyRun,
   artifactRef,

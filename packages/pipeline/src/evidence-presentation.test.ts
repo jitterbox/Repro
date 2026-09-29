@@ -1,9 +1,9 @@
-import { measureOverlayTextWidth } from '@repro/plan';
-import { overlayTheme } from '@repro/contracts';
-import { intersects } from '@repro/plan';
+import { measureOverlayTextWidth } from '@jitterbox/repro-plan';
+import { overlayTheme } from '@jitterbox/repro-contracts';
+import { intersects } from '@jitterbox/repro-plan';
 import { expect, it } from 'vitest';
-import { validateEvidence } from '@repro/contracts';
-import type { Observation } from '@repro/contracts';
+import { validateEvidence } from '@jitterbox/repro-contracts';
+import type { Observation } from '@jitterbox/repro-contracts';
 import { compileEvidencePresentation } from './evidence-presentation.js';
 const spec = validateEvidence({
   schemaVersion: '1.0.0',

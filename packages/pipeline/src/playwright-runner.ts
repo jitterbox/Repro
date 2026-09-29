@@ -6,10 +6,10 @@ export function scenarioPlaywrightRunner(spec: string): string {
   const scenario = createRequire(resolve(spec));
   let fixture: string;
   try {
-    fixture = scenario.resolve('@repro/playwright');
+    fixture = scenario.resolve('@jitterbox/repro-playwright');
   } catch (error) {
     throw new Error(
-      'The scenario cannot resolve @repro/playwright. Install the public fixture in its project and import test from @repro/playwright.',
+      'The scenario cannot resolve @jitterbox/repro-playwright. Install the public fixture in its project and import test from @jitterbox/repro-playwright.',
       { cause: error },
     );
   }

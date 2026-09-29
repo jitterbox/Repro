@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Measured interaction remains explicit across absence, scrolling and frames', async ({
   page,
   repro,

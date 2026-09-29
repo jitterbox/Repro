@@ -1,11 +1,11 @@
-# `@repro/e2e-fixture`
+# `@jitterbox/repro-e2e-fixture`
 
 Vitest + Playwright harness that drives ShopLite through the Repro pipeline to
 produce feature-coverage videos under `.repro/fixture-videos/`.
 
 ```bash
 pnpm build
-pnpm --filter @repro/e2e-fixture test:e2e
+pnpm --filter @jitterbox/repro-e2e-fixture test:e2e
 # or from root:
 pnpm test:e2e-fixture
 ```

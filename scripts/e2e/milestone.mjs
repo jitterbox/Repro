@@ -66,12 +66,12 @@ const jobs = [
     'watch-server',
     { REPRO_WATCH_OUT: join(root, 'watch-server') },
   ],
-  ['compositor', null, {}, ['--filter', '@repro/compositor', 'test']],
+  ['compositor', null, {}, ['--filter', '@jitterbox/repro-compositor', 'test']],
   ['shoplite', null, {}, ['test:e2e-fixture']],
   ['legacy-pixels', 'legacy-review-index', {}],
   ['matrix-verification', 'verify-review-matrix', {}],
   ['clean-install', null, {}, ['test:clean-install']],
-  ['agent-mock', null, {}, ['--filter', '@repro/agent-e2e', 'test']],
+  ['agent-mock', null, {}, ['--filter', '@jitterbox/repro-agent-e2e', 'test']],
 ];
 const report = {
   schemaVersion: '1.0.0',

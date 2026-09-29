@@ -1,5 +1,5 @@
 {
-  "name": "@repro/core",
+  "name": "@jitterbox/repro-core",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -26,7 +26,7 @@
   "dependencies": {
     "better-sqlite3": "^13.0.1",
     "zod": "4.4.3",
-    "@repro/contracts": "workspace:*"
+    "@jitterbox/repro-contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13"
@@ -47,5 +47,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/core \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-core \u2014 Repro browser evidence and annotated video pipeline"
 }

@@ -1,4 +1,4 @@
-import { overlayTheme, parseTimeline } from '@repro/contracts';
+import { overlayTheme, parseTimeline } from '@jitterbox/repro-contracts';
 
 import type { BeatDraft, TimeRange } from './types.js';
 
@@ -8,7 +8,7 @@ import type {
   BeatBadge,
   BeatSource,
   Timeline,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 export type {
   BeatKind,
   BeatSource,
@@ -17,7 +17,7 @@ export type {
   Beat,
   TimeMap,
   Timeline,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 
 export interface CompileTimelineInput {
   readonly captureDurationMs: number;

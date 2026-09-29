@@ -5,7 +5,7 @@ import {
   randomUUID,
 } from 'node:crypto';
 
-import { sha256 } from '@repro/core';
+import { sha256 } from '@jitterbox/repro-core';
 
 export interface VaultOptions {
   readonly masterKey?: Uint8Array;

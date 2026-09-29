@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { assertCurrentPrivacyPresentation } from './export.js';
-import { PRIVACY_RENDER_METHOD } from '@repro/render';
+import { PRIVACY_RENDER_METHOD } from '@jitterbox/repro-render';
 
 it('rejects older presentations with pixelated or omitted selector masks despite a previous OCR pass', () => {
   const spec = {

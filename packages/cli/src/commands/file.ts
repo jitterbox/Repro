@@ -1,1 +1,1 @@
-export * from '@repro/pipeline/commands/file';
+export * from '@jitterbox/repro-pipeline/commands/file';

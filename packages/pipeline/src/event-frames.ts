@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import type { EvidenceSpec, Observation, RunManifest } from '@repro/contracts';
-import { runProcess } from '@repro/core';
+import type { EvidenceSpec, Observation, RunManifest } from '@jitterbox/repro-contracts';
+import { runProcess } from '@jitterbox/repro-core';
 import type { CapturedEvent } from './interaction-events.js';
 
 interface Frame {

@@ -1,10 +1,10 @@
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { artifactBaseName } from '@repro/core';
+import { artifactBaseName } from '@jitterbox/repro-core';
 import { expect, it, vi } from 'vitest';
-import type { RunManifest } from '@repro/contracts';
-import type * as Render from '@repro/render';
+import type { RunManifest } from '@jitterbox/repro-contracts';
+import type * as Render from '@jitterbox/repro-render';
 const state = vi.hoisted(() => ({
   run: {} as RunManifest,
   diagnostics: vi.fn(() => Promise.resolve({ kind: 'repro-devtools' })),
@@ -20,7 +20,7 @@ vi.mock('./commands/package.js', () => ({ packageCommand: state.package }));
 vi.mock('./devtools-export.js', () => ({
   buildDevToolsReport: state.diagnostics,
 }));
-vi.mock('@repro/render', async (original) => ({
+vi.mock('@jitterbox/repro-render', async (original) => ({
   ...(await original<typeof Render>()),
   probeMediaDurationMs: () => Promise.resolve(1000),
 }));

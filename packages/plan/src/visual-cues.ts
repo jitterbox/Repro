@@ -1,4 +1,4 @@
-import type { AnnotationComponent } from '@repro/contracts';
+import type { AnnotationComponent } from '@jitterbox/repro-contracts';
 
 import type { AnnotationBox } from './types.js';
 
@@ -6,8 +6,8 @@ import {
   parseVisualCue,
   type VisualCueDocument,
   type VisualCueDraft,
-} from '@repro/contracts';
-export type { VisualCueDocument } from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
+export type { VisualCueDocument } from '@jitterbox/repro-contracts';
 
 const LAYER_BY_COMPONENT: Partial<Record<AnnotationComponent, number>> = {
   redaction: 2,

@@ -317,7 +317,7 @@ Variants: **repro** (failure), **demo** (walkthrough), **compare** (pair IDs).
 
 ---
 
-## 9. Evidence viewer UI (`@repro/viewer`)
+## 9. Evidence viewer UI (`@jitterbox/repro-viewer`)
 
 ### 9.1 Current foundation (extend, don’t discard)
 

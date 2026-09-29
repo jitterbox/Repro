@@ -1,5 +1,5 @@
 {
-  "name": "@repro/mcp",
+  "name": "@jitterbox/repro-mcp",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,8 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/pipeline": "workspace:*",
-    "@repro/contracts": "workspace:*",
+    "@jitterbox/repro-pipeline": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
     "@modelcontextprotocol/sdk": "1.30.0",
     "zod": "4.4.3"
   },
@@ -43,5 +43,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/mcp \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-mcp \u2014 Repro browser evidence and annotated video pipeline"
 }

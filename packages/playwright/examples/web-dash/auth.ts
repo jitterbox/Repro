@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { test as base } from '@repro/playwright';
+import { test as base } from '@jitterbox/repro-playwright';
 
 /** Authenticate before Repro starts its screencast, trace or diagnostics. */
 export const test = base.extend({

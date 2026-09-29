@@ -1,5 +1,5 @@
 import type { EvidenceManifest } from './package.js';
-import type * as Core from '@repro/core';
+import type * as Core from '@jitterbox/repro-core';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,7 @@ const state = vi.hoisted(() => ({
   available: true,
   models: '',
 }));
-vi.mock('@repro/core', async (original) => ({
+vi.mock('@jitterbox/repro-core', async (original) => ({
   ...(await original<typeof Core>()),
   runProcess: (_command: string, args: string[]) => {
     if (!state.available) return Promise.reject(new Error('missing OCR'));
@@ -22,7 +22,7 @@ vi.mock('@repro/core', async (original) => ({
     );
   },
 }));
-vi.mock('@repro/render', () => ({
+vi.mock('@jitterbox/repro-render', () => ({
   enforceOcrAudit: async ({ path }: { path: string }) => {
     state.audits++;
     if (!state.available) throw new Error('Required OCR is missing');

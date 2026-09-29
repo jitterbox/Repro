@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { generateAss } from './ass.js';
 
-import type { ReproPlan, Timeline } from '@repro/plan';
+import type { ReproPlan, Timeline } from '@jitterbox/repro-plan';
 
 describe('ASS generation', () => {
   it('uses legible explicit text sizes and omits animation fades for checkpoint images', () => {

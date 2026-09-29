@@ -4,7 +4,7 @@ import {
   treatmentCatalog,
   parseTreatmentPlan,
   watchServerSchema,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
@@ -26,7 +26,7 @@ import {
   exportEvidence,
   renderEvidence,
   renderScenePair,
-} from '@repro/pipeline';
+} from '@jitterbox/repro-pipeline';
 import {
   appVersionJsonSchema,
   bugBriefJsonSchema,
@@ -42,7 +42,7 @@ import {
   qualityResultSchema,
   capabilitySchema,
   shareReportSchema,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });

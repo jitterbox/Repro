@@ -1,4 +1,4 @@
-import { headlessShellPath } from '@repro/compositor';
+import { headlessShellPath } from '@jitterbox/repro-compositor';
 import { createRequire } from 'node:module';
 import { access } from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -6,8 +6,8 @@ import {
   capabilities,
   describeCapability,
   validateEvidence,
-} from '@repro/contracts';
-import { runProcess } from '@repro/core';
+} from '@jitterbox/repro-contracts';
+import { runProcess } from '@jitterbox/repro-core';
 export { capabilities, describeCapability, validateEvidence };
 export const recipes = ['interaction', 'geometry', 'transient'].map((kind) =>
   validateEvidence({
@@ -149,7 +149,7 @@ export async function doctor() {
       if (process.platform !== 'win32')
         return runProcess('fc-match', ['sans-serif']);
       const resolver = createRequire(
-        createRequire(import.meta.url).resolve('@repro/compositor'),
+        createRequire(import.meta.url).resolve('@jitterbox/repro-compositor'),
       );
       await access(
         resolver.resolve(

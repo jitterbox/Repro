@@ -1,1 +1,1 @@
-export { mapComparisonTime, type SyncKnot } from '@repro/contracts';
+export { mapComparisonTime, type SyncKnot } from '@jitterbox/repro-contracts';

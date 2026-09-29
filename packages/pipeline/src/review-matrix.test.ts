@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { FeatureFlagsSchema } from '@repro/contracts/config';
+import { FeatureFlagsSchema } from '@jitterbox/repro-contracts/config';
 import { bugStrategies } from './bug-strategies.js';
 const catalog = JSON.parse(
   readFileSync(

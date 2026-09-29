@@ -1,1 +1,1 @@
-export * from '@repro/pipeline/commands/validate-config';
+export * from '@jitterbox/repro-pipeline/commands/validate-config';

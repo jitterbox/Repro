@@ -1,7 +1,7 @@
 import { expect, it, vi } from 'vitest';
 import type { Locator, Page } from '@playwright/test';
-import type { CaptureSession } from '@repro/capture';
-import { validateEvidence } from '@repro/contracts';
+import type { CaptureSession } from '@jitterbox/repro-capture';
+import { validateEvidence } from '@jitterbox/repro-contracts';
 import { EvidenceRecorder } from './index.js';
 
 it('does not invent a crop when a target moves across the screenshot interval', async () => {

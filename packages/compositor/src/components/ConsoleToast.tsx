@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { severityColor } from '@repro/contracts';
+import { severityColor } from '@jitterbox/repro-contracts';
 
 import type { ConsoleLevel, ConsoleToastProps } from '../types.js';
 

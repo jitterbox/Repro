@@ -1,6 +1,6 @@
-import { appVersionSchema, type RunManifest } from '@repro/contracts';
-import type { ReproConfig } from '@repro/core';
-import { redactText } from '@repro/core/redactor';
+import { appVersionSchema, type RunManifest } from '@jitterbox/repro-contracts';
+import type { ReproConfig } from '@jitterbox/repro-core';
+import { redactText } from '@jitterbox/repro-core/redactor';
 
 export interface VersionOverlayOptions {
   appVersion?: string;

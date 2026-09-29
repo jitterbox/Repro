@@ -1,1 +1,1 @@
-export * from '@repro/contracts/config-validator';
+export * from '@jitterbox/repro-contracts/config-validator';

@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { appVersionLabel } from './app-version.js';
-import { ReproConfigSchema } from '@repro/core';
-import type { RunManifest } from '@repro/contracts';
+import { ReproConfigSchema } from '@jitterbox/repro-core';
+import type { RunManifest } from '@jitterbox/repro-contracts';
 
 const config = ReproConfigSchema.parse({
   mode: 'repro',

@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Account details remain visible throughout loading', async ({
   page,
   repro,

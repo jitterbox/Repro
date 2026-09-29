@@ -34,8 +34,8 @@ import {
   driveToastStack,
 } from '../src/scenarios/drivers.js';
 
-import type { CompareManifest } from '@repro/compare';
-import type { ReproConfig } from '@repro/core';
+import type { CompareManifest } from '@jitterbox/repro-compare';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 describe('ShopLite feature-coverage videos', () => {
   it('repro-functional-menu covers stacking + steps + showActions', async () => {

@@ -48,7 +48,7 @@ async function importDistEvaluation() {
     return await import('../../packages/evaluation/dist/index.js');
   } catch (error) {
     throw new Error(
-      'Build @repro/evaluation before running golden evaluation.',
+      'Build @jitterbox/repro-evaluation before running golden evaluation.',
       { cause: error },
     );
   }

@@ -6,18 +6,18 @@ import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { cliStageCacheKey } from './commands/stages.js';
 import { compileEvidencePresentation } from './evidence-presentation.js';
-import { parsePlan } from '@repro/contracts';
+import { parsePlan } from '@jitterbox/repro-contracts';
 import {
   renderPlan,
   renderCheckpointImage,
   PRIVACY_RENDER_METHOD,
-} from '@repro/render';
+} from '@jitterbox/repro-render';
 import {
   validateEvidence,
   validatePresentationEdit,
   hitTestOutline,
-} from '@repro/contracts';
-import { ReproConfigSchema } from '@repro/contracts/config';
+} from '@jitterbox/repro-contracts';
+import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
 import {
   artifactRef,
   containedArtifact,
@@ -29,7 +29,7 @@ import {
   enumerateFonts,
   runProcess,
   motionMaskEnvelopes,
-} from '@repro/core';
+} from '@jitterbox/repro-core';
 
 export async function renderEvidence(
   directory: string,

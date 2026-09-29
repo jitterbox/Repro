@@ -7,7 +7,7 @@ import {
 } from './theme.js';
 
 import type { Severity } from './theme.js';
-import type { AnnotationBox, Chapter, Rect, ReproPlan } from '@repro/plan';
+import type { AnnotationBox, Chapter, Rect, ReproPlan } from '@jitterbox/repro-plan';
 
 export interface GenerateAssInput {
   readonly plan: ReproPlan;

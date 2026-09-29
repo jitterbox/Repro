@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { BrowserContext } from 'playwright';
 import { expect, it, vi } from 'vitest';
-import * as core from '@repro/core';
+import * as core from '@jitterbox/repro-core';
 import { CaptureSession } from './capture-session.js';
 it('closes its store when initialization fails while leaving caller-owned contexts alone', async () => {
   const outputDir = await mkdtemp(join(tmpdir(), 'repro-init-failure-'));

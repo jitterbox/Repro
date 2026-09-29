@@ -6,8 +6,8 @@ import {
   enumerateFonts,
   implementationDigest,
   withFileLock,
-} from '@repro/core';
-import { overlayTheme } from '@repro/contracts';
+} from '@jitterbox/repro-core';
+import { overlayTheme } from '@jitterbox/repro-contracts';
 import { chromium, type Browser, type Page } from 'playwright';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';

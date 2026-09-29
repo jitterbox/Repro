@@ -2,8 +2,8 @@ import { bandedDtw } from './dtw.js';
 
 import type { DtwSample } from './dtw.js';
 
-import type { SyncAnchor } from '@repro/contracts';
-export type { SyncAnchor } from '@repro/contracts';
+import type { SyncAnchor } from '@jitterbox/repro-contracts';
+export type { SyncAnchor } from '@jitterbox/repro-contracts';
 
 export interface SyncMap {
   readonly strategy: 'anchored-dtw';

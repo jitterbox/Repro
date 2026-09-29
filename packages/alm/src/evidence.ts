@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto';
 
-import { canonicalJson, sha256 } from '@repro/core';
+import { canonicalJson, sha256 } from '@jitterbox/repro-core';
 
-import type { HashInput } from '@repro/core';
+import type { HashInput } from '@jitterbox/repro-core';
 
 export type JsonEvidence =
   | string

@@ -1,1 +1,1 @@
-export * from '@repro/contracts/config';
+export * from '@jitterbox/repro-contracts/config';

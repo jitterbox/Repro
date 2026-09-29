@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { overlayTheme } from '@repro/contracts';
+import { overlayTheme } from '@jitterbox/repro-contracts';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import opentype from 'opentype.js';

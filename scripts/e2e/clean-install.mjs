@@ -34,7 +34,7 @@ await exec(install.command, install.args, {
   cwd: project,
   maxBuffer: 8 * 1024 * 1024,
 });
-const cli = join(project, 'node_modules/@repro/cli/dist/bin.js');
+const cli = join(project, 'node_modules/@jitterbox/repro-cli/dist/bin.js');
 // A nested evidence project must not inherit its host app's compiler setup.
 await writeFile(
   join(root, 'tsconfig.json'),
@@ -59,10 +59,10 @@ await exec(
      import { realpathSync } from 'node:fs';
      import { pathToFileURL } from 'node:url';
      import assert from 'node:assert/strict';
-     await import('@repro/playwright'); await import('@repro/mcp');
+     await import('@jitterbox/repro-playwright'); await import('@jitterbox/repro-mcp');
      const cliRequire = createRequire(realpathSync(${JSON.stringify(cli)}));
-     const pipelineRequire = createRequire(cliRequire.resolve('@repro/pipeline'));
-     const { loadCoverageMatrix } = await import(pathToFileURL(pipelineRequire.resolve('@repro/evaluation')).href);
+     const pipelineRequire = createRequire(cliRequire.resolve('@jitterbox/repro-pipeline'));
+     const { loadCoverageMatrix } = await import(pathToFileURL(pipelineRequire.resolve('@jitterbox/repro-evaluation')).href);
      assert.equal((await loadCoverageMatrix()).compareLayouts.length, 7);`,
   ],
   { cwd: project },

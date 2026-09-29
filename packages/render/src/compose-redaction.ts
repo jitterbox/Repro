@@ -4,7 +4,7 @@ import {
 } from './redaction-filters.js';
 import { rrwebInvertedSafeDefaults } from './redaction/source-mask.js';
 
-import type { Rect, ReproPlan } from '@repro/plan';
+import type { Rect, ReproPlan } from '@jitterbox/repro-plan';
 import type { RrwebMaskOptions } from './redaction/source-mask.js';
 
 export interface ComposeRedactionInput {

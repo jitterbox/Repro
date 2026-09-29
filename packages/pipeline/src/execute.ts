@@ -6,8 +6,8 @@ import { compareEvidence } from './comparison.js';
 import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, writeFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { runProcess, artifactBaseName, ReproConfigSchema } from '@repro/core';
-import { validateEvidence, appVersionSchema } from '@repro/contracts';
+import { runProcess, artifactBaseName, ReproConfigSchema } from '@jitterbox/repro-core';
+import { validateEvidence, appVersionSchema } from '@jitterbox/repro-contracts';
 import { recipes } from './discovery.js';
 import { readRun } from './evidence-run.js';
 import { scenarioPlaywrightRunner } from './playwright-runner.js';
@@ -168,7 +168,7 @@ export async function runScenario(options: RunOptions) {
     executionError:
       runs.length === 0
         ? (executionError ??
-          'No Repro fixture evidence produced. Import test from @repro/playwright.')
+          'No Repro fixture evidence produced. Import test from @jitterbox/repro-playwright.')
         : executionError,
     baseline: options.baseline ?? null,
   };
@@ -232,8 +232,8 @@ export async function initScenario(
         null,
         2,
       ) + '\n',
-    'playwright.config.ts': `import { defineConfig } from '@playwright/test';\nexport default defineConfig({ testDir: '.', testMatch: 'scenario.spec.ts', use: { viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'UTC', serviceWorkers: 'block', reducedMotion: 'reduce' }, reporter: [['list'], ['@repro/playwright/reporter']] });\n`,
-    'scenario.spec.ts': `import { test, expect } from '@repro/playwright';\n\ntest('Checkout accepts pointer input', async ({ page, repro }) => {\n  await repro.step('prepare', async () => {\n    await page.goto(process.env.REPRO_URL!);\n    repro.target('target', page.getByRole('button', { name: 'Checkout', exact: true }));\n  });\n  await repro.step('trigger', async () => {\n    await repro.hitTest('result', 'target');\n    await page.getByRole('button', { name: 'Checkout', exact: true }).click({ timeout: 2000 }).catch(error => {\n      if (!String(error).includes('intercepts pointer events')) throw error;\n    });\n  });\n  await repro.step('verify', async () => {\n    await repro.outcome('result', () => expect(page.getByRole('heading', { name: 'Checkout' })).toBeVisible({ timeout: 2000 }));\n    await repro.checkpoint('result');\n  });\n});\n`,
+    'playwright.config.ts': `import { defineConfig } from '@playwright/test';\nexport default defineConfig({ testDir: '.', testMatch: 'scenario.spec.ts', use: { viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'UTC', serviceWorkers: 'block', reducedMotion: 'reduce' }, reporter: [['list'], ['@jitterbox/repro-playwright/reporter']] });\n`,
+    'scenario.spec.ts': `import { test, expect } from '@jitterbox/repro-playwright';\n\ntest('Checkout accepts pointer input', async ({ page, repro }) => {\n  await repro.step('prepare', async () => {\n    await page.goto(process.env.REPRO_URL!);\n    repro.target('target', page.getByRole('button', { name: 'Checkout', exact: true }));\n  });\n  await repro.step('trigger', async () => {\n    await repro.hitTest('result', 'target');\n    await page.getByRole('button', { name: 'Checkout', exact: true }).click({ timeout: 2000 }).catch(error => {\n      if (!String(error).includes('intercepts pointer events')) throw error;\n    });\n  });\n  await repro.step('verify', async () => {\n    await repro.outcome('result', () => expect(page.getByRole('heading', { name: 'Checkout' })).toBeVisible({ timeout: 2000 }));\n    await repro.checkpoint('result');\n  });\n});\n`,
   };
   for (const [name, content] of Object.entries(files))
     await writeFile(join(directory, name), content, { flag: 'wx' });
@@ -251,7 +251,7 @@ export async function recordScenario(url: string, output = 'scenario.spec.ts') {
   ]);
   return {
     path: resolve(output),
-    next: 'Import test and expect from @repro/playwright, bind targets, and commit evidence.json with designated outcome checks.',
+    next: 'Import test and expect from @jitterbox/repro-playwright, bind targets, and commit evidence.json with designated outcome checks.',
   };
 }
 

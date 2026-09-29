@@ -1,1 +1,1 @@
-import { defineConfig } from '@playwright/test'; export default defineConfig({testDir:'.',testMatch:'scenario.spec.ts',use:{viewport:{width:1280,height:720},deviceScaleFactor:1,locale:'en-US',timezoneId:'UTC'},reporter:[['list'],['@repro/playwright/reporter']]});
+import { defineConfig } from '@playwright/test'; export default defineConfig({testDir:'.',testMatch:'scenario.spec.ts',use:{viewport:{width:1280,height:720},deviceScaleFactor:1,locale:'en-US',timezoneId:'UTC'},reporter:[['list'],['@jitterbox/repro-playwright/reporter']]});

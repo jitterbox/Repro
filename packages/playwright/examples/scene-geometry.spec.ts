@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Invoice total aligns with its reference after refresh', async ({
   page,
   repro,

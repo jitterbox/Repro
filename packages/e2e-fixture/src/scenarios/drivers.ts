@@ -1,7 +1,7 @@
 import { testId, type BugWorkItem } from '../bugs.js';
 import { waitReady } from '../harness.js';
 
-import type { CaptureSession } from '@repro/capture';
+import type { CaptureSession } from '@jitterbox/repro-capture';
 
 export async function driveMenuExport(session: CaptureSession): Promise<void> {
   const page = session.page;

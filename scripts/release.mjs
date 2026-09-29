@@ -45,9 +45,9 @@ export async function packRelease(destination) {
     packageManager: 'pnpm@9.15.0',
     engines: { node: '>=22' },
     dependencies: {
-      '@repro/cli': overrides['@repro/cli'],
-      '@repro/playwright': overrides['@repro/playwright'],
-      '@repro/mcp': overrides['@repro/mcp'],
+      '@jitterbox/repro-cli': overrides['@jitterbox/repro-cli'],
+      '@jitterbox/repro-playwright': overrides['@jitterbox/repro-playwright'],
+      '@jitterbox/repro-mcp': overrides['@jitterbox/repro-mcp'],
       '@playwright/test': '1.62.0',
     },
     pnpm: { overrides },

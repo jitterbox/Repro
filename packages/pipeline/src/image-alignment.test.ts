@@ -1,8 +1,8 @@
 import { expect, it, vi } from 'vitest';
-import type { Observation } from '@repro/contracts';
+import type { Observation } from '@jitterbox/repro-contracts';
 import { alignCheckpointImages } from './image-alignment.js';
 // Synthetic similarity scores exercise correspondence rules; browser acceptance measures PNG pixels.
-vi.mock('@repro/evaluation', () => ({
+vi.mock('@jitterbox/repro-evaluation', () => ({
   compareDecodedPng: (a: Buffer, b: Buffer) => ({
     ratio: a[0] === b[0] ? 0 : 0.2,
   }),

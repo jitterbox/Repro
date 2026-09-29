@@ -5,7 +5,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 
-import { getProbeInitScript, sampleDocumentClock } from '@repro/probe';
+import { getProbeInitScript, sampleDocumentClock } from '@jitterbox/repro-probe';
 import {
   REPRO_CORE_VERSION,
   MonotonicClockBridge,
@@ -14,8 +14,8 @@ import {
   implementationDigest,
   enumerateFonts,
   writeStageAtomic,
-} from '@repro/core';
-import { createPresidioLikeRedactor } from '@repro/core/redactor';
+} from '@jitterbox/repro-core';
+import { createPresidioLikeRedactor } from '@jitterbox/repro-core/redactor';
 import { chromium } from 'playwright';
 
 import { captureAnchor } from './anchors.js';
@@ -51,8 +51,8 @@ import type {
   ReproConfig,
   StageManifest,
   Viewport,
-} from '@repro/core';
-import type { StreamRedactor } from '@repro/core/redactor';
+} from '@jitterbox/repro-core';
+import type { StreamRedactor } from '@jitterbox/repro-core/redactor';
 import type { CaptureProfileOptions } from './profiles.js';
 
 export interface CaptureSessionOptions {
@@ -1099,13 +1099,13 @@ function actionScreencastFrom(
 
 function captureStageVersions(): Record<string, string> {
   return {
-    '@repro/capture': REPRO_CAPTURE_STAGE_VERSION,
-    '@repro/core': REPRO_CORE_VERSION,
+    '@jitterbox/repro-capture': REPRO_CAPTURE_STAGE_VERSION,
+    '@jitterbox/repro-core': REPRO_CORE_VERSION,
     captureImplementation: implementationDigest(
       new URL('./index.js', import.meta.url).href,
     ),
     probeImplementation: implementationDigest(
-      createRequire(import.meta.url).resolve('@repro/probe'),
+      createRequire(import.meta.url).resolve('@jitterbox/repro-probe'),
     ),
   };
 }

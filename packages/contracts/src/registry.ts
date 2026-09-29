@@ -400,7 +400,7 @@ const fixtureCapabilities = [
     'Designate the proof assertion',
     "await repro.outcome('result', () => expect(page.getByRole('heading')).toHaveText('Checkout'))",
     'Record an executed Playwright assertion. A before mismatch may prove reproduction; after must pass. Setup, browser and unrelated code errors are not proof. Pass a third Page argument for a popup assertion.',
-    'Use expect from @repro/playwright and a declared checkpoint.',
+    'Use expect from @jitterbox/repro-playwright and a declared checkpoint.',
     'Check assertionPassed false before and true after; inspect the resulting state.',
   ],
   [

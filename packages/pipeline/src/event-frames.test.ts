@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { validateEvidence } from '@repro/contracts';
+import { validateEvidence } from '@jitterbox/repro-contracts';
 import { selectEventFrame } from './event-frames.js';
 const spec = validateEvidence({
   schemaVersion: '1.0.0',

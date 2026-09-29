@@ -1,6 +1,6 @@
 import { composeRedactionFilter } from './compose-redaction.js';
 
-import type { ReproPlan, Timeline } from '@repro/plan';
+import type { ReproPlan, Timeline } from '@jitterbox/repro-plan';
 
 export interface CompositorOverlayInput {
   readonly streamIndex: number;

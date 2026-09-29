@@ -1,7 +1,7 @@
-import { overlayTheme } from '@repro/contracts';
+import { overlayTheme } from '@jitterbox/repro-contracts';
 
 import type { AnnotationBox, Point, Rect } from './types.js';
-import type { Viewport } from '@repro/core';
+import type { Viewport } from '@jitterbox/repro-core';
 
 export interface PlaceAnnotationsInput {
   readonly annotations: readonly AnnotationBox[];

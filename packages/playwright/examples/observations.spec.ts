@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Checkout status appears and disappears with response evidence', async ({
   page,
   repro,

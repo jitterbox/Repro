@@ -9,8 +9,8 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { scenePlanSchema, type RunManifest } from '@repro/contracts';
-import { parsePlan } from '@repro/contracts';
+import { scenePlanSchema, type RunManifest } from '@jitterbox/repro-contracts';
+import { parsePlan } from '@jitterbox/repro-contracts';
 import {
   buildDevToolsReport,
   assertDiagnosticPolicy,

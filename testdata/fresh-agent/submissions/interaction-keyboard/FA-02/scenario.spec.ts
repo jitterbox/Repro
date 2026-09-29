@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('FA-02 Escape closes the dialog and returns focus to Edit display name.', async ({page,repro})=>{
  const target=page.getByRole('button',{name:'Edit display name',exact:true}); const reference=page.getByRole('link',{name:'Help',exact:true});
  await repro.step('prepare',async()=>{await page.goto(process.env.REPRO_URL!);repro.target('target',target);repro.target('reference',reference);await repro.check('ready','Correct page and enabled opener',async()=>{await expect(page.getByRole('heading',{name:'Workspace settings',exact:true})).toBeVisible();await expect(target).toBeEnabled();});await repro.checkpoint('ready');});

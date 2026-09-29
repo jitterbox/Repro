@@ -1,22 +1,22 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import type { CardSpec } from '@repro/compositor';
+import type { CardSpec } from '@jitterbox/repro-compositor';
 import { join } from 'node:path';
 
-import { evidenceFilename } from '@repro/alm';
-import { closeCompositor, renderCards } from '@repro/compositor';
-import { validateAgainst } from '@repro/contracts';
+import { evidenceFilename } from '@jitterbox/repro-alm';
+import { closeCompositor, renderCards } from '@jitterbox/repro-compositor';
+import { validateAgainst } from '@jitterbox/repro-contracts';
 import {
   REPRO_PLAN_VERSION,
   annotationsToVisualCues,
   buildPlan,
   buildSlate,
-} from '@repro/plan';
+} from '@jitterbox/repro-plan';
 import {
   REPRO_RENDER_VERSION,
   probeMediaDurationMs,
   renderPlan,
-} from '@repro/render';
+} from '@jitterbox/repro-render';
 
 import {
   loadConfig,
@@ -33,16 +33,16 @@ import {
   writeCliStage,
 } from './stages.js';
 
-import type { SlateMode } from '@repro/compositor';
+import type { SlateMode } from '@jitterbox/repro-compositor';
 import type {
   EventRecord,
   HashInput,
   JsonValue,
   ReproConfig,
   StageManifest,
-} from '@repro/core';
-import type { ReproPlan, SlateEnvironment } from '@repro/plan';
-import type { RenderPlanResult } from '@repro/render';
+} from '@jitterbox/repro-core';
+import type { ReproPlan, SlateEnvironment } from '@jitterbox/repro-plan';
+import type { RenderPlanResult } from '@jitterbox/repro-render';
 
 export interface AnnotateCommandOptions {
   readonly config: string;
@@ -340,13 +340,13 @@ function encodeInputs(input: {
 
 function composeVersions(): Record<string, string> {
   return {
-    '@repro/plan': REPRO_PLAN_VERSION,
+    '@jitterbox/repro-plan': REPRO_PLAN_VERSION,
   };
 }
 
 function encodeVersions(): Record<string, string> {
   return {
-    '@repro/render': REPRO_RENDER_VERSION,
+    '@jitterbox/repro-render': REPRO_RENDER_VERSION,
   };
 }
 

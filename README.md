@@ -16,14 +16,13 @@ Choose your harness—Claude Code, Cursor, Codex or another supported agent—an
 
 The setup skill installs the CLI and checks Chromium, FFmpeg and OCR. Skills are portable instructions around the same CLI; they do not supply an AI model. [Installation guide →](docs/installation.md)
 
-**0.2.1 release status:** package preparation is implemented; npm publication and pushing these changes are separate release steps. Until published, use the [source or packed-toolchain installation](docs/installation.md#install-from-source-now). Remote skill installation reads the pushed GitHub repository.
 
 ## Install the CLI
 
-Once 0.2.1 is published, from an evidence project with Node 22+:
+From an evidence project with Node 22+:
 
 ```sh
-npm install --save-dev @repro/cli@0.2.1 @repro/playwright@0.2.1
+npm install --save-dev @jitterbox/repro-cli@0.2.1 @jitterbox/repro-playwright@0.2.1
 npx repro setup --system
 npx repro doctor
 npx repro init DASH2R-949 --description "Mobile metric overflow"
@@ -31,7 +30,7 @@ npx repro init DASH2R-949 --description "Mobile metric overflow"
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
 
-Optional: install `@repro/mcp@0.2.1` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
+Optional: install `@jitterbox/repro-mcp@0.2.1` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
 
 ## Record a website—with or without its source
 

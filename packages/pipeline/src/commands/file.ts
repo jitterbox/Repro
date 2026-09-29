@@ -1,12 +1,12 @@
 import { deliverEvidence } from '../delivery.js';
 import { basename } from 'node:path';
 
-import { evidenceFilename, uploadEvidence } from '@repro/alm';
-import { enforceOcrAudit } from '@repro/render';
+import { evidenceFilename, uploadEvidence } from '@jitterbox/repro-alm';
+import { enforceOcrAudit } from '@jitterbox/repro-render';
 
 import { loadConfig } from './io.js';
 
-import type { AlmSystem } from '@repro/alm';
+import type { AlmSystem } from '@jitterbox/repro-alm';
 
 export interface FileCommandOptions {
   readonly config?: string;

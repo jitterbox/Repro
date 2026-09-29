@@ -11,7 +11,7 @@ export default defineConfig({
     reducedMotion: 'no-preference',
   },
   webServer: {
-    command: 'pnpm --filter @repro/shoplite dev --host 127.0.0.1',
+    command: 'pnpm --filter @jitterbox/repro-shoplite dev --host 127.0.0.1',
     cwd: '../../..',
     url: 'http://127.0.0.1:5177',
     reuseExistingServer: true,

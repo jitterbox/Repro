@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { emitFeatureAnnotations } from './features.js';
 
-import type { EventRecord, ReproConfig } from '@repro/core';
+import type { EventRecord, ReproConfig } from '@jitterbox/repro-core';
 
 const config = {
   features: {

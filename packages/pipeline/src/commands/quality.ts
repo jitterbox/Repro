@@ -1,7 +1,7 @@
 import {
   buildQualityReport,
   qualityMetricsFromValues,
-} from '@repro/evaluation';
+} from '@jitterbox/repro-evaluation';
 
 import { readJson, writeJson } from './io.js';
 
@@ -9,7 +9,7 @@ import type {
   QualityMetric,
   QualityMetricValues,
   QualityReport,
-} from '@repro/evaluation';
+} from '@jitterbox/repro-evaluation';
 
 type MutableQualityMetricValues = {
   -readonly [Key in keyof QualityMetricValues]?: number;

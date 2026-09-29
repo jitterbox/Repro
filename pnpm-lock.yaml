@@ -65,22 +65,22 @@ importers:
 
   packages/agent-e2e:
     dependencies:
-      '@repro/capture':
+      '@jitterbox/repro-capture':
         specifier: workspace:*
         version: link:../capture
-      '@repro/cli':
+      '@jitterbox/repro-cli':
         specifier: workspace:*
         version: link:../cli
-      '@repro/compare':
+      '@jitterbox/repro-compare':
         specifier: workspace:*
         version: link:../compare
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/e2e-fixture':
+      '@jitterbox/repro-e2e-fixture':
         specifier: workspace:*
         version: link:../e2e-fixture
-      '@repro/evaluation':
+      '@jitterbox/repro-evaluation':
         specifier: workspace:*
         version: link:../evaluation
     devDependencies:
@@ -90,16 +90,16 @@ importers:
 
   packages/alm:
     dependencies:
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
 
   packages/capture:
     dependencies:
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/probe':
+      '@jitterbox/repro-probe':
         specifier: workspace:*
         version: link:../probe
       playwright:
@@ -108,10 +108,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/pipeline':
+      '@jitterbox/repro-pipeline':
         specifier: workspace:*
         version: link:../pipeline
       commander:
@@ -123,10 +123,10 @@ importers:
 
   packages/compare:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
 
@@ -141,10 +141,10 @@ importers:
       '@hyperframes/engine':
         specifier: 0.8.87
         version: 0.8.87(@types/node@22.20.1)
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
       playwright:
@@ -178,7 +178,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
       better-sqlite3:
@@ -194,25 +194,25 @@ importers:
 
   packages/e2e-fixture:
     dependencies:
-      '@repro/capture':
+      '@jitterbox/repro-capture':
         specifier: workspace:*
         version: link:../capture
-      '@repro/cli':
+      '@jitterbox/repro-cli':
         specifier: workspace:*
         version: link:../cli
-      '@repro/compare':
+      '@jitterbox/repro-compare':
         specifier: workspace:*
         version: link:../compare
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/evaluation':
+      '@jitterbox/repro-evaluation':
         specifier: workspace:*
         version: link:../evaluation
-      '@repro/plan':
+      '@jitterbox/repro-plan':
         specifier: workspace:*
         version: link:../plan
-      '@repro/render':
+      '@jitterbox/repro-render':
         specifier: workspace:*
         version: link:../render
       playwright:
@@ -228,13 +228,13 @@ importers:
 
   packages/evaluation:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/render':
+      '@jitterbox/repro-render':
         specifier: workspace:*
         version: link:../render
       pixelmatch:
@@ -253,10 +253,10 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0(zod@4.4.3)
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/pipeline':
+      '@jitterbox/repro-pipeline':
         specifier: workspace:*
         version: link:../pipeline
       zod:
@@ -268,37 +268,37 @@ importers:
       '@playwright/test':
         specifier: 1.62.0
         version: 1.62.0
-      '@repro/alm':
+      '@jitterbox/repro-alm':
         specifier: workspace:*
         version: link:../alm
-      '@repro/capture':
+      '@jitterbox/repro-capture':
         specifier: workspace:*
         version: link:../capture
-      '@repro/compare':
+      '@jitterbox/repro-compare':
         specifier: workspace:*
         version: link:../compare
-      '@repro/compositor':
+      '@jitterbox/repro-compositor':
         specifier: workspace:*
         version: link:../compositor
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/evaluation':
+      '@jitterbox/repro-evaluation':
         specifier: workspace:*
         version: link:../evaluation
-      '@repro/plan':
+      '@jitterbox/repro-plan':
         specifier: workspace:*
         version: link:../plan
-      '@repro/render':
+      '@jitterbox/repro-render':
         specifier: workspace:*
         version: link:../render
-      '@repro/vault':
+      '@jitterbox/repro-vault':
         specifier: workspace:*
         version: link:../vault
-      '@repro/viewer':
+      '@jitterbox/repro-viewer':
         specifier: workspace:*
         version: link:../viewer
       esbuild:
@@ -313,10 +313,10 @@ importers:
 
   packages/plan:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
       opentype.js:
@@ -335,19 +335,19 @@ importers:
       '@playwright/test':
         specifier: 1.62.0
         version: 1.62.0
-      '@repro/capture':
+      '@jitterbox/repro-capture':
         specifier: workspace:*
         version: link:../capture
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/pipeline':
+      '@jitterbox/repro-pipeline':
         specifier: workspace:*
         version: link:../pipeline
-      '@repro/probe':
+      '@jitterbox/repro-probe':
         specifier: workspace:*
         version: link:../probe
 
@@ -366,28 +366,28 @@ importers:
 
   packages/render:
     dependencies:
-      '@repro/compare':
+      '@jitterbox/repro-compare':
         specifier: workspace:*
         version: link:../compare
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@repro/plan':
+      '@jitterbox/repro-plan':
         specifier: workspace:*
         version: link:../plan
 
   packages/vault:
     dependencies:
-      '@repro/core':
+      '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
 
   packages/viewer:
     dependencies:
-      '@repro/contracts':
+      '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:

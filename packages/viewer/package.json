@@ -1,5 +1,5 @@
 {
-  "name": "@repro/viewer",
+  "name": "@jitterbox/repro-viewer",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -25,7 +25,7 @@
     "vite": "^6.0.7"
   },
   "dependencies": {
-    "@repro/contracts": "workspace:*"
+    "@jitterbox/repro-contracts": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -43,5 +43,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/viewer \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-viewer \u2014 Repro browser evidence and annotated video pipeline"
 }

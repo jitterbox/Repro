@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mapBounded, runProcess as executeProcess } from '@repro/core';
+import { mapBounded, runProcess as executeProcess } from '@jitterbox/repro-core';
 import { spawn } from 'node:child_process';
 import {
   access,
@@ -12,8 +12,8 @@ import {
 import { tmpdir } from 'node:os';
 import { basename, dirname, extname, join, parse } from 'node:path';
 
-import type { Rect } from '@repro/plan';
-import type { ReproConfig } from '@repro/core';
+import type { Rect } from '@jitterbox/repro-plan';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 import { DEFAULT_CANARY_SECRET } from './redaction/canaries.js';
 import { createPresidioLikeRedactor } from './redaction/presidio.js';

@@ -99,7 +99,7 @@ describe('zod mirrors', () => {
     expect(parsed.determinism.level).toBe('best-effort');
   });
 
-  it('parses config fixture via @repro/core', () => {
+  it('parses config fixture via @jitterbox/repro-core', () => {
     const data = loadFixture('config');
     const parsed = parseReproConfig(data);
     expect(parsed.mode).toBe('repro');

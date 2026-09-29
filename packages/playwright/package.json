@@ -1,5 +1,5 @@
 {
-  "name": "@repro/playwright",
+  "name": "@jitterbox/repro-playwright",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -24,13 +24,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/capture": "workspace:*",
-    "@repro/core": "workspace:*",
-    "@repro/contracts": "workspace:*",
-    "@repro/pipeline": "workspace:*",
+    "@jitterbox/repro-capture": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-pipeline": "workspace:*",
     "@playwright/test": "1.62.0",
     "@axe-core/playwright": "4.13.0",
-    "@repro/probe": "workspace:*"
+    "@jitterbox/repro-probe": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -48,5 +48,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/playwright \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-playwright \u2014 Repro browser evidence and annotated video pipeline"
 }

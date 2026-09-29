@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 
 test('Ordinary prerequisites cannot manufacture a verified outcome', async ({
   page,

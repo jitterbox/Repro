@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 import type { Page } from '@playwright/test';
 
 test('Evidence strategy matrix', async ({ page, repro }) => {

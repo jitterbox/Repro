@@ -1,4 +1,4 @@
-import type { Observation, RunManifest } from '@repro/contracts';
+import type { Observation, RunManifest } from '@jitterbox/repro-contracts';
 
 export interface CapturedEvent {
   id: string;

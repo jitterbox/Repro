@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it, vi } from 'vitest';
-import type * as Core from '@repro/core';
-import type { RunManifest } from '@repro/contracts';
+import type * as Core from '@jitterbox/repro-core';
+import type { RunManifest } from '@jitterbox/repro-contracts';
 
 const mocks = vi.hoisted(() => ({ process: vi.fn() }));
-vi.mock('@repro/core', async (original) => ({
+vi.mock('@jitterbox/repro-core', async (original) => ({
   ...(await original<typeof Core>()),
   runProcess: mocks.process,
 }));

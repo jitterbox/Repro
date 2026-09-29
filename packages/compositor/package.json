@@ -1,5 +1,5 @@
 {
-  "name": "@repro/compositor",
+  "name": "@jitterbox/repro-compositor",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -23,8 +23,8 @@
     "@fontsource/source-code-pro": "5.3.0",
     "@fontsource/source-sans-3": "5.3.0",
     "@hyperframes/engine": "0.8.87",
-    "@repro/contracts": "workspace:*",
-    "@repro/core": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
     "playwright": "1.62.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -49,5 +49,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/compositor \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-compositor \u2014 Repro browser evidence and annotated video pipeline"
 }

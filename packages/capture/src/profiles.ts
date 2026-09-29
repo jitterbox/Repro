@@ -1,5 +1,5 @@
 import type { BrowserContext, BrowserContextOptions, Page } from 'playwright';
-import type { CaptureProfile, Viewport } from '@repro/core';
+import type { CaptureProfile, Viewport } from '@jitterbox/repro-core';
 
 export interface CaptureProfileOptions {
   readonly blockServiceWorkers?: boolean;
@@ -143,7 +143,7 @@ function blockServiceWorkerScript(options: CaptureProfileOptions): string {
   }
 
   const blocked = () => Promise.reject(
-    new DOMException('Service workers blocked by @repro/capture'),
+    new DOMException('Service workers blocked by @jitterbox/repro-capture'),
   );
   Object.defineProperty(navigator, 'serviceWorker', {
     configurable: true,

@@ -1,4 +1,4 @@
-import {test,expect} from '@repro/playwright';
+import {test,expect} from '@jitterbox/repro-playwright';
 test('Report preparation never announces failure',async({page,repro})=>{
  const notice=page.locator('#notice');
  await repro.step('prepare',async()=>{await page.goto(process.env.REPRO_URL!);await expect(page.getByRole('heading',{name:'Report download'})).toBeVisible();repro.target('notice',notice);await page.evaluate(()=>{(window as any).__noticeHistory=[];new MutationObserver(()=>{(window as any).__noticeHistory.push({text:document.querySelector('#notice')!.textContent,t:performance.now()})}).observe(document.querySelector('#notice')!,{childList:true,subtree:true,characterData:true});});});

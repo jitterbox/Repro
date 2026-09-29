@@ -1,4 +1,4 @@
-import { expect, humanPointer } from '@repro/playwright';
+import { expect, humanPointer } from '@jitterbox/repro-playwright';
 import { test } from './auth.js';
 
 // These are real Web-Dash controls. No route interception, HTML replacement,

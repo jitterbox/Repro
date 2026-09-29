@@ -1,5 +1,5 @@
 import type { CaptureEventSink } from './events.js';
-import type { JsonValue } from '@repro/core';
+import type { JsonValue } from '@jitterbox/repro-core';
 
 export interface PassiveProtocol {
   send(method: string): Promise<unknown>;

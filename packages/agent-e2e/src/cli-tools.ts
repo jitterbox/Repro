@@ -5,7 +5,7 @@ import {
   qualityCommand,
   renderCompareCommand,
   validateConfigCommand,
-} from '@repro/cli';
+} from '@jitterbox/repro-cli';
 
 import type { ReproCliVerb, TranscriptStep } from './types.js';
 

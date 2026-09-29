@@ -1,13 +1,13 @@
-import { withFileLock } from '@repro/core';
+import { withFileLock } from '@jitterbox/repro-core';
 import {
   shareReportSchema,
   devToolsReportSchema,
   type DevToolsReport,
   type ShareReport,
-} from '@repro/contracts';
-import { createPresidioLikeRedactor } from '@repro/core/redactor';
+} from '@jitterbox/repro-contracts';
+import { createPresidioLikeRedactor } from '@jitterbox/repro-core/redactor';
 import { createHash, randomUUID } from 'node:crypto';
-import { enforceOcrAudit } from '@repro/render';
+import { enforceOcrAudit } from '@jitterbox/repro-render';
 import {
   cp,
   mkdir,
@@ -258,7 +258,7 @@ async function assertDirectory(path: string): Promise<void> {
 }
 
 function defaultViewerDir(): string {
-  return dirname(createRequire(import.meta.url).resolve('@repro/viewer'));
+  return dirname(createRequire(import.meta.url).resolve('@jitterbox/repro-viewer'));
 }
 
 function assertShareableText(text: string, patterns: readonly string[]): void {

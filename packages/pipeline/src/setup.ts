@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { runProcess } from '@repro/core';
+import { runProcess } from '@jitterbox/repro-core';
 import { doctor } from './discovery.js';
 
 const require = createRequire(import.meta.url);

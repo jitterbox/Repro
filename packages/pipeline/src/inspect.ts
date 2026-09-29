@@ -1,12 +1,12 @@
 import { serveArtifact } from './http-artifact.js';
-import { reviewDocumentHtml } from '@repro/viewer';
+import { reviewDocumentHtml } from '@jitterbox/repro-viewer';
 import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { createServer } from 'node:http';
 import { access, mkdir, readFile } from 'node:fs/promises';
 import { join, resolve, extname, sep } from 'node:path';
-import { runProcess } from '@repro/core';
-import { rasterCropBounds, observationUncertaintyMs } from '@repro/contracts';
+import { runProcess } from '@jitterbox/repro-core';
+import { rasterCropBounds, observationUncertaintyMs } from '@jitterbox/repro-contracts';
 import { containedArtifact, verifyRun, writeJson } from './evidence-run.js';
 export async function inspectFrame(
   directory: string,

@@ -1,4 +1,4 @@
-import type { SceneRect } from '@repro/contracts';
+import type { SceneRect } from '@jitterbox/repro-contracts';
 
 /** Rectilinear visibility graph: leaders may touch boundaries but not enter protected areas. */
 export function routeLeader(

@@ -1,8 +1,8 @@
-import { validateConfig } from '@repro/core';
+import { validateConfig } from '@jitterbox/repro-core';
 
 import { formatValidation, readJson } from './io.js';
 
-import type { ValidationResult } from '@repro/core';
+import type { ValidationResult } from '@jitterbox/repro-core';
 
 export interface ValidateConfigCommandOptions {
   readonly config: string;

@@ -1,8 +1,8 @@
-import { setup } from '@repro/pipeline';
-import { treatmentPlanSchema } from '@repro/contracts';
-import { importJiraIssue } from '@repro/pipeline';
-import { renderScenePair } from '@repro/pipeline';
-import { treatmentCatalog, parseTreatmentPlan } from '@repro/pipeline';
+import { setup } from '@jitterbox/repro-pipeline';
+import { treatmentPlanSchema } from '@jitterbox/repro-contracts';
+import { importJiraIssue } from '@jitterbox/repro-pipeline';
+import { renderScenePair } from '@jitterbox/repro-pipeline';
+import { treatmentCatalog, parseTreatmentPlan } from '@jitterbox/repro-pipeline';
 import { readFile, writeFile } from 'node:fs/promises';
 import {
   discoverBug,
@@ -24,7 +24,7 @@ import {
   watchServerSchema,
   experimentNative,
   migrateRun,
-} from '@repro/pipeline';
+} from '@jitterbox/repro-pipeline';
 import { Command } from 'commander';
 import { z } from 'zod';
 

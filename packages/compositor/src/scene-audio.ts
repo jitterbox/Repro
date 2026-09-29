@@ -1,4 +1,4 @@
-import type { ScenePlan } from '@repro/contracts';
+import type { ScenePlan } from '@jitterbox/repro-contracts';
 
 /** Optional, deterministic pointer feedback. It is presentation, never captured application audio. */
 export function actionWave(scene: ScenePlan): Buffer {

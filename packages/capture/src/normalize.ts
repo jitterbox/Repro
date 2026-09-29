@@ -1,6 +1,6 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { h264Profile, runProcess, probeMedia } from '@repro/core';
+import { h264Profile, runProcess, probeMedia } from '@jitterbox/repro-core';
 export interface TimedFrame {
   path: string;
   pageId: string;

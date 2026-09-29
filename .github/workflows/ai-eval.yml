@@ -33,7 +33,7 @@ jobs:
 
       - name: Agent E2E mock (no API keys)
         continue-on-error: true
-        run: pnpm --filter @repro/agent-e2e test
+        run: pnpm --filter @jitterbox/repro-agent-e2e test
 
       - name: Live evaluation availability
         run: echo "Provider adapters are unavailable. Mock tests above are not fresh-agent evaluation. See docs/fresh-agent-evaluation.md for the external-agent protocol."
@@ -44,7 +44,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            pnpm --filter @repro/evaluation test
+            pnpm --filter @jitterbox/repro-evaluation test
           else
             echo "Skipping judge eval (ANTHROPIC_API_KEY not configured)."
           fi

@@ -5,11 +5,11 @@ import {
   annotationsToVisualCues,
   placeAnnotations,
   measureOverlayTextWidth,
-} from '@repro/plan';
-import type { AnnotationBox } from '@repro/plan';
-import { overlayTheme, visualCueSchema } from '@repro/contracts';
-import type { EvidenceSpec, RunManifest } from '@repro/contracts';
-import type { Viewport } from '@repro/core';
+} from '@jitterbox/repro-plan';
+import type { AnnotationBox } from '@jitterbox/repro-plan';
+import { overlayTheme, visualCueSchema } from '@jitterbox/repro-contracts';
+import type { EvidenceSpec, RunManifest } from '@jitterbox/repro-contracts';
+import type { Viewport } from '@jitterbox/repro-core';
 
 /** One deterministic source for capture plans, screenshot cues and rendered video annotations. */
 export function compileEvidencePresentation(

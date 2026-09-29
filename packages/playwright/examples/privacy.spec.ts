@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 import type { Page } from '@playwright/test';
 
 test('Untouched private fields remain protected across motion, scroll and popup', async ({

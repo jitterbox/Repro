@@ -2,7 +2,7 @@ import { mkdtemp, writeFile, utimes, stat, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { expect, it } from 'vitest';
-import { ReproConfigSchema } from '@repro/core';
+import { ReproConfigSchema } from '@jitterbox/repro-core';
 import { captureStageCacheKey } from './capture-session.js';
 it('invalidates explicit capture reuse when HAR bytes change with unchanged modification time', async () => {
   const directory = await mkdtemp(join(tmpdir(),'repro-har-key-'));

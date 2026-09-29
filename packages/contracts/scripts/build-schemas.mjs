@@ -23,6 +23,6 @@ for (const [name, schema] of [
     JSON.stringify(schema)
   )
     throw new Error(
-      `Published ${name} schema is stale. Run pnpm --filter @repro/contracts generate:schemas and review the generated change.`,
+      `Published ${name} schema is stale. Run pnpm --filter @jitterbox/repro-contracts generate:schemas and review the generated change.`,
     );
 }

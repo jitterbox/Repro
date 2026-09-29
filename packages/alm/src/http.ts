@@ -1,4 +1,4 @@
-import { sha256 } from '@repro/core';
+import { sha256 } from '@jitterbox/repro-core';
 
 export type AlmFetch = typeof fetch;
 

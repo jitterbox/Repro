@@ -1,12 +1,12 @@
 import { dirname } from 'node:path';
 
-import { captureStageCacheKey, runCapture } from '@repro/capture';
+import { captureStageCacheKey, runCapture } from '@jitterbox/repro-capture';
 
 import { loadConfig } from './io.js';
 import { artifactEnding, matchingVerifiedStage } from './stages.js';
 
-import type { CaptureRunResult } from '@repro/capture';
-import type { StageManifest } from '@repro/core';
+import type { CaptureRunResult } from '@jitterbox/repro-capture';
+import type { StageManifest } from '@jitterbox/repro-core';
 
 export interface CaptureCommandOptions {
   readonly config: string;

@@ -1,4 +1,4 @@
-import { runManifestSchema } from '@repro/contracts';
+import { runManifestSchema } from '@jitterbox/repro-contracts';
 import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';

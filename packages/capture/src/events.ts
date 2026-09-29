@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import type { JsonValue, MonotonicClockBridge, ReproStore } from '@repro/core';
-import type { StreamRedactor } from '@repro/core/redactor';
+import type { JsonValue, MonotonicClockBridge, ReproStore } from '@jitterbox/repro-core';
+import type { StreamRedactor } from '@jitterbox/repro-core/redactor';
 
 export interface CaptureEventInput {
   readonly pageId: string;

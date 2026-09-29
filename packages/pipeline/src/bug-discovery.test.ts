@@ -8,8 +8,8 @@ import {
   discoveryAssessmentJsonSchema,
   capabilities,
   validateEvidence,
-} from '@repro/contracts';
-import { FeatureFlagsSchema } from '@repro/contracts/config';
+} from '@jitterbox/repro-contracts';
+import { FeatureFlagsSchema } from '@jitterbox/repro-contracts/config';
 import { discoverBug, discoveryGuide } from './bug-discovery.js';
 
 const brief = {

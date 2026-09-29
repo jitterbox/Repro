@@ -1,9 +1,9 @@
-import { withFileLock } from '@repro/core';
+import { withFileLock } from '@jitterbox/repro-core';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { parseScenePlan, type RunManifest } from '@repro/contracts';
-import { renderSceneComparison, type ComparisonPane } from '@repro/compositor';
+import { parseScenePlan, type RunManifest } from '@jitterbox/repro-contracts';
+import { renderSceneComparison, type ComparisonPane } from '@jitterbox/repro-compositor';
 import {
   verifyRun,
   containedArtifact,

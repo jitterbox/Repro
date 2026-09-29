@@ -5,13 +5,13 @@ import type {
   CompareCompositionDelta,
   CompareLayout,
   ComparePane,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 export type {
   CompareComposition,
   CompareCompositionDelta,
   CompareLayout,
   ComparePane,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 
 const SUB_PIXEL_THRESHOLD = 8;
 

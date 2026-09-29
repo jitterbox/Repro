@@ -30,7 +30,7 @@ for (const file of Object.keys(checksums)) {
       !String(version).startsWith('workspace:'),
       `${name}: unresolved workspace dependency`,
     );
-    if (name.startsWith('@repro/')) assert.equal(version, root.version);
+    if (name.startsWith('@jitterbox/repro-')) assert.equal(version, root.version);
   }
   for (const path of ['LICENSE', 'README.md', ...Object.values(pkg.bin ?? {})])
     assert.ok(
@@ -43,7 +43,7 @@ for (const file of Object.keys(checksums)) {
     ),
     `Private/runtime files in ${pkg.name}`,
   );
-  if (pkg.name === '@repro/cli') {
+  if (pkg.name === '@jitterbox/repro-cli') {
     for (const path of [
       'skills/repro-setup/SKILL.md',
       'skills/repro-capture/SKILL.md',

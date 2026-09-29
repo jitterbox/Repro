@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { parseScenePlan } from '@repro/contracts';
+import { parseScenePlan } from '@jitterbox/repro-contracts';
 import { actionWave } from './scene-audio.js';
 it('places optional action audio on output time with silence before the observed action', () => {
   const scene = parseScenePlan({

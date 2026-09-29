@@ -1,5 +1,5 @@
 import { sharedAnalysis, sharedFrame, imageIdentity } from './analysis.js';
-import { runProcess } from '@repro/core';
+import { runProcess } from '@jitterbox/repro-core';
 import { tmpdir } from 'node:os';
 import { readdir, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join, extname } from 'node:path';

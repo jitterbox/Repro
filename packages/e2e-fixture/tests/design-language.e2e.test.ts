@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { evaluateCoverage } from '@repro/evaluation';
+import { evaluateCoverage } from '@jitterbox/repro-evaluation';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_ROOT = join(HERE, '../../../.repro/fixture-videos');

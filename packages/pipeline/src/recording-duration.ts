@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { probeMediaDurationMs } from '@repro/render';
-import type { RunManifest } from '@repro/contracts';
+import { probeMediaDurationMs } from '@jitterbox/repro-render';
+import type { RunManifest } from '@jitterbox/repro-contracts';
 
 /** Original media duration excludes setup before the first captured frame. */
 export async function recordingDurationMs(

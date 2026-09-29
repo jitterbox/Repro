@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
-import { sampleDocumentClock } from '@repro/probe';
-import { createPresidioLikeRedactor } from '@repro/core/redactor';
+import { sampleDocumentClock } from '@jitterbox/repro-probe';
+import { createPresidioLikeRedactor } from '@jitterbox/repro-core/redactor';
 
 it('keeps document IDs stable through privacy redaction while masking actual sensitive text', () => {
   const redact = createPresidioLikeRedactor();

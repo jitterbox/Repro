@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { MonotonicClockBridge, ReproStore, Viewport } from '@repro/core';
+import type { MonotonicClockBridge, ReproStore, Viewport } from '@jitterbox/repro-core';
 import type { CDPSession, Page } from 'playwright';
 
 import { FrameQueue } from './frame-queue.js';

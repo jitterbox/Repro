@@ -29,12 +29,12 @@ Each invocation owns a directory under `--out-dir`, containing its individual
 attempts. Use the run paths returned by the CLI; do not infer run ownership from
 new directory names when concurrent captures share an output root. Incomplete
 attempts remain local and are reported only to their owning invocation.
-Install `@repro/playwright` in the scenario's project. Repro resolves its runner
+Install `@jitterbox/repro-playwright` in the scenario's project. Repro resolves its runner
 from that fixture's Playwright installation, including when a CLI outside the
 project launches the scenario. Mixing separate runner and fixture module
 instances can cause Playwright's "test() called here" error even at equal versions.
 
-For presentation captures, import `humanPointer` from `@repro/playwright` and use
+For presentation captures, import `humanPointer` from `@jitterbox/repro-playwright` and use
 one `humanPointer(page)` controller for mouse approaches and clicks. Its eased
 curves are real captured input. Leave approximately 1.5–2 seconds to observe each
 completed action. Preserve timing-sensitive trigger sequences; put observation
@@ -97,7 +97,7 @@ assessment produces an unsupported result with no page-proof draft.
 
 MCP exposes the same `discover` service and resources `repro://discovery-guide`,
 `repro://bug-brief-schema`, and `repro://discovery-assessment-schema`. Build output
-also publishes these documents under `@repro/contracts/dist/discovery`. No hosted
+also publishes these documents under `@jitterbox/repro-contracts/dist/discovery`. No hosted
 model is required: reasoning belongs to the discovery agent; validation and
 committed execution remain deterministic.
 
@@ -503,7 +503,7 @@ use `render <run> --evidence <revision.json>` without recapture.
 | Smoke E2E              | `node scripts/e2e/smoke.mjs`                      |
 | Golden eval            | `node scripts/evaluation/run-golden.mjs`          |
 
-Build first: `pnpm build` (or `pnpm --filter @repro/cli build`).
+Build first: `pnpm build` (or `pnpm --filter @jitterbox/repro-cli build`).
 Compatibility interfaces: `capture`, `annotate`, `package`, and JSON-file inputs
 to `compare` support existing low-level workflows. Prefer the run-directory
 interfaces above for committed scenarios and measured evidence.
@@ -610,7 +610,7 @@ feature checklist without a full Cartesian matrix. Each bug JSON includes
 
 Use `repro capabilities --json` and `repro describe <id> --json` as the authoritative CLI discovery surface, then check runtime availability with `repro doctor`. The stdio MCP adapter exposes the same pipeline services and JSON resources. Generated reference documents live in `packages/contracts/dist/discovery` after `node scripts/generate-capabilities.mjs`.
 
-Start with `repro init`, edit the durable Playwright locators and outcome check, and commit the generated inputs. Use the installed `@repro/playwright` fixture, not fixture-corpus helper imports. The fixture supports named targets, semantic steps, checkpoints, designated outcome assertions, sampled hit tests and checkpoint-scoped Axe scans. The `run` command accepts existing Playwright configuration/projects and repeated attempts. A supplied URL is available as `process.env.REPRO_URL`; the test explicitly navigates to it.
+Start with `repro init`, edit the durable Playwright locators and outcome check, and commit the generated inputs. Use the installed `@jitterbox/repro-playwright` fixture, not fixture-corpus helper imports. The fixture supports named targets, semantic steps, checkpoints, designated outcome assertions, sampled hit tests and checkpoint-scoped Axe scans. The `run` command accepts existing Playwright configuration/projects and repeated attempts. A supplied URL is available as `process.env.REPRO_URL`; the test explicitly navigates to it.
 
 `repro frame <run> --checkpoint <id>` returns a context image and optional derived crop with the actual screenshot interval. `--time-ms` selects the nearest normalized recording frame and reports the offset. Target bounds are measured on both sides of screenshot acquisition. If they change, Repro reports unavailable alignment and refuses a requested crop; inspect the context or event-linked recording instead. A screenshot's acquisition interval is not interchangeable with a screencast presentation timestamp. Do not claim tighter alignment than the reported uncertainty.
 
@@ -620,7 +620,7 @@ Keep scenario titles separate from variant labels, use numbered meaningful steps
 
 Pass the resulting `comparison.json` directly to `repro render-compare --composition after-run/comparison.json --video-a before-run/capture.mp4 --video-b after-run/capture.mp4 --out-dir comparison-review`. The renderer accepts the legacy composition shape too. Every synchronization knot controls playback; checkpoint numbers and committed titles change at their measured output times. Checkpoints are distinct from executable scenario steps. Inspect both panes and the original durations before exporting audited evidence. Comparison renders from raw captures remain local inspection artifacts.
 
-The authoritative comparison contract lives in `@repro/contracts`; its generated JSON Schema is available at `@repro/contracts/schemas/compare-composition.schema.json` and MCP resource `repro://compare-composition-schema`. Cross-field validation additionally requires Before/After pane roles, strictly increasing source/output knot times, measured ROI bounds and explicit blink opt-in. Legacy compositions with fewer than two knots play in original timing, reported as `timing: "original"`; they do not establish synchronized proof. Public run comparisons require measured matching checkpoints. Normal builds check the published schema without modifying tracked sources; after editing its Zod source, explicitly run `pnpm --filter @repro/contracts generate:schemas` and review the change.
+The authoritative comparison contract lives in `@jitterbox/repro-contracts`; its generated JSON Schema is available at `@jitterbox/repro-contracts/schemas/compare-composition.schema.json` and MCP resource `repro://compare-composition-schema`. Cross-field validation additionally requires Before/After pane roles, strictly increasing source/output knot times, measured ROI bounds and explicit blink opt-in. Legacy compositions with fewer than two knots play in original timing, reported as `timing: "original"`; they do not establish synchronized proof. Public run comparisons require measured matching checkpoints. Normal builds check the published schema without modifying tracked sources; after editing its Zod source, explicitly run `pnpm --filter @jitterbox/repro-contracts generate:schemas` and review the change.
 
 Use `repro review after-run --baseline before-run` to inspect local comparisons. The review page lists unmatched checkpoints and uncertain alignment intervals, shows actual media durations, and keeps screenshot acquisition uncertainty separate from recording playback. Uncertain comparisons start in original timing; you can explicitly select synchronized inspection, with uncertainty still visible. Warnings conservatively include frames touching an uncertain interval. Native pause on the leading synchronized video pauses both panes; original timing restores independent controls and normal playback rates. Inspection does not override failed comparison or export gates.
 
@@ -638,7 +638,7 @@ space.
 
 ### Public fixture API and presentation decisions
 
-The fixture is imported from `@repro/playwright`. Bind only locators declared by
+The fixture is imported from `@jitterbox/repro-playwright`. Bind only locators declared by
 ID in the evidence specification: `repro.target('target', page.getByRole(...))`.
 Wrap meaningful actions in `await repro.step('trigger', async () => { ... })`.
 A step is always recorded, even if its badge is disabled. Titles describe what
@@ -796,7 +796,7 @@ Before/after comparison requires the same measured executable scenario/configura
 
 Comparison video displays scenario steps separately from checkpoint numbers. Each pane advances its own numbered step and trigger label at measured synchronization times. Expected results remain visible; observed result and “Bug reproduced”/“Fix verified” labels start only after the recorded designated assertions. Portable review adds onion, wipe, difference and edge modes. **Independent presentation timing** includes reading holds; use local review’s **Original timing** for unedited capture timing.
 
-Executable plans, timelines and quality results are defined in `@repro/contracts` using Zod. The existing `plan.schema.json` remains the legacy document format; new executable plans use `executable-plan.schema.json`. Normal builds verify generated schemas without modifying tracked sources. Schema regeneration is explicit: `pnpm --filter @repro/contracts generate:schemas`. `parsePlan` and `parseTimeline` apply semantic timing checks in addition to generated structural constraints. MCP exposes `repro://plan-schema`, `repro://timeline-schema` and `repro://quality-result-schema` on demand.
+Executable plans, timelines and quality results are defined in `@jitterbox/repro-contracts` using Zod. The existing `plan.schema.json` remains the legacy document format; new executable plans use `executable-plan.schema.json`. Normal builds verify generated schemas without modifying tracked sources. Schema regeneration is explicit: `pnpm --filter @jitterbox/repro-contracts generate:schemas`. `parsePlan` and `parseTimeline` apply semantic timing checks in addition to generated structural constraints. MCP exposes `repro://plan-schema`, `repro://timeline-schema` and `repro://quality-result-schema` on demand.
 
 To materialize current defaults in an older committed run without changing it, use `repro migrate-run older-run --out-dir migrated-run`. The command requires a new directory, verifies every referenced artifact, preserves the original manifest, and publishes the new manifest last. It preserves existing outcomes; unknown identities and missing observations remain unknown. Legacy delivery-only `manifest.json` documents remain supported by their compatibility commands; they cannot acquire committed-scenario proof without recapture.
 
@@ -878,7 +878,7 @@ Build a portable toolchain with `pnpm build` followed by
 required Repro tarballs, a package manifest with relative dependency overrides,
 checksums and installation instructions. Move the whole directory, then run
 `pnpm install` inside it. This distribution does not require ownership of the
-`@repro` npm scope and does not publish any package. `pnpm test:clean-install`
+`@jitterbox` npm scope and does not publish any package. `pnpm test:clean-install`
 uses this same packer and executes installed CLI/Playwright scenarios after moving
 the bundle into an unrelated consumer directory and checking its tarball hashes.
 
