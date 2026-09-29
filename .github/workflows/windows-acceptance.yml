@@ -1,0 +1,47 @@
+name: Windows acceptance
+on:
+  push:
+    branches: [codex/windows-validation]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm docs:check
+      - run: node --test scripts/stage-ci-artifacts.test.mjs
+      - name: Provision Windows media and OCR tools
+        shell: pwsh
+        run: |
+          choco install ffmpeg tesseract --no-progress -y
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content $env:GITHUB_PATH 'C:\Program Files\Tesseract-OCR'
+          node packages/cli/dist/bin.js setup
+      - name: Process, setup, defaults and renderer platform tests
+        run: pnpm exec vitest run packages/pipeline/src/app-version.test.ts packages/pipeline/src/evidence-presentation.test.ts packages/plan/src/scene.test.ts packages/core/src/artifact-name.test.ts packages/cli/src/work-item.test.ts packages/pipeline/src/devtools-export.test.ts packages/pipeline/src/export-options.test.ts packages/core/src/media.test.ts packages/core/src/lock.test.ts packages/core/src/fonts.test.ts packages/pipeline/src/setup.test.ts packages/pipeline/src/execute.test.ts packages/cli/src/defaults.test.ts packages/compositor/src/browser-path.test.ts packages/render/src/filtergraph.test.ts packages/render/src/ass-source.test.ts
+      - name: Packed consumer capture, custom scene, strict OCR export and review
+        run: pnpm test:clean-install
+        env:
+          REPRO_CAPTURE_DEBUG: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-acceptance
+          include-hidden-files: true
+          path: |
+            .repro/portable-install.json
+            .repro/portable-artifacts/
+          retention-days: 14

@@ -1,0 +1,18 @@
+{
+  "mode": "demo",
+  "profile": "faithful",
+  "surfaceCapture": "page",
+  "features": {
+    "clickViz": true,
+    "redaction": true
+  },
+  "viewport": {
+    "width": 393,
+    "height": 852,
+    "deviceScaleFactor": 1
+  },
+  "redaction": {
+    "strict": true,
+    "masks": []
+  }
+}

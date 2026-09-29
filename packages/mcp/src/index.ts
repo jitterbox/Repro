@@ -1,8 +1,16 @@
-import { watchServerSchema } from '@repro/contracts';
+import {
+  devToolsReportJsonSchema,
+  treatmentPlanSchema,
+  treatmentCatalog,
+  parseTreatmentPlan,
+  watchServerSchema,
+} from '@repro/contracts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
 import {
+  setup,
+  importJiraIssue,
   discoverBug,
   discoveryGuide,
   capabilities,
@@ -17,8 +25,10 @@ import {
   compareEvidence,
   exportEvidence,
   renderEvidence,
+  renderScenePair,
 } from '@repro/pipeline';
 import {
+  appVersionJsonSchema,
   bugBriefJsonSchema,
   discoveryAssessmentJsonSchema,
   evidenceJsonSchema,
@@ -26,6 +36,8 @@ import {
   configJsonSchema,
   compareCompositionJsonSchema,
   timelineJsonSchema,
+  scenePlanJsonSchema,
+  treatmentPlanJsonSchema,
   planJsonSchema,
   qualityResultSchema,
   capabilitySchema,
@@ -35,7 +47,61 @@ const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });
 export function createReproMcpServer() {
-  const server = new McpServer({ name: 'repro', version: '0.1.0' });
+  const server = new McpServer({ name: 'repro', version: '0.2.1' });
+  server.registerTool(
+    'defaults',
+    {
+      description: describeCapability('defaults').description,
+      inputSchema: {},
+    },
+    () => json(treatmentPlanSchema.parse({ schemaVersion: '1.0.0' })),
+  );
+  server.registerTool(
+    'setup',
+    {
+      description: describeCapability('setup').description,
+      inputSchema: {
+        system: z.boolean().default(false),
+        browser: z.boolean().default(true),
+        dryRun: z.boolean().default(true),
+      },
+    },
+    async (options) => json(await setup(options)),
+  );
+  server.registerTool(
+    'import-jira',
+    {
+      description: describeCapability('import-jira').description,
+      inputSchema: {
+        file: z.string(),
+        outDir: z.string(),
+        attachmentsDir: z.string().optional(),
+      },
+    },
+    async ({ file, outDir, attachmentsDir }) =>
+      json(
+        await importJiraIssue(file, {
+          outDir,
+          ...(attachmentsDir ? { attachmentsDir } : {}),
+        }),
+      ),
+  );
+  server.registerTool(
+    'treatments',
+    {
+      description: describeCapability('treatments').description,
+      inputSchema: {},
+    },
+    () => json(treatmentCatalog),
+  );
+  server.registerTool(
+    'validate-treatment',
+    {
+      description: describeCapability('validate-treatment').description,
+      inputSchema: { plan: z.unknown() },
+    },
+    ({ plan }) => json(parseTreatmentPlan(plan)),
+  );
   server.registerTool(
     'discover',
     {
@@ -87,7 +153,13 @@ export function createReproMcpServer() {
         playwrightConfig: z.string().optional(),
         config: z.string().optional(),
         project: z.string().optional(),
+        appVersion: z.string().trim().min(1).max(160).optional(),
+        versionOverlay: z.boolean().optional(),
         buildId: z.string().optional(),
+        workItem: z.string().trim().min(1).max(200).optional(),
+        description: z.string().trim().min(1).max(200).optional(),
+        useWorkItemId: z.boolean().optional(),
+        devtools: z.boolean().optional(),
         repeat: z.number().int().positive().optional(),
         baseline: z.string().optional(),
         outDir: z.string().optional(),
@@ -139,13 +211,51 @@ export function createReproMcpServer() {
     async ({ before, after }) => json(await compareEvidence(before, after)),
   );
   server.registerTool(
+    'render-scene-pair',
+    {
+      description: describeCapability('render-scene-pair').description,
+      inputSchema: {
+        before: z.string(),
+        after: z.string(),
+        observational: z.boolean().default(false),
+      },
+    },
+    async ({ before, after, observational }) =>
+      json(await renderScenePair(before, after, observational)),
+  );
+  server.registerTool(
     'render',
     {
       description: describeCapability('render').description,
-      inputSchema: { run: z.string(), evidence: z.string().optional() },
+      inputSchema: {
+        run: z.string(),
+        evidence: z.string().optional(),
+        appVersion: z.string().trim().min(1).max(160).optional(),
+        buildId: z.string().trim().min(1).max(160).optional(),
+        versionOverlay: z.boolean().optional(),
+        renderer: z.enum(['legacy', 'hyperframes']).optional(),
+        treatment: z.string().optional(),
+      },
     },
-    async ({ run, evidence }) =>
-      json(await renderEvidence(run, evidence ? { evidence } : {})),
+    async ({
+      run,
+      evidence,
+      renderer,
+      treatment,
+      appVersion,
+      buildId,
+      versionOverlay,
+    }) =>
+      json(
+        await renderEvidence(run, {
+          ...(evidence ? { evidence } : {}),
+          ...(renderer ? { renderer } : {}),
+          ...(treatment ? { treatment } : {}),
+          ...(appVersion ? { appVersion } : {}),
+          ...(buildId ? { buildId } : {}),
+          ...(versionOverlay === undefined ? {} : { versionOverlay }),
+        }),
+      ),
   );
   server.registerTool(
     'export',
@@ -155,10 +265,42 @@ export function createReproMcpServer() {
         run: z.string(),
         outDir: z.string(),
         baseline: z.string().optional(),
+        draft: z.boolean().optional(),
+        workItem: z.string().trim().min(1).max(200).optional(),
+        description: z.string().trim().min(1).max(200).optional(),
+        useWorkItemId: z.boolean().optional(),
+        devtools: z.boolean().optional(),
+        config: z.string().optional(),
       },
     },
-    async ({ run, outDir, baseline }) =>
-      json(await exportEvidence(run, outDir, baseline)),
+    async ({
+      run,
+      outDir,
+      baseline,
+      draft,
+      workItem,
+      description,
+      useWorkItemId,
+      devtools,
+      config,
+    }) =>
+      json(
+        workItem !== undefined ||
+          description !== undefined ||
+          useWorkItemId !== undefined ||
+          devtools !== undefined ||
+          config !== undefined
+          ? await exportEvidence(run, outDir, baseline, draft, {
+              ...(workItem === undefined ? {} : { workItem }),
+              ...(description === undefined ? {} : { description }),
+              ...(useWorkItemId === undefined ? {} : { useWorkItemId }),
+              ...(devtools === undefined ? {} : { devtools }),
+              ...(config === undefined ? {} : { config }),
+            })
+          : draft === undefined
+            ? await exportEvidence(run, outDir, baseline)
+            : await exportEvidence(run, outDir, baseline, draft),
+      ),
   );
   server.registerTool(
     'recipes',
@@ -174,9 +316,14 @@ export function createReproMcpServer() {
     'evidence-schema': evidenceJsonSchema,
     'run-schema': runJsonSchema,
     'config-schema': configJsonSchema,
+    'app-version-schema': appVersionJsonSchema,
+    'devtools-report-schema': devToolsReportJsonSchema,
     'watch-server-schema': z.toJSONSchema(watchServerSchema),
     'compare-composition-schema': compareCompositionJsonSchema,
     'timeline-schema': timelineJsonSchema,
+    'scene-schema': scenePlanJsonSchema,
+    'treatment-schema': treatmentPlanJsonSchema,
+    defaults: treatmentPlanSchema.parse({ schemaVersion: '1.0.0' }),
     'plan-schema': planJsonSchema,
     'quality-result-schema': z.toJSONSchema(qualityResultSchema),
     'capability-schema': z.toJSONSchema(capabilitySchema),

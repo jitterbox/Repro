@@ -1,6 +1,6 @@
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { h264Profile, runProcess } from '@repro/core';
+import { h264Profile, runProcess, probeMedia } from '@repro/core';
 export interface TimedFrame {
   path: string;
   pageId: string;
@@ -71,6 +71,12 @@ export async function normalizeCapture(
   const input = join(directory, 'frames.ffconcat');
   const video = join(directory, 'capture.mp4');
   await writeFile(input, concat);
+  const dimensions = (await probeMedia(requireValue(selected[0]).path))
+    .streams[0];
+  const odd = Boolean(
+    (dimensions?.width ?? 0) % 2 || (dimensions?.height ?? 0) % 2,
+  );
+  const pixelFormat = odd ? 'yuv444p' : 'yuv420p';
   await runProcess(
     'ffmpeg',
     [
@@ -84,10 +90,14 @@ export async function normalizeCapture(
       '-i',
       input,
       '-vf',
-      'fps=30,scale=in_range=full:out_range=tv,format=yuv420p',
+      `fps=30,scale=in_range=full:out_range=tv,format=${pixelFormat}`,
       '-t',
       String((endMs - requireValue(selected[0]).timeMs) / 1000),
       ...h264Profile,
+      '-pix_fmt',
+      pixelFormat,
+      '-profile:v',
+      odd ? 'high444' : 'high',
       video,
     ],
     signal ? { signal } : {},

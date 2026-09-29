@@ -21,6 +21,7 @@ export function compileEvidencePresentation(
   viewport: Viewport,
   offset: number,
   readingHolds = true,
+  appVersion?: string,
 ) {
   const steps = run.steps.map((step) => ({
     ...step,
@@ -166,6 +167,46 @@ export function compileEvidencePresentation(
       timeRange: { start: outcomeStart, end: outputDuration },
     }),
   );
+  if (appVersion) {
+    const width = Math.min(360, viewport.width - 48);
+    const lines: string[] = [];
+    for (const paragraph of appVersion.split('\n')) {
+      let line = '';
+      for (const character of Array.from(paragraph)) {
+        if (
+          line &&
+          measureOverlayTextWidth(line + character, 18) > width - 24
+        ) {
+          lines.push(line);
+          line = '';
+        }
+        line += character;
+      }
+      if (line) lines.push(line);
+    }
+    const label = lines.join('\n');
+    annotations.push(
+      ...placeAnnotations({
+        viewport,
+        regionsOfInterest: [
+          ...annotations.map((a) => a.bounds),
+          ...run.observations.flatMap((o) => (o.bounds ? [o.bounds] : [])),
+        ],
+        annotations: [
+          annotation({
+            id: 'app-version',
+            component: 'plate',
+            label,
+            plate: { kicker: 'App version / build', label },
+            fontSize: 18,
+            bounds: { x: 24, y: 84, width, height: 40 + lines.length * 24 },
+            timeRange: { start: 0, end: outputDuration },
+            collisionPolicy: 'avoid',
+          }),
+        ],
+      }),
+    );
+  }
   // Author-selected callouts are required presentation evidence. Never invent
   // geometry, silently discard a requested label, or cover a measured target.
   for (const checkpoint of spec.checkpoints) {
@@ -194,6 +235,7 @@ export function compileEvidencePresentation(
             .filter(
               (item) =>
                 item.id === 'title' ||
+                item.id === 'app-version' ||
                 item.id === 'outcome' ||
                 steps.some((step) => step.id === item.id) ||
                 (item.component === 'callout' &&

@@ -9,6 +9,9 @@ import {
   compareCompositionJsonSchema,
   timelineJsonSchema,
   planJsonSchema,
+  scenePlanJsonSchema,
+  treatmentPlanJsonSchema,
+  treatmentPlanSchema,
 } from '../packages/contracts/dist/index.js';
 import { recipes, discoveryGuide } from '../packages/pipeline/dist/index.js';
 const output = 'packages/contracts/dist/discovery';
@@ -25,6 +28,9 @@ for (const [name, data] of Object.entries({
   'compare-composition.schema': compareCompositionJsonSchema,
   'timeline.schema': timelineJsonSchema,
   'plan.schema': planJsonSchema,
+  'scene.schema': scenePlanJsonSchema,
+  'treatment.schema': treatmentPlanJsonSchema,
+  defaults: treatmentPlanSchema.parse({ schemaVersion: '1.0.0' }),
 }))
   await writeFile(
     `${output}/${name}.json`,

@@ -1,3 +1,5 @@
+> For Repro 0.2.1 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
+
 # Repro — AI agent usage guide
 
 This document is the authoritative playbook for agents (and humans driving
@@ -31,6 +33,15 @@ Install `@repro/playwright` in the scenario's project. Repro resolves its runner
 from that fixture's Playwright installation, including when a CLI outside the
 project launches the scenario. Mixing separate runner and fixture module
 instances can cause Playwright's "test() called here" error even at equal versions.
+
+For presentation captures, import `humanPointer` from `@repro/playwright` and use
+one `humanPointer(page)` controller for mouse approaches and clicks. Its eased
+curves are real captured input. Leave approximately 1.5–2 seconds to observe each
+completed action. Preserve timing-sensitive trigger sequences; put observation
+pauses outside them. The scene renderer holds checkpoints for at least 5.4 seconds,
+including captured transient failures, and displays a source-timed arrow cursor.
+Do not add invented movement to old recordings with instantaneous clicks; recapture.
+See [scene presentation](scene-renderer.md) for `cursorGlow` and treatment intent.
 
 Related skills (thin CLI wrappers): `repro-capture`, `repro-annotate`,
 `repro-compare`, `repro-file` under `skills/`.
@@ -501,9 +512,11 @@ interfaces above for committed scenarios and measured evidence.
 
 ## 10. Evidence & naming
 
+Keep app defaults separate from run metadata. `naming.useWorkItemId` defaults to true; provide each ID/description through `evidence.workItem` or CLI metadata. With no ID or a false naming policy, use a brief description with a stable scenario suffix. Known target-app version/build values appear throughout the video by default; use `--app-version`/`--build-id`, or configured runtime metadata discovery. Never substitute the Repro package version or evidence repository SHA. See [configuration](configuration.md).
+
 ALM attachment basename:
 
-`{ISSUEID}__{slug}__{env}__{sha7}__{ISO8601Z}.mp4`
+`{work-item}_{variant}_repro.mp4` with matching `{work-item}_{variant}_devtools.json` by default; ALM delivery uses content-identity upload names.
 
 Example: `BUG-1234__cart-total-nan__staging__a1b2c3d__20260727T211500Z.mp4`
 
@@ -771,7 +784,7 @@ Declare `segments: [{id:"loading", title:"Load through completion", step:"trigge
 
 Do not call `repro.checkpoint('during')` for an event-selected checkpoint. The pipeline selects an existing frame using the committed event occurrence, same-page calibrated time, offset and segment boundaries. Missing events, unknown calibration and frames outside the tolerance fail required evidence. `repro frame <run> --checkpoint during` returns actual/requested times, selection offset, uncertainty, event reference and context PNG. It cannot invent historical target bounds; use context unless aligned geometry was measured. Capture the final stable outcome separately with an assertion and checkpoint. Never wait for stability when instability is the subject.
 
-Public Playwright console, page exceptions, HTTP error responses and failed connections are recorded passively. HTTP 4xx/5xx and transport failures remain separate. Review lists event/page/request references and seeks the original recording. These events use host receipt times with unknown delivery latency; step associations describe temporal containment, not causality. URL credentials, query strings and fragments are discarded; event text passes the configured redactor. Raw diagnostics remain local and are excluded from shareable reports. Controlled clock implementations may report timer exceptions as console errors; Repro preserves the observed event category.
+Public Playwright console, page exceptions, HTTP error responses and failed connections are recorded passively. HTTP 4xx/5xx and transport failures remain separate. Review lists event/page/request references and seeks the original recording. These events use host receipt times with unknown delivery latency; step associations describe temporal containment, not causality. URL credentials, query strings and fragments are discarded; event text passes the configured redactor. Raw diagnostics remain local. Export includes a sanitized DevTools JSON report by default, named alongside the video using the configured naming policy (per-run work-item ID or descriptive name) and variant. `--no-devtools` or `export.devtools: false` disables that export without disabling local capture. See [naming and diagnostic export](configuration.md#work-item-names-and-browser-diagnostics). Controlled clock implementations may report timer exceptions as console errors; Repro preserves the observed event category.
 
 Comparison matches semantic checkpoint IDs first. Its decoded-image fallback only proposes unique reciprocal matches that preserve semantic-anchor order. Changed-pixel ratios are measurements; image correspondence remains a heuristic with uncertain spans, original-timing default and no successful proof claim. Commit consistent checkpoint IDs to establish before/after meaning.
 
@@ -886,3 +899,7 @@ font hashes and machine/tool identity under `.repro/annotation-benchmark`.
 machine and capture to compare annotation work. A current measurement does not
 reconstruct the missing historical Phase 1 median; the report explicitly leaves
 the 50% improvement gate unassessed without an approved comparable baseline.
+
+## Opt-in scene renderer
+
+For Hyperframes treatments, replayed source intervals, scene review, or scene before/after output, read [scene-renderer.md](scene-renderer.md) before selecting commands. It documents the acceptance slice and its export gate; the legacy renderer remains the default.

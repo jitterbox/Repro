@@ -1,6 +1,6 @@
 {
   "name": "@repro/viewer",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "type": "module",
   "exports": {
     ".": {
@@ -29,5 +29,19 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jitterbox/Repro.git",
+    "directory": "packages/viewer"
+  },
+  "homepage": "https://github.com/jitterbox/Repro#readme",
+  "bugs": {
+    "url": "https://github.com/jitterbox/Repro/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "@repro/viewer \u2014 Repro browser evidence and annotated video pipeline"
 }

@@ -1,3 +1,4 @@
+import type { AppVersion } from '@repro/contracts';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   readFile,
@@ -100,6 +101,7 @@ export interface FinishEvidenceInput {
   testCase?: string;
   errors: string[];
   buildId?: string;
+  appVersion?: AppVersion;
   url?: string;
   config: unknown;
   designatedChecks: boolean[];
@@ -218,7 +220,31 @@ export async function finishEvidence(input: FinishEvidenceInput) {
     cues,
     timeline,
   });
+  // Preserve pre-normalization frame identities as verified, local-only artifacts.
+  const sourceFrames = await Promise.all(
+    normalized.frames.map(async (frame, index) => ({
+      id: `source-${index}`,
+      pageId: frame.pageId,
+      timeMs: frame.timeMs,
+      ...(await artifactRef(directory, frame.path, 'source-frame')),
+    })),
+  );
+  await writeJson(join(directory, 'source-frames.json'), sourceFrames);
   const artifacts = await Promise.all([
+    artifactRef(
+      directory,
+      join(directory, 'source-frames.json'),
+      'source-frame-index',
+    ),
+    ...sourceFrames.map((frame) =>
+      Promise.resolve({
+        path: frame.path,
+        sha256: frame.sha256,
+        bytes: frame.bytes,
+        kind: frame.kind,
+        shareable: false,
+      }),
+    ),
     artifactRef(directory, normalized.video, 'recording'),
     artifactRef(directory, join(directory, 'events.jsonl'), 'events'),
     artifactRef(
@@ -257,6 +283,7 @@ export async function finishEvidence(input: FinishEvidenceInput) {
     environment: {
       ...environment,
       appliedConfiguration: input.config,
+      ...(input.appVersion ? { appVersion: input.appVersion } : {}),
       scenarioInputCoverage: {
         staticLocalImports: input.executableIdentity ? 'hashed' : 'unknown',
         runtimeFileReads: 'unknown',

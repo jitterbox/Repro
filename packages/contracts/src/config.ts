@@ -167,6 +167,41 @@ export const CompareConfigSchema = z
 export const ReproConfigSchema = z
   .object({
     mode: ModeSchema,
+    /** Compatibility for older captured config snapshots; never written by init. */
+    workItem: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .optional()
+      .describe(
+        'Deprecated: older run snapshots only; supply issue identity per scenario/run',
+      ),
+    naming: z
+      .object({ useWorkItemId: z.boolean().default(true) })
+      .strict()
+      .optional(),
+    versionOverlay: z
+      .object({
+        enabled: z.boolean().default(true),
+        discover: z.boolean().default(true),
+        versionSelector: z.string().min(1).optional(),
+        buildSelector: z.string().min(1).optional(),
+        versionPath: z
+          .string()
+          .regex(/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/)
+          .optional(),
+        buildPath: z
+          .string()
+          .regex(/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/)
+          .optional(),
+      })
+      .strict()
+      .optional(),
+    export: z
+      .object({ devtools: z.boolean().default(true) })
+      .strict()
+      .optional(),
     features: FeatureFlagsSchema.default({}),
     profile: CaptureProfileSchema,
     surfaceCapture: SurfaceCaptureSchema,

@@ -3,7 +3,7 @@ import { reviewDocumentHtml } from '@repro/viewer';
 import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { createServer } from 'node:http';
-import { access, mkdir } from 'node:fs/promises';
+import { access, mkdir, readFile } from 'node:fs/promises';
 import { join, resolve, extname, sep } from 'node:path';
 import { runProcess } from '@repro/core';
 import { rasterCropBounds, observationUncertaintyMs } from '@repro/contracts';
@@ -132,6 +132,7 @@ export async function reviewRun(
   directory: string,
   port = 0,
   baseline?: string,
+  presentation = false,
 ) {
   const root = resolve(directory);
   const run = await verifyRun(root);
@@ -139,7 +140,7 @@ export async function reviewRun(
   const comparison = baseline
     ? await compareEvidence(baseline, root)
     : undefined;
-  const html = reviewDocumentHtml({
+  let html = reviewDocumentHtml({
     before: {
       run: before,
       prefix: '/before',
@@ -172,6 +173,18 @@ export async function reviewRun(
         }
       : {}),
   });
+  if (presentation) {
+    if (baseline)
+      throw new Error(
+        'Scene presentation review is single-run; inspect original comparison separately',
+      );
+    const review = run.artifacts.find((a) => a.kind === 'presentation-review');
+    const video = run.artifacts.find((a) => a.kind === 'presentation-video');
+    if (!review || !video) throw new Error('Render a scene presentation first');
+    html = (
+      await readFile(await containedArtifact(root, review.path), 'utf8')
+    ).replace('src="proof.mp4"', `src="/before/${video.path}"`);
+  }
   const server = createServer((req, res) => {
     void (async () => {
       try {
@@ -205,6 +218,7 @@ export async function reviewRun(
           (
             {
               '.mp4': 'video/mp4',
+              '.html': 'text/html; charset=utf-8',
               '.png': 'image/png',
               '.json': 'application/json',
             } as Record<string, string>

@@ -9,7 +9,8 @@ import { verifyTerminalCheckpoint } from './terminal-checkpoint.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, basename } from 'node:path';
+import { devToolsReportSchema } from '../../packages/contracts/dist/index.js';
 const execute = promisify(execFile);
 const root = resolve(
   process.env.REPRO_ACCEPTANCE_OUT ?? '.repro/public-acceptance',
@@ -451,7 +452,27 @@ assert.deepEqual(
 );
 for (const asset of exported.manifest.assets) {
   assert.ok(!asset.path.startsWith('/'));
-  assert.ok(['mp4', 'vtt', 'png', 'json'].includes(asset.kind));
+  assert.ok(['mp4', 'vtt', 'png', 'json', 'devtools'].includes(asset.kind));
+}
+const diagnosticAssets = exported.manifest.assets.filter(
+  (asset) => asset.kind === 'devtools',
+);
+assert.equal(
+  diagnosticAssets.length,
+  2,
+  'Both variants export diagnostics by default',
+);
+for (const asset of diagnosticAssets) {
+  const report = devToolsReportSchema.parse(
+    JSON.parse(await readFile(join(root, 'bundle', asset.path), 'utf8')),
+  );
+  const video = exported.manifest.assets.find(
+    (candidate) => candidate.kind === 'mp4' && candidate.role === asset.role,
+  );
+  assert.ok(video, 'Diagnostic report must have a corresponding variant video');
+  assert.equal(report.video, basename(video.path));
+  assert.equal(report.variant.role, asset.role);
+  assert.ok(report.events.length > 0, 'Export retains captured browser events');
 }
 console.log(
   'Checking relocated viewer, captions, images and keyboard controls',

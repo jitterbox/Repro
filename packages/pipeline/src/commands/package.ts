@@ -1,5 +1,10 @@
 import { withFileLock } from '@repro/core';
-import { shareReportSchema, type ShareReport } from '@repro/contracts';
+import {
+  shareReportSchema,
+  devToolsReportSchema,
+  type DevToolsReport,
+  type ShareReport,
+} from '@repro/contracts';
 import { createPresidioLikeRedactor } from '@repro/core/redactor';
 import { createHash, randomUUID } from 'node:crypto';
 import { enforceOcrAudit } from '@repro/render';
@@ -15,6 +20,7 @@ import {
 import { basename, dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 
+import { assertDiagnosticPolicy } from '../devtools-export.js';
 import { writeJson } from './io.js';
 import {
   packageCacheKey,
@@ -22,13 +28,15 @@ import {
   recordPackageCache,
 } from './package-cache.js';
 
-export type EvidenceAssetKind = 'chapters' | 'json' | 'mp4' | 'vtt' | 'png';
+export type EvidenceAssetKind =
+  'chapters' | 'json' | 'mp4' | 'vtt' | 'png' | 'devtools';
 
 export interface EvidenceAssetInput {
   readonly kind: EvidenceAssetKind;
   readonly path: string;
   readonly role?: 'before' | 'after';
   readonly title?: string;
+  readonly fileName?: string;
 }
 
 export interface EvidenceManifestAsset extends EvidenceAssetInput {
@@ -47,6 +55,12 @@ export interface EvidenceManifest {
 
 export interface PackageCommandOptions {
   readonly assets?: readonly EvidenceAssetInput[];
+  readonly workItem?: string;
+  readonly devtools?: readonly {
+    fileName: string;
+    report: DevToolsReport;
+    role?: 'before' | 'after';
+  }[];
   readonly outDir: string;
   readonly viewerDir?: string;
   readonly privacyPatterns?: readonly string[];
@@ -64,6 +78,8 @@ export interface PackageCommandResult {
 export async function packageCommand(
   options: PackageCommandOptions,
 ): Promise<PackageCommandResult> {
+  if (options.workItem)
+    assertShareableText(options.workItem, options.privacyPatterns ?? []);
   const viewerDir = options.viewerDir ?? defaultViewerDir();
   await assertDirectory(viewerDir);
   await mkdir(dirname(options.outDir), { recursive: true });
@@ -90,6 +106,23 @@ export async function packageCommand(
           options.privacyPatterns ?? [],
         )),
       ];
+      for (const diagnostic of options.devtools ?? []) {
+        assertFileName(diagnostic.fileName);
+        const report = devToolsReportSchema.parse(diagnostic.report);
+        assertDiagnosticPolicy(report);
+        assertShareableReport(report, options.privacyPatterns ?? []);
+        const href = `assets/${diagnostic.fileName}`;
+        const bytes = Buffer.from(JSON.stringify(report, null, 2) + '\n');
+        await writeFile(join(staging, href), bytes, { flag: 'wx' });
+        assets.push({
+          kind: 'devtools',
+          path: href,
+          href,
+          sha256: hashBytes(bytes),
+          title: 'Synchronized browser DevTools data',
+          ...(diagnostic.role ? { role: diagnostic.role } : {}),
+        });
+      }
       if (options.report) {
         const report = shareReportSchema.parse(options.report);
         assertShareableReport(report, options.privacyPatterns ?? []);
@@ -155,15 +188,18 @@ async function copyEvidenceAssets(
   await mkdir(targetDir, { recursive: true });
 
   const copiedAssets: EvidenceManifestAsset[] = [];
-  const verified = new Set<string>();
+  const verified = new Map<string, string>();
   for (const asset of assets) {
     if (asset.title) assertShareableText(asset.title, patterns);
     // Snapshot first: audits and publication operate on the same private copy.
     const bytes = await readFile(asset.path);
     const hash = hashBytes(bytes);
-    const href = `assets/${hash.slice(0, 16)}-${basename(asset.path)}`;
+    if (asset.fileName) assertFileName(asset.fileName);
+    const href = `assets/${asset.fileName ?? `${hash.slice(0, 16)}-${basename(asset.path)}`}`;
     const destination = join(outDir, href);
     if (verified.has(`${asset.kind}:${href}`)) {
+      if (verified.get(`${asset.kind}:${href}`) !== hash)
+        throw new Error('Conflicting exported artifact filenames');
       copiedAssets.push({
         kind: asset.kind,
         path: href,
@@ -200,7 +236,7 @@ async function copyEvidenceAssets(
     }
     if (hashBytes(await readFile(destination)) !== hash)
       throw new Error('Artifact changed while packaging');
-    verified.add(`${asset.kind}:${href}`);
+    verified.set(`${asset.kind}:${href}`, hash);
     copiedAssets.push({
       kind: asset.kind,
       path: href,
@@ -228,7 +264,7 @@ function defaultViewerDir(): string {
 function assertShareableText(text: string, patterns: readonly string[]): void {
   if (
     createPresidioLikeRedactor().redactText(text).hits.length ||
-    patterns.some((pattern) => text.includes(pattern)) ||
+    patterns.some((pattern) => new RegExp(pattern, 'iu').test(text)) ||
     /repro-canary-secret-/i.test(text)
   )
     throw new Error('Sensitive text in exported report or captions');
@@ -247,6 +283,21 @@ function assertShareableReport(
   else if (Array.isArray(value))
     for (const item of value) assertShareableReport(item, patterns);
   else if (value && typeof value === 'object')
-    for (const item of Object.values(value))
+    for (const [key, item] of Object.entries(value)) {
+      assertShareableText(key, patterns);
       assertShareableReport(item, patterns);
+    }
+}
+
+function assertFileName(name: string): void {
+  if (
+    !name ||
+    name === '.' ||
+    name === '..' ||
+    /[\\/:*?"<>|]/.test(name) ||
+    Array.from(name).some((char) => char.charCodeAt(0) < 32) ||
+    /[. ]$/.test(name) ||
+    /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)
+  )
+    throw new Error('Unsafe exported artifact filename');
 }

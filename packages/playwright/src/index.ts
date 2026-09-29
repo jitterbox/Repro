@@ -1,3 +1,5 @@
+import { observeAppVersion } from './app-version.js';
+import { artifactSlug, artifactBaseName } from '@repro/core';
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page, TestInfo, Response } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
@@ -16,6 +18,7 @@ import {
 } from '@repro/pipeline';
 
 export { expect };
+export { humanPointer, humanApproach } from './human-pointer.js';
 export class EvidenceRecorder {
   readonly observations: Observation[] = [];
   readonly steps: RunManifest['steps'] = [];
@@ -27,6 +30,82 @@ export class EvidenceRecorder {
     readonly spec: EvidenceSpec,
     readonly directory: string,
   ) {}
+  readonly stateSubscriptions: (() => Promise<void>)[] = [];
+  /** Read explicit page state. The returned object is snapshotted immediately. */
+  async observe<T>(
+    name: string,
+    reader: () => T | Promise<T>,
+    page: Page = this.session.page,
+  ): Promise<T> {
+    const start = this.session.clock.nowMono();
+    const value = await page.evaluate(reader);
+    await this.session.observeValue(
+      page,
+      name,
+      value,
+      start,
+      this.session.clock.nowMono(),
+    );
+    return value;
+  }
+  /** Opt-in sampling with bounded overhead, automatic teardown and coverage reporting. */
+  watch<T>(
+    name: string,
+    reader: () => T | Promise<T>,
+    options: { intervalMs?: number; page?: Page } = {},
+  ) {
+    const intervalMs = options.intervalMs ?? 100;
+    if (intervalMs < 50 || !Number.isFinite(intervalMs))
+      throw new Error('State sampling requires an interval of at least 50ms');
+    let active = true,
+      samples = 0;
+    let stopped = false,
+      partial = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let pending: Promise<void> = Promise.resolve();
+    const sample = () => {
+      pending = (async () => {
+        try {
+          await this.observe(name, reader, options.page);
+          samples++;
+        } catch (error) {
+          partial = true;
+          this.session.emitSemantic('diagnostic.coverage', {
+            collector: `state:${name}`,
+            status: 'partial',
+            reason: String(error),
+          });
+        }
+        if (active && samples < 2000) timer = setTimeout(sample, intervalMs);
+        else if (active)
+          this.session.emitSemantic('diagnostic.coverage', {
+            collector: `state:${name}`,
+            status: 'dropped',
+            reason: '2000 sample limit',
+          });
+      })();
+    };
+    sample();
+    const stop = async () => {
+      if (stopped) return;
+      stopped = true;
+      active = false;
+      if (timer) clearTimeout(timer);
+      await pending;
+      this.session.emitSemantic('diagnostic.coverage', {
+        collector: `state:${name}`,
+        status: samples >= 2000 ? 'dropped' : partial ? 'partial' : 'captured',
+        samples,
+        intervalMs,
+        timing: 'host-observation-window',
+      });
+    };
+    this.stateSubscriptions.push(stop);
+    return stop;
+  }
+  async dispose() {
+    await Promise.all(this.stateSubscriptions.map((stop) => stop()));
+  }
   target(id: string, locator: Locator) {
     if (!this.spec.targets.some((t) => t.id === id))
       throw new Error(`Unknown target ${id}`);
@@ -109,6 +188,25 @@ export class EvidenceRecorder {
         throw new Error(
           `Target ${target} belongs to another page; capture a checkpoint on that page`,
         );
+      const computed = await requireValue(locator).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          color: style.color,
+          backgroundColor: style.backgroundColor,
+          fontSize: style.fontSize,
+          lineHeight: style.lineHeight,
+          zIndex: style.zIndex,
+          position: style.position,
+          overflow: style.overflow,
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          clientHeight: element.clientHeight,
+          scrollHeight: element.scrollHeight,
+          role: element.getAttribute('role'),
+          ariaLabel: element.getAttribute('aria-label'),
+          text: element.textContent.slice(0, 2000),
+        };
+      });
       const measuredAfter = await requireValue(locator).boundingBox();
       const measuredBefore = before.get(target) ?? null;
       const stable = sameBounds(measuredBefore, measuredAfter);
@@ -131,6 +229,7 @@ export class EvidenceRecorder {
         data: {
           measuredBefore,
           measuredAfter,
+          computed,
           coordinateSpace: 'viewport-css',
           deviceScaleFactor: this.session.config.viewport.deviceScaleFactor,
         },
@@ -519,6 +618,33 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
               viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
             },
       );
+      if (process.env.REPRO_WORK_ITEM || process.env.REPRO_DESCRIPTION)
+        spec.workItem = {
+          ...spec.workItem,
+          ...(process.env.REPRO_WORK_ITEM
+            ? { id: process.env.REPRO_WORK_ITEM }
+            : {}),
+          ...(process.env.REPRO_DESCRIPTION
+            ? { description: process.env.REPRO_DESCRIPTION }
+            : {}),
+        };
+      if (process.env.REPRO_USE_WORK_ITEM_ID !== undefined)
+        config.naming = {
+          useWorkItemId: process.env.REPRO_USE_WORK_ITEM_ID === 'true',
+        };
+      if (process.env.REPRO_VERSION_OVERLAY !== undefined)
+        config.versionOverlay = {
+          discover: true,
+          ...config.versionOverlay,
+          enabled: process.env.REPRO_VERSION_OVERLAY === 'true',
+        };
+      if (process.env.REPRO_EXPORT_DEVTOOLS !== undefined) {
+        if (!['true', 'false'].includes(process.env.REPRO_EXPORT_DEVTOOLS))
+          throw new Error('REPRO_EXPORT_DEVTOOLS must be true or false');
+        config.export = {
+          devtools: process.env.REPRO_EXPORT_DEVTOOLS === 'true',
+        };
+      }
       config.features.redaction =
         spec.privacy.strict ||
         spec.privacy.selectors.length > 0 ||
@@ -537,7 +663,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         throw new Error(validation.errors.map((e) => e.message).join('; '));
       const directory = join(
         process.env.REPRO_OUT ?? testInfo.outputDir,
-        `${spec.id}-${randomUUID()}`,
+        `${artifactBaseName({ workItem: spec.workItem?.id, description: spec.workItem?.description ?? spec.title, scenarioId: spec.id, useWorkItemId: config.naming?.useWorkItemId })}-${artifactSlug(spec.variant.id)}-${randomUUID()}`,
       );
       await mkdir(directory, { recursive: true });
       const executableIdentity =
@@ -563,6 +689,17 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         fixtureError = error;
       }
       {
+        const appVersion = await observeAppVersion(
+          page,
+          config.versionOverlay,
+          {
+            version: process.env.REPRO_APP_VERSION,
+            build: process.env.REPRO_BUILD_ID,
+          },
+          () => session.clock.nowMono(),
+        );
+        session.emitSemantic('app.version', appVersion);
+        await recorder.dispose();
         const scenarioCompletedAt = performance.now();
         const durationMs = session.clock.nowMono();
         let capture;
@@ -593,6 +730,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
           segments: recorder.segments,
           errors: testInfo.errors.map((e) => e.message ?? 'Test failed'),
           config,
+          appVersion,
           designatedChecks: recorder.designatedChecks,
           testFailed: failed(testInfo),
           ...(process.env.REPRO_BUILD_ID
@@ -612,7 +750,9 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
           throw new Error(`Evidence incomplete: ${directory}/run.json`);
       }
     },
-    { auto: true },
+    // Host inventory and capture finalization have their own finite budget;
+    // they must not consume the scenario's normal Playwright action/test time.
+    { auto: true, timeout: 120_000 },
   ],
 });
 function failed(info: TestInfo) {

@@ -3,4 +3,4 @@ export * from './harness.js';
 export * from './scenarios/drivers.js';
 export * from './server.js';
 
-export const REPRO_E2E_FIXTURE_VERSION = '0.0.0' as const;
+export const REPRO_E2E_FIXTURE_VERSION = '0.2.1' as const;

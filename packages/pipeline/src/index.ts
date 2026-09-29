@@ -20,3 +20,11 @@ export {
 } from './server.js';
 
 export * from './bug-discovery.js';
+
+export { treatmentCatalog, parseTreatmentPlan } from '@repro/contracts';
+
+export { renderScenePair } from './scene-comparison.js';
+
+export { importJiraIssue } from './jira-import.js';
+
+export { setup, setupCommands } from './setup.js';

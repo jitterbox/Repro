@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "surface": {
+      "type": "string",
+      "enum": [
+        "cli",
+        "playwright",
+        "mcp"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "implemented",
+        "unsupported",
+        "unavailable"
+      ]
+    },
+    "invocation": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timingEffects": {
+      "type": "string"
+    },
+    "privacy": {
+      "type": "string"
+    },
+    "failureModes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verification": {
+      "type": "string"
+    },
+    "example": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "surface",
+    "title",
+    "status",
+    "invocation",
+    "description",
+    "inputs",
+    "outputs",
+    "prerequisites",
+    "timingEffects",
+    "privacy",
+    "failureModes",
+    "verification",
+    "example"
+  ],
+  "additionalProperties": false
+}

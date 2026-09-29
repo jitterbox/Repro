@@ -1,3 +1,4 @@
+import { resolveMediaCommand } from '@repro/core';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -227,7 +228,7 @@ async function probeDurationMs(
 
 function run(command: string, args: readonly string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, [...args]);
+    const child = spawn(resolveMediaCommand(command), [...args]);
     let stdout = '';
     let stderr = '';
 

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "actionAudio": false,
+  "cursorGlow": true,
+  "steps": [
+    {
+      "step": "menu",
+      "sequence": "workflow",
+      "text": "Open the application navigation."
+    },
+    {
+      "step": "destination",
+      "sequence": "workflow"
+    },
+    {
+      "step": "inspect",
+      "sequence": "workflow",
+      "text": "Open the calendar."
+    }
+  ],
+  "treatments": [
+    {
+      "id": "observed-detail",
+      "kind": "callout",
+      "checkpoint": "result",
+      "target": "detail",
+      "title": "Recorded calendar",
+      "detail": "Inspect the calendar and its selected date in the real Sales view.",
+      "severity": "normal",
+      "rationale": "Describe only the observed live workflow, without claiming a defect or fix."
+    },
+    {
+      "id": "transfer",
+      "kind": "data-panel",
+      "eventKind": "browser.transfer",
+      "valuePath": "cumulativeBytes",
+      "format": "sparkline",
+      "unit": "B",
+      "title": "Recorded page transfer",
+      "rationale": "Show actual CDP transfer events while the real report loads; no invented samples."
+    }
+  ]
+}

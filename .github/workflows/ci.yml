@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   pull_request:
 
+env:
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+
 jobs:
   fast-checks:
     runs-on: ubuntu-24.04
@@ -19,10 +22,17 @@ jobs:
           version: 9.15.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm docs:check
       - name: Type check (blocking)
         run: pnpm typecheck
       - name: Lint (blocking)
         run: pnpm lint
+      - name: Evidence artifact staging excludes dependency links
+        run: node --test scripts/stage-ci-artifacts.test.mjs
+      - name: Install FFmpeg for filtergraph integration tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
       - name: Contracts, pipeline, privacy and compatibility tests
         run: >-
           node node_modules/vitest/vitest.mjs run packages/contracts packages/core packages/capture packages/plan packages/render packages/compare packages/evaluation packages/cli packages/pipeline packages/alm packages/viewer packages/mcp packages/playwright/src
@@ -30,11 +40,14 @@ jobs:
       - name: Builds and tests leave tracked sources unchanged
         run: git diff --exit-code
 
-  windows-processes:
-    # pnpm 9 bundles node-gyp 10, which cannot discover VS 2026 on windows-latest.
-    # Keep this compatibility gate on the VS 2022 image rather than a moving alias.
-    runs-on: windows-2022
-    timeout-minutes: 15
+  portable-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    # VS 2022 is required if a native npm dependency falls back to compilation.
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,9 +57,30 @@ jobs:
         with:
           version: 9.15.0
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter "@repro/core..." build
-      - name: Process-tree cancellation and crashed-writer lock recovery
-        run: pnpm --filter "@repro/core" test -- src/media.test.ts src/lock.test.ts
+      - run: pnpm build
+      - name: Provision Linux tools through the public CLI
+        if: runner.os == 'Linux'
+        run: node packages/cli/dist/bin.js setup --system
+      - name: Provision Windows CI image tools
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ffmpeg tesseract --no-progress -y
+          Add-Content $env:GITHUB_PATH 'C:\Program Files\Tesseract-OCR'
+          node packages/cli/dist/bin.js setup --no-browser --dry-run
+          node packages/cli/dist/bin.js setup
+      - name: Process cancellation and platform setup contracts
+        run: pnpm exec vitest run packages/core/src/media.test.ts packages/core/src/lock.test.ts packages/pipeline/src/setup.test.ts packages/compositor/src/browser-path.test.ts
+      - name: Verify packed consumer capture, custom scene, review and strict export
+        run: pnpm test:clean-install
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portable-install-${{ matrix.os }}
+          include-hidden-files: true
+          path: |
+            .repro/portable-install.json
+            .repro/portable-artifacts/
 
   browser-media:
     runs-on: ubuntu-24.04
@@ -127,39 +161,18 @@ jobs:
         run: pnpm test:clean-install
       - name: Agent mock evaluation (no model or API keys)
         run: pnpm --filter @repro/agent-e2e test
+      - name: Builds and tests leave tracked sources unchanged
+        run: git diff --exit-code
+      - name: Stage evidence without linked dependencies
+        if: always()
+        run: node scripts/stage-ci-artifacts.mjs
       - name: Preserve acceptance and failure artifacts
         if: always()
+        timeout-minutes: 5
         uses: actions/upload-artifact@v4
         with:
           name: browser-evidence-${{ github.run_id }}
           include-hidden-files: true
-          path: |
-            .repro/ci
-            .repro/annotation-benchmark
-            .repro/fresh-agent-replay
-            .repro/review-matrix
-            .repro/discovery
-            .repro/delivery
-            .repro/export-cache
-            .repro/observations
-            .repro/watch-acceptance
-            .repro/public-acceptance
-            .repro/timing-acceptance
-            .repro/timing-trace-acceptance
-            .repro/hidpi-acceptance
-            .repro/hidpi-private
-            .repro/interaction-diagnostics
-            .repro/moving-privacy
-            .repro/checkpoint-checks
-            .repro/synchronization
-            .repro/browser-diagnostics
-            .repro/transient
-            .repro/recipes
-            .repro/har-privacy
-            .repro/review-acceptance
-            .repro/fixture-videos
-            packages/*/test-results
-            packages/e2e-fixture/artifacts
+          compression-level: 0
+          path: .repro/ci-artifacts/
           retention-days: 7
-      - name: Builds and tests leave tracked sources unchanged
-        run: git diff --exit-code

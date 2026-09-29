@@ -16,3 +16,9 @@ export type {
   ViewportSpec,
   VitalsHudProps,
 } from './types.js';
+
+export * from './scene-render.js';
+
+export * from './scene-compare.js';
+
+export { headlessShellPath } from './browser-path.js';

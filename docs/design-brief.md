@@ -407,8 +407,9 @@ Reference tokens already in fixture CSS: `--accent: #2457d6`, `--text: #1a1a1a`,
 
 | Asset | Pattern (examples) |
 | --- | --- |
-| Repro video | `BUG-1001_repro_broken.mp4` |
-| Demo / fix | `BUG-1001_demo_fixed.mp4` |
+| Repro video | `BUG-1001_before_repro.mp4` |
+| Demo / fix | `BUG-1001_after_repro.mp4` |
+| Browser diagnostics | `BUG-1001_before_devtools.json` (default on) |
 | Compare SBS | `BUG-1001_compare_sbs.mp4` |
 | Compare onion | `BUG-1001_compare_onion.mp4` |
 | Package folder | `BUG-1001_evidence/` |

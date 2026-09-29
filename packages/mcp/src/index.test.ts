@@ -46,6 +46,7 @@ it('discovers authoritative guidance and forwards revised presentations and pair
         'repro://compare-composition-schema',
         'repro://capability-schema',
         'repro://share-report-schema',
+        'repro://devtools-report-schema',
       ]),
     );
     const discovery = await client.callTool({
@@ -72,6 +73,22 @@ it('discovers authoritative guidance and forwards revised presentations and pair
       arguments: { run: '/after', outDir: '/bundle', baseline: '/before' },
     });
     expect(calls.export).toHaveBeenCalledWith('/after', '/bundle', '/before');
+    await client.callTool({
+      name: 'export',
+      arguments: {
+        run: '/after',
+        outDir: '/bundle',
+        workItem: 'DASH2R-949',
+        devtools: false,
+      },
+    });
+    expect(calls.export).toHaveBeenCalledWith(
+      '/after',
+      '/bundle',
+      undefined,
+      undefined,
+      { workItem: 'DASH2R-949', devtools: false },
+    );
   } finally {
     await client.close();
     await server.close();

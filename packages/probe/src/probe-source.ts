@@ -137,6 +137,49 @@ function installProbe(): void {
 
     listenForKeys();
     listenForPointers();
+    for (const phase of [
+      'focusin',
+      'focusout',
+      'scroll',
+      'selectionchange',
+    ] as const)
+      document.addEventListener(
+        phase,
+        (event) =>
+          { emit('browser-state', {
+            phase,
+            selector: selectorForTarget(event.target),
+            scrollX,
+            scrollY,
+          }); },
+        { passive: true, capture: true },
+      );
+    window.addEventListener(
+      'dblclick',
+      (event) =>
+        { emit('pointer:gesture', {
+          action: 'double-click',
+          x: event.clientX,
+          y: event.clientY,
+          button: event.button,
+          coordinateSpace:
+            window === window.top ? 'viewport-css' : 'frame-viewport-css',
+        }); },
+      { passive: true, capture: true },
+    );
+    window.addEventListener(
+      'contextmenu',
+      (event) =>
+        { emit('pointer:gesture', {
+          action: 'right-click',
+          x: event.clientX,
+          y: event.clientY,
+          button: event.button,
+          coordinateSpace:
+            window === window.top ? 'viewport-css' : 'frame-viewport-css',
+        }); },
+      { passive: true, capture: true },
+    );
     startGeometryTracker();
     startLongAnimationFrames();
     startFreezeDetector();

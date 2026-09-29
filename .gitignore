@@ -14,3 +14,9 @@ coverage/
 apps/shoplite/dist/
 test-results/
 playwright-report/
+
+# Build-time npm package resources
+/packages/*/LICENSE
+/packages/*/README.md
+/packages/cli/skills/
+/packages/cli/docs/

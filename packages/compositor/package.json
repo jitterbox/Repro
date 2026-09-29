@@ -1,6 +1,6 @@
 {
   "name": "@repro/compositor",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "type": "module",
   "exports": {
     ".": {
@@ -10,7 +10,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -19,11 +20,14 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@fontsource/source-code-pro": "5.3.0",
+    "@fontsource/source-sans-3": "5.3.0",
+    "@hyperframes/engine": "0.8.87",
     "@repro/contracts": "workspace:*",
+    "@repro/core": "workspace:*",
     "playwright": "1.62.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@repro/core": "workspace:*"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
@@ -31,5 +35,19 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jitterbox/Repro.git",
+    "directory": "packages/compositor"
+  },
+  "homepage": "https://github.com/jitterbox/Repro#readme",
+  "bugs": {
+    "url": "https://github.com/jitterbox/Repro/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "@repro/compositor \u2014 Repro browser evidence and annotated video pipeline"
 }

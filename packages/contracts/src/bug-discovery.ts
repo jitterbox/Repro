@@ -25,6 +25,27 @@ export const bugBriefSchema = z
     actual: z.string().default(''),
     steps: z.array(text).default([]),
     tags: z.array(text).default([]),
+    attachments: z
+      .array(
+        z.strictObject({
+          id: text,
+          name: text,
+          mediaType: text,
+          path: text,
+          sha256: z.string().regex(/^[a-f0-9]{64}$/),
+          source: text,
+          provenance: z.literal('ticket-context'),
+          restricted: z.literal(true),
+        }),
+      )
+      .optional(),
+    provenance: z
+      .strictObject({
+        source: text,
+        sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        kind: z.literal('jira'),
+      })
+      .optional(),
   })
   .strict();
 export type BugBrief = z.infer<typeof bugBriefSchema>;

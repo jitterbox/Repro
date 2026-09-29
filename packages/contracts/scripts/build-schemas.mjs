@@ -1,12 +1,15 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { compareCompositionJsonSchema } from '../dist/comparison.js';
 import { planJsonSchema } from '../dist/plan.js';
+import { scenePlanJsonSchema, treatmentPlanJsonSchema } from '../dist/scene.js';
 import { timelineJsonSchema } from '../dist/timeline.js';
 
 for (const [name, schema] of [
   ['compare-composition', compareCompositionJsonSchema],
   ['timeline', timelineJsonSchema],
   ['executable-plan', planJsonSchema],
+  ['scene-plan', scenePlanJsonSchema],
+  ['treatment-plan', treatmentPlanJsonSchema],
 ]) {
   const destination = new URL(
     `../schemas/${name}.schema.json`,

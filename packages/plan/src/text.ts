@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { overlayTheme } from '@repro/contracts';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import opentype from 'opentype.js';
 
 export interface MeasureTextInput {
@@ -66,12 +67,21 @@ export function measureOverlayTextWidth(
   if (!overlayFontResolved) {
     overlayFontResolved = true;
     try {
+      const windowsFont = join(
+        process.env.WINDIR ?? 'C:/Windows',
+        'Fonts',
+        'arialbd.ttf',
+      );
       overlayFontPath =
-        execFileSync(
-          'fc-match',
-          ['-f', '%{file}', `${overlayTheme.burnInFont.family}:style=Bold`],
-          { encoding: 'utf8' },
-        ).trim() || undefined;
+        process.platform === 'win32'
+          ? existsSync(windowsFont)
+            ? windowsFont
+            : undefined
+          : execFileSync(
+              'fc-match',
+              ['-f', '%{file}', `${overlayTheme.burnInFont.family}:style=Bold`],
+              { encoding: 'utf8' },
+            ).trim() || undefined;
     } catch {
       /* Keep a conservative width without fontconfig. */
     }

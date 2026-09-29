@@ -19,6 +19,51 @@ export type Capability = z.infer<typeof capabilitySchema>;
 const entries: [string, string, string, string, string[], string[], string][] =
   [
     [
+      'setup',
+      'Provision local runtime',
+      'repro setup --system',
+      'Install pinned Chromium and optionally system video/OCR tools on Windows or Ubuntu/Debian; dry-run lists exact commands.',
+      ['Optional system, browser and dryRun choices'],
+      ['Dependency checks and install commands'],
+      'System provisioning requires package-manager access and may require elevation.',
+    ],
+    [
+      'defaults',
+      'Editable presentation defaults',
+      'repro defaults --json',
+      'Emit a complete validated treatment template with visual, timing and encoding preferences.',
+      [],
+      ['Treatment plan JSON'],
+      'Settings apply to the opt-in scene renderer; inspect rendered frames after styling changes.',
+    ],
+    [
+      'import-jira',
+      'Import Jira ticket context',
+      'repro import jira issue.json --attachments-dir media --out-dir brief',
+      'Import a saved Jira issue, structured description and local media with source links and hashes. Ticket media is context, not new browser evidence.',
+      ['Jira issue JSON', 'Local attachment directory'],
+      ['Normalized BugBrief', 'Restricted copied attachments'],
+      'Missing attachments fail closed; inspect untrusted ticket content before committing a scenario.',
+    ],
+    [
+      'treatments',
+      'Discover scene treatments',
+      'repro treatments --json',
+      'List the opt-in Hyperframes slice treatments, their measured evidence requirements and editorial guidance.',
+      [],
+      ['Treatment catalog'],
+      'Each selected effect must link to captured evidence.',
+    ],
+    [
+      'validate-treatment',
+      'Validate scene treatments',
+      'repro validate-treatment treatment.json',
+      'Validate treatment intent before compiling it against a captured run.',
+      ['Treatment plan'],
+      ['Validation result'],
+      'Unknown fields and missing observation references are rejected.',
+    ],
+    [
       'discovery-guide',
       'Choose evidence tools by the question they answer',
       'repro discovery-guide --json',
@@ -58,7 +103,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'render',
       'Render a run presentation',
       'repro render run',
-      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture.',
+      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.',
       [
         'run directory',
         'optional --evidence edited.json with checkpoint highlights: [{target, label}]',
@@ -69,10 +114,14 @@ const entries: [string, string, string, string, string[], string[], string][] =
     [
       'export',
       'Export audited presentation',
-      'repro export run --out-dir bundle',
-      'Package complete presentation evidence after a real-frame privacy audit.',
-      ['complete run'],
-      ['portable viewer bundle'],
+      'repro export run --out-dir bundle --work-item DASH2R-949',
+      'Package complete presentation evidence after a real-frame privacy audit. Filenames follow naming.useWorkItemId (default true): prefer a supplied per-run ID, otherwise use a brief description and stable scenario suffix. --no-use-work-item-id selects descriptive naming. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.',
+      ['complete run', 'optional workItem, description, useWorkItemId, devtools, config overrides'],
+      [
+        'named media and checkpoints',
+        'DevTools report (default on)',
+        'portable viewer bundle',
+      ],
       'Missing OCR and incomplete evidence must block export.',
     ],
     [
@@ -123,8 +172,8 @@ const entries: [string, string, string, string, string[], string[], string][] =
     [
       'init',
       'Create a scenario',
-      'repro init',
-      'Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
+      'repro init DASH2R-949',
+      'Store an optional work-item ID and --description in scenario metadata; app config stores naming.useWorkItemId and versionOverlay policy, not changing issue IDs or version values. Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
       [],
       ['committed input files'],
       'Run generated scenario against a supplied URL.',
@@ -273,7 +322,7 @@ export const capabilities: Capability[] = entries.map(
       ? 'Controlled profile fixes Date and RNG and reduces motion. Faithful leaves timing and network unchanged. Screenshots occupy a measured capture interval.'
       : 'No application timing changes. Presentation holds must retain a separate execution timeline.',
     privacy:
-      'Keep raw captures and diagnostics local. Strict export requires actual frame OCR and content-bound audit. Never include credentials in prompts.',
+      'Raw captures and diagnostics stay local. Export includes sanitized, synchronized DevTools data by default; devtools=false disables it. Strict media export requires actual frame OCR and content-bound audit.',
     failureModes: [
       'Invalid or missing inputs',
       'Required evidence unavailable',
@@ -461,4 +510,32 @@ capabilities.push({
   failureModes: ['Deleted or corrupt artifact'],
   verification: 'Corrupt a referenced artifact and verify status fails.',
   example: 'status({run:"/absolute/run-directory"})',
+});
+
+capabilities.push({
+  id: 'render-scene-pair',
+  surface: 'mcp',
+  title: 'Render scene comparison',
+  status: 'implemented',
+  invocation: 'repro render AFTER --renderer hyperframes --baseline BEFORE',
+  description:
+    'Render two scene presentations at equal scale with independent clocks. Observational playback makes no controlled comparison claim.',
+  inputs: ['Rendered before and after runs', 'Optional observational flag'],
+  outputs: ['Local comparison draft', 'Per-pane source-frame map'],
+  prerequisites: [
+    'Pinned Chromium headless shell',
+    'Matching committed scenarios',
+  ],
+  timingEffects:
+    'Aligns semantic beats and holds shorter panes without stretching source clocks.',
+  privacy: 'Sanitized source assets; comparison drafts stay local.',
+  failureModes: [
+    'Mismatched scenarios',
+    'Missing beat or asset',
+    'Uncontrolled verified comparison',
+  ],
+  verification:
+    'Inspect pane clocks, held states, and recorded source identities.',
+  example:
+    'repro render AFTER --renderer hyperframes --baseline BEFORE --observational',
 });

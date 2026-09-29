@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "kind": {
+      "type": "string",
+      "const": "repro-devtools"
+    },
+    "workItem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "variant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "before",
+            "after",
+            "standalone"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "runId": {
+      "type": "string"
+    },
+    "video": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.mp4$"
+    },
+    "clock": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string",
+          "const": "run-monotonic-ms"
+        },
+        "recordingStartMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "captureDurationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "outputDurationMs": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "source",
+        "recordingStartMs",
+        "captureDurationMs",
+        "outputDurationMs"
+      ],
+      "additionalProperties": false
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "play",
+              "hold",
+              "insert"
+            ]
+          },
+          "outputStartMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "outputDurationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sourceStartMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pageId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "outputStartMs",
+          "outputDurationMs",
+          "sourceStartMs",
+          "rate",
+          "pageId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "outputMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sourceMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "capturedSourceMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sourceFrameId": {
+            "type": "string"
+          },
+          "pageId": {
+            "type": "string"
+          },
+          "segmentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "frame",
+          "outputMs",
+          "sourceMs",
+          "capturedSourceMs",
+          "sourceFrameId",
+          "pageId",
+          "segmentId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "pageId": {
+            "type": "string"
+          },
+          "timeMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "uncertaintyMs": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "timing": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/__schema0"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "pageId",
+          "timeMs",
+          "uncertaintyMs",
+          "timing",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "checkpoint": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "pageId": {
+            "type": "string"
+          },
+          "timeMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "status": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "bounds": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "height": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/__schema0"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "checkpoint",
+          "kind",
+          "pageId",
+          "timeMs",
+          "status",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "propertyNames": {
+          "type": "string"
+        },
+        "additionalProperties": {
+          "$ref": "#/$defs/__schema0"
+        }
+      }
+    },
+    "omittedEventCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "workItem",
+    "variant",
+    "runId",
+    "video",
+    "clock",
+    "segments",
+    "frames",
+    "events",
+    "checkpoints",
+    "coverage",
+    "omittedEventCount",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/__schema0"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/__schema0"
+          }
+        }
+      ]
+    }
+  }
+}

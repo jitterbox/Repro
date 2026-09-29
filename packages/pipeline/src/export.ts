@@ -1,20 +1,35 @@
+import { artifactSlug, artifactBaseName } from '@repro/core';
+import { ReproConfigSchema } from '@repro/contracts/config';
+import { buildDevToolsReport } from './devtools-export.js';
 import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@repro/render';
 import { readFile } from 'node:fs/promises';
-import { validateEvidence, shareReportSchema } from '@repro/contracts';
+import {
+  validateEvidence,
+  shareReportSchema,
+  parseScenePlan,
+} from '@repro/contracts';
 import { mapTime, type ReproPlan } from '@repro/plan';
-import { join, basename } from 'node:path';
+import { join, basename, extname } from 'node:path';
 import { verifyRun } from './evidence-run.js';
 import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { packageCommand, type EvidenceAssetInput } from './commands/package.js';
 
-async function presentation(directory: string) {
+async function presentation(directory: string, draft = false) {
   const run = await verifyRun(directory);
   if (
     run.pipelineOutcome !== 'passed' ||
     !['bug-reproduced', 'fix-verified', 'passed'].includes(run.scenarioOutcome)
   )
     throw new Error('Required evidence or designated outcome is missing');
+  if (run.stages.presentation?.status !== 'passed')
+    throw new Error(
+      'Presentation is incomplete or failed; inspect and rerender before export',
+    );
+  if (run.artifacts.some((a) => a.kind === 'presentation-scene') && !draft)
+    throw new Error(
+      'Scene renderer awaits visual acceptance. Use --draft for an OCR-audited acceptance bundle; final-quality scene export is not promoted yet.',
+    );
   const media = run.artifacts.find((a) => a.kind === 'presentation-video');
   const planArtifact = run.artifacts.find((a) =>
     a.kind.startsWith('presentation-key:'),
@@ -29,9 +44,28 @@ async function presentation(directory: string) {
   const spec = validateEvidence(
     JSON.parse(await readFile(join(directory, source), 'utf8')),
   );
-  const plan = JSON.parse(
+  let plan = JSON.parse(
     await readFile(join(directory, planArtifact.path), 'utf8'),
   ) as ReproPlan;
+  const sceneRef = run.artifacts.find((a) => a.kind === 'presentation-scene');
+  if (sceneRef) {
+    const scene = parseScenePlan(
+      JSON.parse(await readFile(join(directory, sceneRef.path), 'utf8')),
+    );
+    plan = {
+      ...plan,
+      annotations: plan.annotations.map((annotation) => {
+        const cue = scene.cues.find(
+          (c) =>
+            ['step', 'marker'].includes(c.kind) &&
+            [`step-${annotation.id}`, `marker-${annotation.id}`].includes(c.id),
+        );
+        return cue
+          ? { ...annotation, timeRange: { start: cue.startMs, end: cue.endMs } }
+          : annotation;
+      }),
+    };
+  }
   assertCurrentPrivacyPresentation(spec, plan);
   const assets: EvidenceAssetInput[] = run.artifacts.flatMap((a) => {
     const kind =
@@ -69,6 +103,7 @@ async function presentation(directory: string) {
   if (!presentationDurationMs)
     throw new Error('Presentation duration is unavailable');
   return {
+    directory,
     run,
     spec,
     plan,
@@ -92,17 +127,32 @@ export function assertCurrentPrivacyPresentation(
     );
 }
 
-/** Share only audited pixels and an allowlisted summary; raw diagnostics remain local. */
+/** Share audited pixels and default-on sanitized diagnostics; raw artifacts remain local. */
 export async function exportEvidence(
   directory: string,
   outDir: string,
   baseline?: string,
+  draft = false,
+  options: {
+    workItem?: string;
+    description?: string;
+    useWorkItemId?: boolean;
+    devtools?: boolean;
+    config?: string;
+  } = {},
 ) {
-  const current = await presentation(directory);
-  const previous = baseline ? await presentation(baseline) : undefined;
+  const current = await presentation(directory, draft);
+  const previous = baseline ? await presentation(baseline, draft) : undefined;
   const items = previous ? [previous, current] : [current];
   let compare: { syncMap: [number, number, number, number][] } | undefined;
   if (previous && baseline) {
+    if (
+      current.run.artifacts.some((a) => a.kind === 'presentation-scene') ||
+      previous.run.artifacts.some((a) => a.kind === 'presentation-scene')
+    )
+      throw new Error(
+        'Scene paired export requires occurrence-aware synchronization; export each reviewed scene separately until that capability is available',
+      );
     const measured = await compareEvidence(baseline, directory);
     if (!measured.ok)
       throw new Error(
@@ -141,9 +191,87 @@ export async function exportEvidence(
     compare = { syncMap: knots };
   }
   const primary = items[0] ?? current;
+  const configured = options.config
+    ? ReproConfigSchema.parse(
+        JSON.parse(await readFile(options.config, 'utf8')),
+      )
+    : current.run.environment.appliedConfiguration === undefined
+      ? undefined
+      : ReproConfigSchema.parse(current.run.environment.appliedConfiguration);
+  const capturedConfig = current.run.environment.appliedConfiguration as
+    { workItem?: string } | undefined;
+  const workItem =
+    options.workItem ?? primary.spec.workItem?.id ?? capturedConfig?.workItem;
+  const description =
+    options.description ??
+    primary.spec.workItem?.description ??
+    primary.spec.title;
+  const useWorkItemId =
+    options.useWorkItemId ?? configured?.naming?.useWorkItemId ?? true;
+  const namingText = useWorkItemId && workItem ? workItem : description;
+  const name = artifactBaseName({
+    workItem,
+    description,
+    scenarioId: primary.spec.id,
+    useWorkItemId,
+  });
+  if (workItem !== undefined && (!workItem.trim() || workItem.length > 200))
+    throw new Error('workItem must contain 1–200 characters');
+  if (
+    options.description !== undefined &&
+    (!options.description.trim() || options.description.length > 200)
+  )
+    throw new Error('description must contain 1–200 characters');
+  const includeDevtools =
+    options.devtools ?? configured?.export?.devtools ?? true;
+  const assets: EvidenceAssetInput[] = [];
+  const devtools: NonNullable<
+    Parameters<typeof packageCommand>[0]['devtools']
+  >[number][] = [];
+  const stems = new Set<string>();
+  for (const item of items) {
+    const stem = `${name}_${artifactSlug(item.run.variant.id)}`;
+    if (stems.has(stem))
+      throw new Error(
+        'Export variants have colliding filenames; choose distinct variant IDs',
+      );
+    stems.add(stem);
+    const counts = new Map<string, number>();
+    for (const asset of item.assets) {
+      const suffix =
+        asset.kind === 'mp4'
+          ? 'repro'
+          : asset.kind === 'vtt'
+            ? 'captions'
+            : `checkpoint-${artifactSlug(basename(asset.path, extname(asset.path)))}`;
+      const duplicate = (counts.get(suffix) ?? 0) + 1;
+      counts.set(suffix, duplicate);
+      assets.push({
+        ...asset,
+        fileName: `${stem}_${suffix}${duplicate > 1 ? `-${duplicate}` : ''}${extname(asset.path)}`,
+      });
+    }
+    if (includeDevtools)
+      devtools.push({
+        fileName: `${stem}_devtools.json`,
+        ...(item.run.variant.role === 'standalone'
+          ? {}
+          : { role: item.run.variant.role }),
+        report: await buildDevToolsReport({
+          directory: item.directory,
+          run: item.run,
+          plan: item.plan,
+          workItem: workItem ?? description,
+          video: `${stem}_repro.mp4`,
+          durationMs: item.presentationDurationMs,
+          patterns: item.spec.privacy.patterns,
+        }),
+      });
+  }
+
   const report = shareReportSchema.parse({
     schemaVersion: '1.0.0',
-    title: primary.spec.title,
+    title: draft ? `[DRAFT] ${primary.spec.title}` : primary.spec.title,
     variants: items.map(({ run, spec, originalDurationMs }) => ({
       id: run.variant.id,
       label: spec.variant.label,
@@ -181,6 +309,8 @@ export async function exportEvidence(
     privacyPatterns: [
       ...new Set(items.flatMap((item) => item.spec.privacy.patterns)),
     ],
-    assets: items.flatMap((item) => item.assets),
+    assets,
+    workItem: namingText,
+    devtools,
   });
 }

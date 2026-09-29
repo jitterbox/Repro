@@ -15,7 +15,7 @@ export interface CompositorOverlayInput {
 export type SkiaOverlayInput = CompositorOverlayInput;
 
 export interface BuildFilterGraphInput {
-  readonly assPath: string;
+  readonly assPath?: string;
   readonly plan: ReproPlan;
   readonly timeline?: Timeline;
   readonly slateStreamIndex?: number;
@@ -143,10 +143,12 @@ export function buildFilterGraph(input: BuildFilterGraphInput): FilterGraph {
     current = next;
   }
 
-  const assLabel = label(labelIndex);
-  labelIndex += 1;
-  chains.push(`${current}ass=${quote(input.assPath)}${assLabel}`);
-  current = assLabel;
+  if (input.assPath !== undefined) {
+    const assLabel = label(labelIndex);
+    labelIndex += 1;
+    chains.push(`${current}ass=${quote(input.assPath)}${assLabel}`);
+    current = assLabel;
+  }
 
   const overlays = [
     ...(input.compositorOverlays ?? []),
@@ -326,7 +328,10 @@ function label(index: number): string {
 }
 
 function quote(value: string): string {
-  return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
+  // FFmpeg parses the graph first, then the filter's colon-separated options.
+  // Preserve option escapes through graph quoting, including drive letters.
+  const option = value.replace(/[\\':]/g, (char) => `\\${char}`);
+  return `'${option.replaceAll("'", "'\\''")}'`;
 }
 
 function requireValue<T>(value: T | null | undefined): T {

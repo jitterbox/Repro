@@ -103,6 +103,13 @@ function sources(brief: BugBrief): Record<string, string> {
     ['actual', brief.actual],
     ...brief.steps.map((step, i): [string, string] => [`steps.${i + 1}`, step]),
     ...brief.tags.map((tag, i): [string, string] => [`tags.${i + 1}`, tag]),
+    ...(brief.attachments ?? []).map((attachment, i): [string, string] => [
+      `attachments.${i + 1}`,
+      JSON.stringify(attachment),
+    ]),
+    ...(brief.provenance
+      ? [['provenance', JSON.stringify(brief.provenance)] as [string, string]]
+      : []),
   ];
   return Object.fromEntries(entries);
 }

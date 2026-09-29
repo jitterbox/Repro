@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { runProcess, h264Profile } from '@repro/core';
 
 import { generateAss } from './ass.js';
+import { withAssSource } from './ass-source.js';
 import { buildFilterGraph } from './filtergraph.js';
 import { writeVtt } from './voiceover.js';
 
@@ -95,7 +96,7 @@ export async function renderPlan(
     mediaMs === undefined
       ? input.plan.timeline
       : clampTimelineToMedia(input.plan.timeline, mediaMs);
-  const graph = buildFilterGraph({
+  const graphInput = {
     assPath,
     plan: input.plan,
     timeline,
@@ -105,19 +106,26 @@ export async function renderPlan(
       ? {}
       : { progressBar: input.progressBar }),
     videoPreFilters: await videoPreFilters(ffmpegPath),
-  });
+  };
+  const graph = buildFilterGraph(graphInput);
   const outputPath = join(input.outDir, input.outputName ?? 'rendered.mp4');
 
-  await runFfmpeg({
-    args: ffmpegArgs(
-      input.video,
-      extraInputs,
-      graph.filterComplex,
-      graph.videoLabel,
-      outputPath,
-      timeline.fps,
-    ),
-    ffmpegPath,
+  await withAssSource(assPath, async (stagedPath) => {
+    const stagedGraph = buildFilterGraph({
+      ...graphInput,
+      assPath: stagedPath,
+    });
+    await runFfmpeg({
+      args: ffmpegArgs(
+        input.video,
+        extraInputs,
+        stagedGraph.filterComplex,
+        graph.videoLabel,
+        outputPath,
+        timeline.fps,
+      ),
+      ffmpegPath,
+    });
   });
 
   const narration = input.plan.narrationSegments ?? [];
@@ -312,26 +320,39 @@ export async function renderCheckpointImage(input: {
       warnings: [],
     },
   };
-  const assPath = `${input.output}.ass`;
-  await writeFile(assPath, generateAss({ plan, staticFrame: true }));
-  const graph = buildFilterGraph({ assPath, plan, progressBar: false });
-  await runFfmpeg({
-    ffmpegPath: 'ffmpeg',
-    args: [
-      '-v',
-      'error',
-      '-y',
-      '-loop',
-      '1',
-      '-i',
-      input.image,
-      '-filter_complex',
-      graph.filterComplex,
-      '-map',
-      graph.videoLabel,
-      '-frames:v',
-      '1',
-      input.output,
-    ],
-  });
+  const render = async (stagedPath?: string) => {
+    const graph = buildFilterGraph({
+      ...(stagedPath === undefined ? {} : { assPath: stagedPath }),
+      plan,
+      progressBar: false,
+    });
+    await runFfmpeg({
+      ffmpegPath: 'ffmpeg',
+      args: [
+        '-v',
+        'error',
+        '-y',
+        '-loop',
+        '1',
+        '-i',
+        input.image,
+        '-filter_complex',
+        graph.filterComplex,
+        '-map',
+        graph.videoLabel,
+        '-frames:v',
+        '1',
+        input.output,
+      ],
+    });
+  };
+  // Sanitized source pixels have no presentation text. Do not initialize libass
+  // and scan the host font library again for every source frame.
+  if (plan.annotations.length === 0 && plan.chapters.length === 0) {
+    await render();
+  } else {
+    const assPath = `${input.output}.ass`;
+    await writeFile(assPath, generateAss({ plan, staticFrame: true }));
+    await withAssSource(assPath, render);
+  }
 }

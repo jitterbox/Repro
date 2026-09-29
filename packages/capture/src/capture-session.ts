@@ -12,12 +12,14 @@ import {
   ReproStore,
   cacheKey,
   implementationDigest,
+  enumerateFonts,
   writeStageAtomic,
 } from '@repro/core';
 import { createPresidioLikeRedactor } from '@repro/core/redactor';
 import { chromium } from 'playwright';
 
 import { captureAnchor } from './anchors.js';
+import { startSceneDiagnostics } from './scene-diagnostics.js';
 import { startBrowserDiagnostics } from './browser-diagnostics.js';
 import { collectEnvironmentManifest } from './environment.js';
 import { StoreEventSink } from './events.js';
@@ -107,7 +109,7 @@ interface ExperimentalActionScreencast {
   readonly showChapter?: (title: string) => Promise<void> | void;
 }
 
-const REPRO_CAPTURE_STAGE_VERSION = '0.1.0';
+const REPRO_CAPTURE_STAGE_VERSION = '0.2.1';
 
 export class CaptureSession {
   readonly #clock: MonotonicClockBridge;
@@ -193,6 +195,21 @@ export class CaptureSession {
     return this.#storePath;
   }
 
+  /** Opt-in startup breadcrumbs contain phase names/timing only, never page data. */
+  async #initialize<T>(phase: string, work: () => Promise<T>): Promise<T> {
+    const started = performance.now();
+    const trace = process.env.REPRO_CAPTURE_DEBUG === '1';
+    if (trace) process.stderr.write(`[repro:init] ${phase} start\n`);
+    try {
+      return await work();
+    } finally {
+      if (trace)
+        process.stderr.write(
+          `[repro:init] ${phase} end ${Math.round(performance.now() - started)}ms\n`,
+        );
+    }
+  }
+
   async start(): Promise<void> {
     try {
       await this.#prepareArtifactDirectories();
@@ -202,19 +219,32 @@ export class CaptureSession {
         status: 'running',
       });
 
-      this.#resources = await this.#createResources();
-      await this.#installContextHooks();
-      await this.#installHarStub();
-      await this.#startTracing();
+      // Inventory the host before recording starts. Otherwise a cold Windows
+      // font scan becomes seconds of blank footage and unnecessary OCR frames.
+      // The environment manifests still validate cached hashes against file metadata.
+      await this.#initialize('font-inventory', enumerateFonts);
+
+      this.#resources = await this.#initialize('browser-resources', () =>
+        this.#createResources(),
+      );
+      await this.#initialize('context-hooks', () =>
+        this.#installContextHooks(),
+      );
+      await this.#initialize('har', () => this.#installHarStub());
+      await this.#initialize('trace', () => this.#startTracing());
       this.#startTracker();
-      await this.#tracker?.ready();
+      await this.#initialize('page-registration', async () =>
+        this.#tracker?.ready(),
+      );
 
       if (this.#options.url !== undefined) {
         await this.page.goto(this.#options.url);
       }
 
-      await this.#calibrateClock(this.page);
-      await this.#writeEnvironmentManifest('start');
+      await this.#initialize('clock', () => this.#calibrateClock(this.page));
+      await this.#initialize('environment', () =>
+        this.#writeEnvironmentManifest('start'),
+      );
     } catch (error) {
       try {
         await this.fail(error);
@@ -320,6 +350,49 @@ export class CaptureSession {
       pageId: this.#primaryPageId(),
       payload: jsonValueFrom(payload),
       tMono: this.#clock.nowMono(),
+    });
+  }
+
+  async observeValue(
+    page: Page,
+    name: string,
+    value: unknown,
+    startMs: number,
+    endMs: number,
+  ) {
+    const pageId = await this.ready(page);
+    const snapshot: unknown = JSON.stringify(value);
+    if (
+      typeof snapshot !== 'string' ||
+      Buffer.byteLength(snapshot, 'utf8') > 65536
+    ) {
+      this.#sink.emitEvent({
+        pageId,
+        kind: 'diagnostic.coverage',
+        payload: {
+          collector: `state:${name}`,
+          status: 'dropped',
+          reason: 'Snapshot exceeds 64 KiB or is not JSON serializable',
+        },
+        tMono: endMs,
+      });
+      throw new Error(
+        'State observation must be JSON serializable and at most 64 KiB',
+      );
+    }
+    this.#sink.emitEvent({
+      pageId,
+      kind: 'scenario.state',
+      tMono: endMs,
+      payload: jsonValueFrom({
+        name,
+        value: JSON.parse(snapshot) as unknown,
+        source: 'scenario-reader',
+        timing: 'host-observation-window',
+        startMs,
+        endMs,
+        uncertaintyMs: endMs - startMs,
+      }),
     });
   }
 
@@ -512,10 +585,27 @@ export class CaptureSession {
   }
 
   async #startPageCapture(registration: PageRegistration): Promise<void> {
-    this.#telemetry.push(startBrowserDiagnostics(registration.page, registration.pageId, this.#sink));
-    await applyProfileToPage(
-      registration.page,
-      profileOptions(this.#options, this.#config),
+    this.#telemetry.push(
+      await this.#initialize('diagnostics', () =>
+        startSceneDiagnostics(
+          registration.page,
+          registration.pageId,
+          this.#sink,
+        ),
+      ),
+    );
+    this.#telemetry.push(
+      startBrowserDiagnostics(
+        registration.page,
+        registration.pageId,
+        this.#sink,
+      ),
+    );
+    await this.#initialize('page-profile', () =>
+      applyProfileToPage(
+        registration.page,
+        profileOptions(this.#options, this.#config),
+      ),
     );
     await registration.page.setViewportSize({
       height: this.#config.viewport.height,
@@ -528,7 +618,7 @@ export class CaptureSession {
     await this.#calibrateClock(registration.page);
     const screencast = await this.#screencastFor(registration);
     this.#screencasts.push(screencast);
-    await screencast.ready();
+    await this.#initialize('initial-frame', () => screencast.ready());
     await this.#showActions(registration.page);
   }
 
@@ -901,7 +991,11 @@ export function captureStageCacheKey(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
-      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
+      harReplayHash: input.config.capture?.har
+        ? createHash('sha256')
+            .update(readFileSync(input.config.capture.har))
+            .digest('hex')
+        : null,
     },
     versions: captureStageVersions(),
   });
@@ -920,7 +1014,11 @@ export function captureStageManifest(input: {
     config: hashInputFromJson(input.config),
     inputs: {
       url: input.url ?? null,
-      harReplayHash: input.config.capture?.har ? createHash('sha256').update(readFileSync(input.config.capture.har)).digest('hex') : null,
+      harReplayHash: input.config.capture?.har
+        ? createHash('sha256')
+            .update(readFileSync(input.config.capture.har))
+            .digest('hex')
+        : null,
     },
     stage: 'capture',
     versions: captureStageVersions(),

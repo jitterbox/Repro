@@ -60,10 +60,41 @@ export function generateAss(input: GenerateAssInput): string {
   ].join('\n');
 }
 
+/** Persistent metadata chrome: measured wrapped lines, no truncation or fade. */
+function versionPlateEvents(annotation: AnnotationBox): readonly string[] {
+  const { x, y, width, height } = annotation.bounds;
+  const range = outputRange(annotation);
+  return [
+    dialogue(
+      8,
+      range,
+      'Panel',
+      `{\\pos(${x},${y})\\p1}${rectPath({ x: 0, y: 0, width, height })}`,
+    ),
+    dialogue(
+      9,
+      range,
+      'Kicker',
+      `{\\pos(${x + 12},${y + 8})}APP VERSION / BUILD`,
+    ),
+    ...annotation.label
+      .split('\n')
+      .map((line, index) =>
+        dialogue(
+          9,
+          range,
+          'Plate',
+          `{\\pos(${x + 12},${y + 28 + index * 24})\\fs18}${escapeAss(line)}`,
+        ),
+      ),
+  ];
+}
+
 function annotationEvents(
   annotation: AnnotationBox,
   theme: ReturnType<typeof getOverlayTheme>,
 ): readonly string[] {
+  if (annotation.id === 'app-version') return versionPlateEvents(annotation);
   const component = annotation.component ?? inferComponent(annotation);
   if (annotation.renderer === 'compositor') {
     return [];
@@ -240,6 +271,7 @@ function badgeEvents(
     annotation.bounds.width - 16,
     annotation.fontSize ?? theme.type.badge.size,
   );
+  if (annotation.id === 'app-version') return versionPlateEvents(annotation);
   const component = annotation.component ?? inferComponent(annotation);
   const style = component === 'speed-chip' ? 'Meta' : 'Badge';
   return [

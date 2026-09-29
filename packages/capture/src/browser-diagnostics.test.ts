@@ -24,6 +24,7 @@ it('records distinct HTTP and transport failures, correlates requests, and detac
   page.emit('requestfailed', request);
   expect(emitEvent.mock.calls.map(([event]) => event.kind)).toEqual([
     'browser.request',
+    'browser.response',
     'browser.http-error',
     'browser.request-failure',
   ]);
@@ -37,10 +38,10 @@ it('records distinct HTTP and transport failures, correlates requests, and detac
         uncertaintyMs: null,
       },
     });
-  expect(emitEvent.mock.calls[1]?.[0].payload).toMatchObject({ status: 500 });
+  expect(emitEvent.mock.calls[2]?.[0].payload).toMatchObject({ status: 500 });
   await capture.dispose();
   page.emit('request', request);
-  expect(emitEvent).toHaveBeenCalledTimes(3);
+  expect(emitEvent).toHaveBeenCalledTimes(4);
 });
 
 it('does not expose opaque URL data or credentials', () => {
