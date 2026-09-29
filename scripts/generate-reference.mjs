@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 /** Public references are generated from the installed CLI and MCP protocol, not a second option list. */
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -7,10 +8,11 @@ const require = createRequire(
   new URL('../packages/mcp/package.json', import.meta.url),
 );
 const { Client } = await import(
-  require.resolve('@modelcontextprotocol/sdk/client/index.js')
+  pathToFileURL(require.resolve('@modelcontextprotocol/sdk/client/index.js'))
+    .href
 );
 const { InMemoryTransport } = await import(
-  require.resolve('@modelcontextprotocol/sdk/inMemory.js')
+  pathToFileURL(require.resolve('@modelcontextprotocol/sdk/inMemory.js')).href
 );
 const output = new URL('../docs/reference/', import.meta.url);
 await mkdir(new URL('schemas/', output), { recursive: true });
