@@ -12,6 +12,7 @@ import {
   ReproStore,
   cacheKey,
   implementationDigest,
+  enumerateFonts,
   writeStageAtomic,
 } from '@repro/core';
 import { createPresidioLikeRedactor } from '@repro/core/redactor';
@@ -217,6 +218,11 @@ export class CaptureSession {
         runId: this.#runId,
         status: 'running',
       });
+
+      // Inventory the host before recording starts. Otherwise a cold Windows
+      // font scan becomes seconds of blank footage and unnecessary OCR frames.
+      // The environment manifests still validate cached hashes against file metadata.
+      await this.#initialize('font-inventory', enumerateFonts);
 
       this.#resources = await this.#initialize('browser-resources', () =>
         this.#createResources(),
