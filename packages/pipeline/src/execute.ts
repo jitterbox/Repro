@@ -31,7 +31,12 @@ export async function runScenario(options: RunOptions) {
   validateEvidence(JSON.parse(await readFile(evidence, 'utf8')));
   const root = resolve(options.outDir ?? '.repro/runs');
   await mkdir(root, { recursive: true });
-  const args = [scenarioPlaywrightRunner(spec), 'test', spec, '--workers=1'];
+  const args = [
+    scenarioPlaywrightRunner(spec),
+    'test',
+    scenarioFileFilter(spec),
+    '--workers=1',
+  ];
   if (options.playwrightConfig)
     args.push('--config', resolve(options.playwrightConfig));
   if (options.project) args.push('--project', options.project);
@@ -199,4 +204,11 @@ export function summarizeRunResult(
       },
     })),
   };
+}
+
+/** Playwright positional arguments are regexes, not literal filesystem paths.
+ * Its matcher also tests slash-normalized filenames on Windows. */
+export function scenarioFileFilter(spec: string): string {
+  const normalized = spec.split(String.fromCharCode(92)).join('/');
+  return '^' + normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$';
 }

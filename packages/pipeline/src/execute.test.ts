@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it, vi } from 'vitest';
 import type * as Core from '@repro/core';
@@ -25,7 +25,7 @@ vi.mock('./evidence-run.js', () => ({
       'id' | 'pipelineOutcome'
     >,
 }));
-import { runScenario } from './execute.js';
+import { runScenario, scenarioFileFilter } from './execute.js';
 
 afterEach(() => vi.clearAllMocks());
 
@@ -42,7 +42,11 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
       args: string[],
       options: { env: Record<string, string> },
     ) => {
-      const name = args[2]?.endsWith('broken.spec.ts') ? 'broken' : 'complete';
+      const name = new RegExp(args[2] ?? '').test(
+        resolve('broken.spec.ts').replaceAll(String.fromCharCode(92), '/'),
+      )
+        ? 'broken'
+        : 'complete';
       const output = options.env.REPRO_OUT;
       if (!output) throw new Error('No output directory');
       await mkdir(join(output, name));
@@ -58,7 +62,12 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
   );
   try {
     const common = {
-      evidence: fileURLToPath(new URL('../../../packages/playwright/examples/after.json', import.meta.url)),
+      evidence: fileURLToPath(
+        new URL(
+          '../../../packages/playwright/examples/after.json',
+          import.meta.url,
+        ),
+      ),
       outDir: directory,
     };
     const [complete, broken] = await Promise.all([
@@ -76,4 +85,23 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+it('selects exact scenario filenames with Windows separators and regex metacharacters', () => {
+  const windows = String.raw`C:\Users\QA Person\repro (copy)\flow[1].spec.ts`;
+  const pattern = new RegExp(scenarioFileFilter(windows));
+  expect(pattern.test('C:/Users/QA Person/repro (copy)/flow[1].spec.ts')).toBe(
+    true,
+  );
+  expect(pattern.test('C:/Users/QA Person/repro (copy)/flow1.spec.ts')).toBe(
+    false,
+  );
+  expect(
+    pattern.test('C:/Users/QA Person/repro (copy)/flow[1].spec.ts.extra'),
+  ).toBe(false);
+  expect(
+    new RegExp(scenarioFileFilter('/tmp/test+copy/a.spec.ts')).test(
+      '/tmp/test+copy/a.spec.ts',
+    ),
+  ).toBe(true);
 });
