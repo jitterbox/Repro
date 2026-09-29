@@ -1,3 +1,6 @@
+import { artifactSlug } from '@repro/core';
+import { ReproConfigSchema } from '@repro/contracts/config';
+import { buildDevToolsReport } from './devtools-export.js';
 import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@repro/render';
 import { readFile } from 'node:fs/promises';
 import {
@@ -6,7 +9,7 @@ import {
   parseScenePlan,
 } from '@repro/contracts';
 import { mapTime, type ReproPlan } from '@repro/plan';
-import { join, basename } from 'node:path';
+import { join, basename, extname } from 'node:path';
 import { verifyRun } from './evidence-run.js';
 import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
@@ -100,6 +103,7 @@ async function presentation(directory: string, draft = false) {
   if (!presentationDurationMs)
     throw new Error('Presentation duration is unavailable');
   return {
+    directory,
     run,
     spec,
     plan,
@@ -123,12 +127,13 @@ export function assertCurrentPrivacyPresentation(
     );
 }
 
-/** Share only audited pixels and an allowlisted summary; raw diagnostics remain local. */
+/** Share audited pixels and default-on sanitized diagnostics; raw artifacts remain local. */
 export async function exportEvidence(
   directory: string,
   outDir: string,
   baseline?: string,
   draft = false,
+  options: { workItem?: string; devtools?: boolean; config?: string } = {},
 ) {
   const current = await presentation(directory, draft);
   const previous = baseline ? await presentation(baseline, draft) : undefined;
@@ -180,6 +185,63 @@ export async function exportEvidence(
     compare = { syncMap: knots };
   }
   const primary = items[0] ?? current;
+  const configured = options.config
+    ? ReproConfigSchema.parse(
+        JSON.parse(await readFile(options.config, 'utf8')),
+      )
+    : current.run.environment.appliedConfiguration === undefined
+      ? undefined
+      : ReproConfigSchema.parse(current.run.environment.appliedConfiguration);
+  const workItem = options.workItem ?? configured?.workItem ?? primary.spec.id;
+  if (!workItem.trim() || workItem.length > 200)
+    throw new Error('workItem must contain 1–200 characters');
+  const includeDevtools =
+    options.devtools ?? configured?.export?.devtools ?? true;
+  const assets: EvidenceAssetInput[] = [];
+  const devtools: NonNullable<
+    Parameters<typeof packageCommand>[0]['devtools']
+  >[number][] = [];
+  const stems = new Set<string>();
+  for (const item of items) {
+    const stem = `${artifactSlug(workItem)}_${artifactSlug(item.run.variant.id)}`;
+    if (stems.has(stem))
+      throw new Error(
+        'Export variants have colliding filenames; choose distinct variant IDs',
+      );
+    stems.add(stem);
+    const counts = new Map<string, number>();
+    for (const asset of item.assets) {
+      const suffix =
+        asset.kind === 'mp4'
+          ? 'repro'
+          : asset.kind === 'vtt'
+            ? 'captions'
+            : `checkpoint-${artifactSlug(basename(asset.path, extname(asset.path)))}`;
+      const duplicate = (counts.get(suffix) ?? 0) + 1;
+      counts.set(suffix, duplicate);
+      assets.push({
+        ...asset,
+        fileName: `${stem}_${suffix}${duplicate > 1 ? `-${duplicate}` : ''}${extname(asset.path)}`,
+      });
+    }
+    if (includeDevtools)
+      devtools.push({
+        fileName: `${stem}_devtools.json`,
+        ...(item.run.variant.role === 'standalone'
+          ? {}
+          : { role: item.run.variant.role }),
+        report: await buildDevToolsReport({
+          directory: item.directory,
+          run: item.run,
+          plan: item.plan,
+          workItem,
+          video: `${stem}_repro.mp4`,
+          durationMs: item.presentationDurationMs,
+          patterns: item.spec.privacy.patterns,
+        }),
+      });
+  }
+
   const report = shareReportSchema.parse({
     schemaVersion: '1.0.0',
     title: draft ? `[DRAFT] ${primary.spec.title}` : primary.spec.title,
@@ -220,6 +282,8 @@ export async function exportEvidence(
     privacyPatterns: [
       ...new Set(items.flatMap((item) => item.spec.privacy.patterns)),
     ],
-    assets: items.flatMap((item) => item.assets),
+    assets,
+    workItem,
+    devtools,
   });
 }

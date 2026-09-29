@@ -47,8 +47,11 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
       )
         ? 'broken'
         : 'complete';
+      expect(options.env.REPRO_WORK_ITEM).toBe('DASH2R-949');
+      expect(options.env.REPRO_EXPORT_DEVTOOLS).toBe('false');
       const output = options.env.REPRO_OUT;
       if (!output) throw new Error('No output directory');
+      expect(output).toMatch(/DASH2R-949-[^/\\]+$/);
       await mkdir(join(output, name));
       if (name === 'complete')
         await writeFile(
@@ -69,6 +72,8 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
         ),
       ),
       outDir: directory,
+      workItem: 'DASH2R-949',
+      devtools: false,
     };
     const [complete, broken] = await Promise.all([
       runScenario({ ...common, spec: 'complete.spec.ts' }),

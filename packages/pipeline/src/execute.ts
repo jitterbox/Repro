@@ -6,7 +6,7 @@ import { compareEvidence } from './comparison.js';
 import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, writeFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { runProcess } from '@repro/core';
+import { runProcess, artifactSlug, ReproConfigSchema } from '@repro/core';
 import { validateEvidence } from '@repro/contracts';
 import { recipes } from './discovery.js';
 import { readRun } from './evidence-run.js';
@@ -14,6 +14,8 @@ import { scenarioPlaywrightRunner } from './playwright-runner.js';
 const require = createRequire(import.meta.url);
 export interface RunOptions {
   spec: string;
+  workItem?: string | undefined;
+  devtools?: boolean | undefined;
   url?: string | undefined;
   evidence: string;
   config?: string | undefined;
@@ -28,7 +30,17 @@ export interface RunOptions {
 export async function runScenario(options: RunOptions) {
   const spec = resolve(options.spec);
   const evidence = resolve(options.evidence);
-  validateEvidence(JSON.parse(await readFile(evidence, 'utf8')));
+  const evidenceSpec = validateEvidence(
+    JSON.parse(await readFile(evidence, 'utf8')),
+  );
+  const configured = options.config
+    ? ReproConfigSchema.parse(
+        JSON.parse(await readFile(resolve(options.config), 'utf8')),
+      )
+    : undefined;
+  const workItem = options.workItem ?? configured?.workItem ?? evidenceSpec.id;
+  if (!workItem.trim() || workItem.length > 200)
+    throw new Error('workItem must contain 1–200 characters');
   const root = resolve(options.outDir ?? '.repro/runs');
   await mkdir(root, { recursive: true });
   const args = [
@@ -56,13 +68,17 @@ export async function runScenario(options: RunOptions) {
   ]);
   // Each invocation owns its attempt directory, including failures without a
   // manifest. Directory snapshots cannot distinguish concurrent invocations.
-  const out = await mkdtemp(join(root, 'invocation-'));
+  const out = await mkdtemp(join(root, `${artifactSlug(workItem)}-`));
   let executionError: string | null = null;
   try {
     await runProcess(process.execPath, args, {
       env: {
         ...process.env,
         REPRO_EVIDENCE: evidence,
+        REPRO_WORK_ITEM: workItem,
+        REPRO_EXPORT_DEVTOOLS: String(
+          options.devtools ?? configured?.export?.devtools ?? true,
+        ),
         REPRO_OUT: out,
         REPRO_CODE_IDENTITY: codeIdentity,
         REPRO_SCENARIO_SOURCE_IDENTITY: executableIdentity,
@@ -121,7 +137,12 @@ export async function runScenario(options: RunOptions) {
     baseline: options.baseline ?? null,
   };
 }
-export async function initScenario(directory = process.cwd()) {
+export async function initScenario(
+  directory = process.cwd(),
+  workItem?: string,
+) {
+  if (workItem !== undefined && (!workItem.trim() || workItem.length > 200))
+    throw new Error('workItem must contain 1–200 characters');
   await mkdir(directory, { recursive: true });
   const files: Record<string, string> = {
     'tsconfig.json':
@@ -142,6 +163,8 @@ export async function initScenario(directory = process.cwd()) {
       JSON.stringify(
         {
           mode: 'repro',
+          ...(workItem ? { workItem: workItem.trim() } : {}),
+          export: { devtools: true },
           surfaceCapture: 'page',
           profile: 'controlled',
           viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },

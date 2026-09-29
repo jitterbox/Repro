@@ -32,7 +32,8 @@ Commands:
   recipes [options]
   migrate-run [options] <run>
   validate-evidence <file>
-  init [options]
+  init [options] [work-item]        Create a scenario; optionally name artifacts
+                                    with a bug/work-item ID or name
   record [options] <url>
   run [options] <spec>
   frame [options] <run>
@@ -166,11 +167,17 @@ Options:
 Usage: repro export [options] <run>
 
 Options:
+  --work-item <id-or-name>  Override the work item used in exported filenames
+  --config <path>           Read naming and export preferences from a Repro
+                            config
+  --devtools                Include sanitized, synchronized browser diagnostics
+                            (default on)
+  --no-devtools             Export media without browser diagnostics
   --out-dir <path>
-  --draft           Create an audited acceptance bundle for an unpromoted scene
-                    renderer
-  --baseline <run>  Include an audited before/after pair
-  -h, --help        display help for command
+  --draft                   Create an audited acceptance bundle for an
+                            unpromoted scene renderer
+  --baseline <run>          Include an audited before/after pair
+  -h, --help                display help for command
 ```
 
 ## repro experiment-native
@@ -245,7 +252,9 @@ Options:
 ## repro init
 
 ```text
-Usage: repro init [options]
+Usage: repro init [options] [work-item]
+
+Create a scenario; optionally name artifacts with a bug/work-item ID or name
 
 Options:
   --directory <path>
@@ -268,6 +277,11 @@ Options:
 Usage: repro run [options] <spec>
 
 Options:
+  --work-item <id-or-name>    Work item used for run and exported artifact names
+  --devtools                  Export sanitized browser diagnostics by default
+                              for this run
+  --no-devtools               Disable diagnostics export for this run; local
+                              capture remains enabled
   --evidence <path>
   --url <url>
   --config <path>

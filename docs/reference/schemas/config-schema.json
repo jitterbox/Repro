@@ -10,6 +10,21 @@
         "demo"
       ]
     },
+    "workItem": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "export": {
+      "type": "object",
+      "properties": {
+        "devtools": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "features": {
       "default": {},
       "type": "object",

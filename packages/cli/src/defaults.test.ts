@@ -7,9 +7,12 @@ it('creates a portable UTF-8 template and preserves existing treatment files', a
   const directory = await mkdtemp(join(tmpdir(), 'repro defaults '));
   const file = join(directory, 'treatment.json');
   try {
-    await createReproProgram(() => {}).parseAsync(['defaults', '--out', file], {
-      from: 'user',
-    });
+    await createReproProgram(() => undefined).parseAsync(
+      ['defaults', '--out', file],
+      {
+        from: 'user',
+      },
+    );
     const bytes = await readFile(file);
     expect(bytes[0]).toBe(123);
     const plan = JSON.parse(bytes.toString()) as {
@@ -19,9 +22,12 @@ it('creates a portable UTF-8 template and preserves existing treatment files', a
     expect(plan.style.bodyFontSize).toBe(18);
     expect(plan.encoding.crf).toBe(18);
     await expect(
-      createReproProgram(() => {}).parseAsync(['defaults', '--out', file], {
-        from: 'user',
-      }),
+      createReproProgram(() => undefined).parseAsync(
+        ['defaults', '--out', file],
+        {
+          from: 'user',
+        },
+      ),
     ).rejects.toMatchObject({ code: 'EEXIST' });
     expect(await readFile(file)).toEqual(bytes);
   } finally {

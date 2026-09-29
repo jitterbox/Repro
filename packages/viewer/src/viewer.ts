@@ -19,7 +19,7 @@ export interface EvidenceCompareMeta {
 
 export interface EvidenceManifestAsset {
   readonly href: string;
-  readonly kind: 'chapters' | 'json' | 'mp4' | 'vtt' | 'png';
+  readonly kind: 'chapters' | 'json' | 'mp4' | 'vtt' | 'png' | 'devtools';
   readonly path?: string;
   readonly role?: 'after' | 'before';
   readonly title?: string;
@@ -212,6 +212,17 @@ function renderAssets(
       )
       .join(' | ');
     title?.after(summary);
+  }
+  for (const asset of manifest.assets.filter(
+    (asset) => asset.kind === 'devtools',
+  )) {
+    const link = document.createElement('a');
+    link.href = asset.href;
+    link.textContent = `${asset.role ? asset.role + ' · ' : ''}Download browser DevTools data`;
+    link.download = '';
+    const paragraph = document.createElement('p');
+    paragraph.append(link);
+    title?.after(paragraph);
   }
   const captionsFor = (asset: EvidenceManifestAsset | undefined) =>
     manifest.assets.find(

@@ -201,6 +201,14 @@ Execute public Playwright tests in an isolated context; record every attempt. --
     "buildId": {
       "type": "string"
     },
+    "workItem": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "devtools": {
+      "type": "boolean"
+    },
     "repeat": {
       "type": "integer",
       "exclusiveMinimum": 0,
@@ -352,7 +360,7 @@ Render titles, steps, measured highlights and reading holds from a committed evi
 
 ## export
 
-Package complete presentation evidence after a real-frame privacy audit.
+Package complete presentation evidence after a real-frame privacy audit. Filenames use the work-item ID/name and variant. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.
 
 ```json
 {
@@ -369,6 +377,17 @@ Package complete presentation evidence after a real-frame privacy audit.
     },
     "draft": {
       "type": "boolean"
+    },
+    "workItem": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "devtools": {
+      "type": "boolean"
+    },
+    "config": {
+      "type": "string"
     }
   },
   "required": [
@@ -401,6 +420,7 @@ Choose a committed specification for the claim.
 - `repro://evidence-schema`: Authoritative Repro evidence-schema
 - `repro://run-schema`: Authoritative Repro run-schema
 - `repro://config-schema`: Authoritative Repro config-schema
+- `repro://devtools-report-schema`: Authoritative Repro devtools-report-schema
 - `repro://watch-server-schema`: Authoritative Repro watch-server-schema
 - `repro://compare-composition-schema`: Authoritative Repro compare-composition-schema
 - `repro://timeline-schema`: Authoritative Repro timeline-schema

@@ -55,7 +55,7 @@ or environment integrations handle secrets.
    For polished presentation capture, import `humanPointer` from `@repro/playwright` and use one controller per page for recorded curved approaches and clicks. Allow 1.5–2 seconds after ordinary actions for observation. Keep timing-sensitive trigger intervals faithful; add reading holds in presentation. Never synthesize unrecorded cursor paths to repair an old capture.
 4. **Inspect:** Use `repro frame <run> --checkpoint <id>` and `repro review <run>`. Inspect the actual image; check the title, variant, trigger, numbered steps, expected/observed result, framing, timestamps, uncertainty and crop transform. Keep a context image. Default crop padding is 24 CSS pixels. For positional comparisons, retain common bounds and scale.
 5. **Verify:** Rerun the same committed claim after the fix with an explicit baseline. Preserve unrelated test failures as errors. Never silently heal assertions. Capture transient behavior before its trigger; do not wait for stability when instability is the subject.
-6. **Export:** Only export inspected presentation media after required evidence and actual frame OCR pass. Missing OCR blocks strict export. Never include raw captures, traces, HAR or credentials in a shareable package.
+6. **Export:** Export inspected presentation media and the default sanitized DevTools report after required evidence, text audits and actual frame OCR pass. Missing OCR blocks strict export. Never include raw captures, traces, HAR or credentials in a shareable package.
 
 For hidden-hitbox claims, `repro.hitTest(checkpoint, target, point)` records a point sample, hit-test stack, styles and measured bounds. A box outline is not proof of the complete hit region. Label each diagnostic and reference its observation. Do not change CSS or force-click to manufacture evidence. An absent target is absent; a baseline footprint must be labelled as such.
 
@@ -92,3 +92,7 @@ For Hyperframes treatments, source-time replay, scene comparisons, or draft scen
 ## Installation and visual preferences
 
 If `repro` is unavailable, follow [installation](https://github.com/jitterbox/Repro/blob/main/docs/installation.md). Skills are workflow instructions; the local CLI performs capture and rendering. No Repro AI API key is required. Run `repro defaults --json` to discover visual/timing/encoding preferences; put overrides in the treatment file, validate with `repro validate-treatment`, and re-render without recapturing. Use `repro <command> --help` for installed-version options.
+
+## Work-item naming and diagnostic export
+
+Use the supplied bug/work-item ID or name with `repro init "ID or name"`, config `workItem`, or `run`/`export --work-item`. Reuse a known identity without asking again; otherwise the scenario ID is the fallback. Exports name the video and sanitized DevTools JSON together. Diagnostics export defaults on; honor `export.devtools: false` or `--no-devtools`, and use `--devtools` to explicitly enable it. This preference does not disable local capture. Check coverage and timing limitations; raw traces, HAR, DOM serialization and credentials stay local. See [the full configuration contract](https://github.com/jitterbox/Repro/blob/main/docs/configuration.md#work-item-names-and-browser-diagnostics).

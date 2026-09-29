@@ -1,3 +1,4 @@
+import { artifactSlug } from '@repro/core';
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page, TestInfo, Response } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
@@ -616,6 +617,15 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
               viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
             },
       );
+      if (process.env.REPRO_WORK_ITEM)
+        config.workItem = process.env.REPRO_WORK_ITEM;
+      if (process.env.REPRO_EXPORT_DEVTOOLS !== undefined) {
+        if (!['true', 'false'].includes(process.env.REPRO_EXPORT_DEVTOOLS))
+          throw new Error('REPRO_EXPORT_DEVTOOLS must be true or false');
+        config.export = {
+          devtools: process.env.REPRO_EXPORT_DEVTOOLS === 'true',
+        };
+      }
       config.features.redaction =
         spec.privacy.strict ||
         spec.privacy.selectors.length > 0 ||
@@ -634,7 +644,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         throw new Error(validation.errors.map((e) => e.message).join('; '));
       const directory = join(
         process.env.REPRO_OUT ?? testInfo.outputDir,
-        `${spec.id}-${randomUUID()}`,
+        `${artifactSlug(config.workItem ?? spec.id)}-${artifactSlug(spec.variant.id)}-${randomUUID()}`,
       );
       await mkdir(directory, { recursive: true });
       const executableIdentity =

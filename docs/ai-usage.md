@@ -514,7 +514,7 @@ interfaces above for committed scenarios and measured evidence.
 
 ALM attachment basename:
 
-`{ISSUEID}__{slug}__{env}__{sha7}__{ISO8601Z}.mp4`
+`{work-item}_{variant}_repro.mp4` with matching `{work-item}_{variant}_devtools.json` by default; ALM delivery uses content-identity upload names.
 
 Example: `BUG-1234__cart-total-nan__staging__a1b2c3d__20260727T211500Z.mp4`
 
@@ -782,7 +782,7 @@ Declare `segments: [{id:"loading", title:"Load through completion", step:"trigge
 
 Do not call `repro.checkpoint('during')` for an event-selected checkpoint. The pipeline selects an existing frame using the committed event occurrence, same-page calibrated time, offset and segment boundaries. Missing events, unknown calibration and frames outside the tolerance fail required evidence. `repro frame <run> --checkpoint during` returns actual/requested times, selection offset, uncertainty, event reference and context PNG. It cannot invent historical target bounds; use context unless aligned geometry was measured. Capture the final stable outcome separately with an assertion and checkpoint. Never wait for stability when instability is the subject.
 
-Public Playwright console, page exceptions, HTTP error responses and failed connections are recorded passively. HTTP 4xx/5xx and transport failures remain separate. Review lists event/page/request references and seeks the original recording. These events use host receipt times with unknown delivery latency; step associations describe temporal containment, not causality. URL credentials, query strings and fragments are discarded; event text passes the configured redactor. Raw diagnostics remain local and are excluded from shareable reports. Controlled clock implementations may report timer exceptions as console errors; Repro preserves the observed event category.
+Public Playwright console, page exceptions, HTTP error responses and failed connections are recorded passively. HTTP 4xx/5xx and transport failures remain separate. Review lists event/page/request references and seeks the original recording. These events use host receipt times with unknown delivery latency; step associations describe temporal containment, not causality. URL credentials, query strings and fragments are discarded; event text passes the configured redactor. Raw diagnostics remain local. Export includes a sanitized DevTools JSON report by default, named alongside the video using the work-item ID/name and variant. `--no-devtools` or `export.devtools: false` disables that export without disabling local capture. See [naming and diagnostic export](configuration.md#work-item-names-and-browser-diagnostics). Controlled clock implementations may report timer exceptions as console errors; Repro preserves the observed event category.
 
 Comparison matches semantic checkpoint IDs first. Its decoded-image fallback only proposes unique reciprocal matches that preserve semantic-anchor order. Changed-pixel ratios are measurements; image correspondence remains a heuristic with uncertain spans, original-timing default and no successful proof claim. Commit consistent checkpoint IDs to establish before/after meaning.
 

@@ -1,4 +1,5 @@
 import {
+  devToolsReportJsonSchema,
   treatmentPlanSchema,
   treatmentCatalog,
   parseTreatmentPlan,
@@ -152,6 +153,8 @@ export function createReproMcpServer() {
         config: z.string().optional(),
         project: z.string().optional(),
         buildId: z.string().optional(),
+        workItem: z.string().trim().min(1).max(200).optional(),
+        devtools: z.boolean().optional(),
         repeat: z.number().int().positive().optional(),
         baseline: z.string().optional(),
         outDir: z.string().optional(),
@@ -244,13 +247,22 @@ export function createReproMcpServer() {
         outDir: z.string(),
         baseline: z.string().optional(),
         draft: z.boolean().optional(),
+        workItem: z.string().trim().min(1).max(200).optional(),
+        devtools: z.boolean().optional(),
+        config: z.string().optional(),
       },
     },
-    async ({ run, outDir, baseline, draft }) =>
+    async ({ run, outDir, baseline, draft, workItem, devtools, config }) =>
       json(
-        draft === undefined
-          ? await exportEvidence(run, outDir, baseline)
-          : await exportEvidence(run, outDir, baseline, draft),
+        workItem !== undefined || devtools !== undefined || config !== undefined
+          ? await exportEvidence(run, outDir, baseline, draft, {
+              ...(workItem === undefined ? {} : { workItem }),
+              ...(devtools === undefined ? {} : { devtools }),
+              ...(config === undefined ? {} : { config }),
+            })
+          : draft === undefined
+            ? await exportEvidence(run, outDir, baseline)
+            : await exportEvidence(run, outDir, baseline, draft),
       ),
   );
   server.registerTool(
@@ -267,6 +279,7 @@ export function createReproMcpServer() {
     'evidence-schema': evidenceJsonSchema,
     'run-schema': runJsonSchema,
     'config-schema': configJsonSchema,
+    'devtools-report-schema': devToolsReportJsonSchema,
     'watch-server-schema': z.toJSONSchema(watchServerSchema),
     'compare-composition-schema': compareCompositionJsonSchema,
     'timeline-schema': timelineJsonSchema,

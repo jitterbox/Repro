@@ -26,7 +26,7 @@ Once 0.2.0 is published, from an evidence project with Node 22+:
 npm install --save-dev @repro/cli@0.2.0 @repro/playwright@0.2.0
 npx repro setup --system
 npx repro doctor
-npx repro init
+npx repro init DASH2R-949
 ```
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
@@ -55,6 +55,8 @@ npx repro render path/to/run --renderer hyperframes --treatment treatment.json
 npx repro review path/to/run
 npx repro export path/to/run --draft --out-dir evidence-bundle
 ```
+
+Use a work-item ID or a quoted name such as `repro init "Mobile metric overflow"`. Exported files share that name: `DASH2R-949_before_repro.mp4` and, by default, `DASH2R-949_before_devtools.json`. The sanitized diagnostic JSON includes captured browser events, coverage and video timing mappings. Use `--no-devtools` on `run` or `export` to opt out, or set `"export": { "devtools": false }` in `repro.config.json`. [Naming, overrides and diagnostic contents →](docs/configuration.md#work-item-names-and-browser-diagnostics)
 
 Add relevant treatments and step descriptions to `treatment.json` before rendering. Inspect the actual frames and motion; a valid plan alone does not establish good evidence. Hyperframes is currently an opt-in renderer with audited draft export. The legacy renderer remains the default while final promotion gates are completed. `--draft` never bypasses privacy/OCR checks. [Scene workflow and current limits →](docs/scene-renderer.md)
 

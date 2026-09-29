@@ -114,10 +114,14 @@ const entries: [string, string, string, string, string[], string[], string][] =
     [
       'export',
       'Export audited presentation',
-      'repro export run --out-dir bundle',
-      'Package complete presentation evidence after a real-frame privacy audit.',
-      ['complete run'],
-      ['portable viewer bundle'],
+      'repro export run --out-dir bundle --work-item DASH2R-949',
+      'Package complete presentation evidence after a real-frame privacy audit. Filenames use the work-item ID/name and variant. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.',
+      ['complete run', 'optional workItem, devtools, config overrides'],
+      [
+        'named media and checkpoints',
+        'DevTools report (default on)',
+        'portable viewer bundle',
+      ],
       'Missing OCR and incomplete evidence must block export.',
     ],
     [
@@ -168,8 +172,8 @@ const entries: [string, string, string, string, string[], string[], string][] =
     [
       'init',
       'Create a scenario',
-      'repro init',
-      'Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
+      'repro init DASH2R-949',
+      'Accept an optional work-item ID or name for artifact naming. Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
       [],
       ['committed input files'],
       'Run generated scenario against a supplied URL.',
@@ -318,7 +322,7 @@ export const capabilities: Capability[] = entries.map(
       ? 'Controlled profile fixes Date and RNG and reduces motion. Faithful leaves timing and network unchanged. Screenshots occupy a measured capture interval.'
       : 'No application timing changes. Presentation holds must retain a separate execution timeline.',
     privacy:
-      'Keep raw captures and diagnostics local. Strict export requires actual frame OCR and content-bound audit. Never include credentials in prompts.',
+      'Raw captures and diagnostics stay local. Export includes sanitized, synchronized DevTools data by default; devtools=false disables it. Strict media export requires actual frame OCR and content-bound audit.',
     failureModes: [
       'Invalid or missing inputs',
       'Required evidence unavailable',

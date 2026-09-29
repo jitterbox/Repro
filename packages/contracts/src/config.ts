@@ -167,6 +167,11 @@ export const CompareConfigSchema = z
 export const ReproConfigSchema = z
   .object({
     mode: ModeSchema,
+    workItem: z.string().trim().min(1).max(200).optional(),
+    export: z
+      .object({ devtools: z.boolean().default(true) })
+      .strict()
+      .optional(),
     features: FeatureFlagsSchema.default({}),
     profile: CaptureProfileSchema,
     surfaceCapture: SurfaceCaptureSchema,

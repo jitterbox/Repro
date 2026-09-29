@@ -46,7 +46,7 @@ const { stdout } = await exec(
   { cwd: project },
 );
 assert.ok(JSON.parse(stdout).some((c) => c.id === 'run'));
-await exec(process.execPath, [cli, 'init'], { cwd: project });
+await exec(process.execPath, [cli, 'init', 'PORTABLE-949'], { cwd: project });
 await exec(process.execPath, [cli, 'validate-evidence', 'evidence.json'], {
   cwd: project,
 });
@@ -202,7 +202,26 @@ const bundle = await consumerCli(
   '--out-dir',
   join(project, 'share'),
 );
-assert.ok(bundle.manifest.assets.some((asset) => asset.kind === 'mp4'));
+assert.ok(
+  bundle.manifest.assets.some(
+    (asset) =>
+      asset.kind === 'mp4' &&
+      asset.href === 'assets/PORTABLE-949_before_repro.mp4',
+  ),
+);
+const devtoolsAsset = bundle.manifest.assets.find(
+  (asset) => asset.kind === 'devtools',
+);
+assert.equal(devtoolsAsset?.href, 'assets/PORTABLE-949_before_devtools.json');
+const devtoolsBytes = await readFile(
+  join(project, 'share', devtoolsAsset.href),
+);
+const diagnostic = JSON.parse(devtoolsBytes);
+assert.equal(diagnostic.workItem, 'PORTABLE-949');
+assert.equal(diagnostic.video, 'PORTABLE-949_before_repro.mp4');
+assert.equal(diagnostic.frames.length, rendered.receipt.frameCount);
+assert.ok(diagnostic.events.some((event) => event.kind === 'browser.request'));
+assert.ok(diagnostic.coverage.length > 0);
 await consumerCli('frame', run, '--checkpoint', 'result');
 const { spawn } = await import('node:child_process');
 const reviewer = spawn(
@@ -265,6 +284,10 @@ await writeFile(
 console.log(`Packed scene/strict export/review passed: ${project}`);
 
 await mkdir('.repro/portable-artifacts', { recursive: true });
+await writeFile(
+  '.repro/portable-artifacts/PORTABLE-949_before_devtools.json',
+  devtoolsBytes,
+);
 await copyFile(rendered.outputPath, '.repro/portable-artifacts/proof.mp4');
 await copyFile(
   join(rendered.directory, 'result.png'),

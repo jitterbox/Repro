@@ -21,8 +21,7 @@ repro export RUN --draft --out-dir acceptance-bundle
 ```
 
 `--draft` permits an acceptance bundle, not a privacy bypass. OCR remains mandatory,
-including with no configured custom patterns. Raw frames, browser events, source
-maps, compositions, and diagnostic HTML remain local. Final-quality scene export
+including with no configured custom patterns. Raw frames, event logs, compositions and diagnostic HTML remain local. Export includes a sanitized DevTools JSON report with selected events and source/output frame mappings by default; `--no-devtools` opts out. See [export configuration](configuration.md#work-item-names-and-browser-diagnostics). Final-quality scene export
 is blocked until the renderer is promoted in a subsequent change.
 
 Presentation edits use `render --evidence edited.json`. They retain the existing

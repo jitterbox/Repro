@@ -216,6 +216,19 @@ export function createReproProgram(writer: Writer = console.log): Command {
     );
   program
     .command('export <run>')
+    .option(
+      '--work-item <id-or-name>',
+      'Override the work item used in exported filenames',
+    )
+    .option(
+      '--config <path>',
+      'Read naming and export preferences from a Repro config',
+    )
+    .option(
+      '--devtools',
+      'Include sanitized, synchronized browser diagnostics (default on)',
+    )
+    .option('--no-devtools', 'Export media without browser diagnostics')
     .requiredOption('--out-dir <path>')
     .option(
       '--draft',
@@ -225,7 +238,14 @@ export function createReproProgram(writer: Writer = console.log): Command {
     .action(
       async (
         run: string,
-        options: { outDir: string; baseline?: string; draft?: boolean },
+        options: {
+          outDir: string;
+          baseline?: string;
+          draft?: boolean;
+          workItem?: string;
+          devtools?: boolean;
+          config?: string;
+        },
       ) => {
         writer(
           JSON.stringify(
@@ -234,6 +254,17 @@ export function createReproProgram(writer: Writer = console.log): Command {
               options.outDir,
               options.baseline,
               options.draft,
+              {
+                ...(options.workItem === undefined
+                  ? {}
+                  : { workItem: options.workItem }),
+                ...(options.devtools === undefined
+                  ? {}
+                  : { devtools: options.devtools }),
+                ...(options.config === undefined
+                  ? {}
+                  : { config: options.config }),
+              },
             ),
             null,
             2,
@@ -282,11 +313,22 @@ export function createReproProgram(writer: Writer = console.log): Command {
     writer(JSON.stringify({ ok: true }));
   });
   program
-    .command('init')
+    .command('init [work-item]')
+    .description(
+      'Create a scenario; optionally name artifacts with a bug/work-item ID or name',
+    )
     .option('--directory <path>')
-    .action(async (options: { directory?: string }) => {
-      writer(JSON.stringify(await initScenario(options.directory), null, 2));
-    });
+    .action(
+      async (workItem: string | undefined, options: { directory?: string }) => {
+        writer(
+          JSON.stringify(
+            await initScenario(options.directory, workItem),
+            null,
+            2,
+          ),
+        );
+      },
+    );
   program
     .command('record <url>')
     .option('--output <path>')
@@ -297,6 +339,18 @@ export function createReproProgram(writer: Writer = console.log): Command {
     });
   program
     .command('run <spec>')
+    .option(
+      '--work-item <id-or-name>',
+      'Work item used for run and exported artifact names',
+    )
+    .option(
+      '--devtools',
+      'Export sanitized browser diagnostics by default for this run',
+    )
+    .option(
+      '--no-devtools',
+      'Disable diagnostics export for this run; local capture remains enabled',
+    )
     .requiredOption('--evidence <path>')
     .option('--url <url>')
     .option('--config <path>')

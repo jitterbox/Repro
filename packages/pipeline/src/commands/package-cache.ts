@@ -75,6 +75,8 @@ export async function packageCacheKey(
           })),
         ),
         report: options.report ?? null,
+        workItem: options.workItem ?? null,
+        devtools: options.devtools ?? [],
         compare: options.compare ?? null,
         patterns: options.privacyPatterns ?? [],
       }),
