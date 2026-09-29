@@ -4,39 +4,80 @@ Keep three decisions separate: `repro.config.json` controls capture, privacy and
 
 ## Work-item names and browser diagnostics
 
-Start with `repro init DASH2R-949` or `repro init "Mobile metric overflow"`. Initialization stores the ID/name in `repro.config.json`:
+Application configuration stores reusable policy, not the ID or version of one particular run:
 
 ```json
 {
-  "workItem": "DASH2R-949",
-  "export": { "devtools": true }
+  "naming": { "useWorkItemId": true },
+  "export": { "devtools": true },
+  "versionOverlay": { "enabled": true, "discover": true }
 }
 ```
 
-These are optional fields in a complete capture config. Without a work-item name, Repro uses the evidence scenario ID. Names are converted to safe Windows/Linux filename stems; spaces become hyphens, reserved device names are escaped, and long names receive a short hash. Run directories also use this stem with a unique suffix. Internal run manifests and renderer filenames remain stable for compatibility.
+These optional groups belong in a complete capture config; all four booleans default to **true**. Supply each issue's identity separately:
 
-Exports contain matching files under `assets/`:
+```sh
+repro init DASH2R-949 --description "Mobile metric overflow"
+# Without an issue ID:
+repro init --description "Mobile metric overflow"
+```
 
-- `DASH2R-949_before_repro.mp4`
-- `DASH2R-949_before_devtools.json`
-- `DASH2R-949_before_checkpoint-result.png` (when that checkpoint exists)
-- `DASH2R-949_before_captions.vtt` (when captions exist)
+Initialization stores the identity in `evidence.json` as `workItem.id` and `workItem.description`. `run` and `export` also accept `--work-item` and `--description` overrides. Reuse the same app config across different issues.
 
-The middle component is the scenario's variant ID, including for standalone evidence. Exported diagnostic files are linked from the portable viewer. ALM delivery retains its existing content-identity upload names.
+With `naming.useWorkItemId: true`, a supplied ID is the base name: `DASH2R-949_before_repro.mp4` and `DASH2R-949_before_devtools.json`. Without an ID, or with `naming.useWorkItemId: false`, the base uses the brief description (falling back to the scenario title), followed by eight hash characters derived from the scenario ID. For example: `Mobile-metric-overflow-<hash>_before_repro.mp4`. The suffix keeps identical descriptions from different scenarios distinct. Use distinct scenario IDs for distinct issues. `--use-work-item-id` / `--no-use-work-item-id` override this policy for a run or export.
+
+Names are safe on Windows/Linux: spaces become hyphens, device names are escaped, and long names are shortened with a hash. Run folders retain an additional unique attempt suffix. Matching checkpoint/caption files use the same base and variant. Internal manifest/render paths remain stable. ALM upload names retain their content identity.
 
 ```sh
 repro run scenario.spec.ts --evidence evidence.json --config repro.config.json --work-item DASH2R-949
+repro export path/to/run --out-dir bundle --no-use-work-item-id --description "Mobile metric overflow"
 repro export path/to/run --out-dir bundle --no-devtools
-repro export path/to/run --out-dir bundle --devtools --work-item "Mobile metric overflow"
 ```
 
-For scene acceptance bundles, also pass `--draft`. Both `run` and `export` accept `--devtools` / `--no-devtools`. A run stores its resolved preference; an export override needs no recapture. Replacing a bundle with `--no-devtools` removes its previous diagnostic file. Opting out changes export only; local diagnostic capture remains available for review.
+For scene acceptance bundles, also pass `--draft`. Both `run` and `export` accept `--devtools` / `--no-devtools`. Export overrides need no recapture. Replacing a bundle with `--no-devtools` removes its previous diagnostic file; local diagnostic capture remains available.
 
-Export precedence is explicit CLI flags, then an export-time `--config` file (if supplied), otherwise the captured run configuration. Missing `export.devtools` means **true**; missing `workItem` falls back to the scenario ID. An export-time config replaces the captured configuration for these preferences. MCP `repro.run` and `repro.export` expose `workItem` and `devtools`; `repro.export` also accepts `config`.
+Policy precedence is explicit CLI flags, then an export-time `--config` (if supplied), otherwise the captured run config. Identity precedence is explicit CLI metadata, then the scenario/run metadata. Old runs that stored `workItem` in their captured configuration remain readable; this deprecated field is no longer written by initialization or used as a default for new runs. MCP mirrors `workItem`, `description`, `useWorkItemId`, and `devtools` inputs.
 
 The versioned [DevTools report schema](reference/schemas/devtools-report-schema.json) contains captured console/network/lifecycle events, available performance/state/WebMCP observations, checkpoint geometry, coverage/limitations, calibrated source timestamps and timing uncertainty. Scene reports include exact source-frame identities and output segments for holds, slow motion and replay. Legacy runs expose only the timing/observations actually recorded; missing data is explicitly reported.
 
 This is Repro diagnostic JSON, not a Chrome-importable trace or a full browser-memory dump. Raw traces, DOM serialization, request/response bodies, headers, storage and credentials remain local. Export strips URL credentials/query strings/fragments, redacts known sensitive fields and text, and applies configured privacy patterns. Pixel OCR and diagnostic text/schema audits still fail closed. Inspect coverage before claiming that a particular diagnostic stream was captured.
+
+## Persistent application version/build textbox
+
+`versionOverlay.enabled` defaults to true. When a target-app version or build is known, both renderers display a textbox for the entire video, including holds and replay. The scene renderer reserves annotation-gutter space; the legacy renderer wraps text and avoids measured evidence regions. Missing values produce no placeholder. The textbox never uses Repro's package version, Node version, or the evidence repository's Git SHA as a substitute.
+
+Supply values per run:
+
+```sh
+repro run scenario.spec.ts --evidence evidence.json --config repro.config.json --app-version 2.7.1 --build-id qa-42
+repro render path/to/run --renderer hyperframes --app-version 2.7.1 --build-id qa-42
+repro render path/to/run --renderer hyperframes --no-version-overlay
+```
+
+`--version-overlay` / `--no-version-overlay` override the saved policy on `run` and `render`. Render-time version/build labels are presentation metadata; they do not change the captured build identity used for verified before/after comparison. Supplied values take precedence over discovered values independently for version and build.
+
+With `versionOverlay.discover: true`, Repro observes declared version data on the scenario page at the end of execution. This is a contextual run label, not a claim that version changes were tracked continuously. It records the source, method, origin and observation time. Discovery checks:
+
+- Version meta tags: `app-version`, `application-version`, `version`; build meta tags: `app-build`, `build-id`, `build-version`.
+- Attributes: `data-app-version` and `data-build-id`.
+- Plain JavaScript properties: `window.__APP_VERSION__`, `window.__BUILD_ID__`, `window.__APP_CONFIG__.version` and `.buildId`.
+
+For app-specific declarations, configure selectors or dotted paths relative to `window`:
+
+```json
+{
+  "versionOverlay": {
+    "enabled": true,
+    "discover": true,
+    "versionSelector": "[data-testid='app-version']",
+    "buildPath": "appMetadata.buildId"
+  }
+}
+```
+
+`versionSelector`, `buildSelector`, `versionPath`, and `buildPath` are optional. Selectors read `content`, the matching `data-app-*` attribute, or text content; explicit selectors/paths are tried before conventional declarations. Discovery does not invoke getters, application actions or network endpoints. Strings must be nonempty and at most 160 characters. Unsupported/absent data stays unknown. Set `discover: false` to use only supplied values. A closed/unavailable page records discovery as unavailable without fabricating a version.
+
+Recorded metadata lives in `run.environment.appVersion` and an `app.version` diagnostic event. Overlay text receives configured and built-in redaction; strict export auditing still applies. [Metadata schema](reference/schemas/app-version-schema.json).
 
 ## Create editable presentation defaults
 
@@ -118,7 +159,7 @@ The [Playwright API guide](playwright-api.md) describes targets, checkpoints, hu
 | `REPRO_OCR_WORKERS` | OCR concurrency, integer 1–8, default 2 |
 | `REPRO_OCR_COMMAND` | Advanced external OCR adapter command; must supply actual frame-audit evidence, never bypasses strict export |
 | `REPRO_ADO_TOKEN`, `REPRO_JIRA_TOKEN` | Delivery-only secrets; keep out of prompts and artifacts |
-| `REPRO_EVIDENCE`, `REPRO_CONFIG`, `REPRO_OUT`, `REPRO_URL`, `REPRO_BUILD_ID`, `REPRO_WORK_ITEM`, `REPRO_EXPORT_DEVTOOLS` | Passed to fixtures by `repro run`; prefer CLI flags |
+| `REPRO_EVIDENCE`, `REPRO_CONFIG`, `REPRO_OUT`, `REPRO_URL`, `REPRO_BUILD_ID`, `REPRO_WORK_ITEM`, `REPRO_DESCRIPTION`, `REPRO_USE_WORK_ITEM_ID`, `REPRO_EXPORT_DEVTOOLS`, `REPRO_APP_VERSION`, `REPRO_VERSION_OVERLAY` | Passed to fixtures by `repro run`; prefer CLI flags |
 | `REPRO_CODE_IDENTITY`, `REPRO_SCENARIO_SOURCE_IDENTITY` | Internal runner provenance; do not override to manufacture matching evidence |
 
 Test-script-specific `REPRO_*` environment variables are development controls, not public runtime settings. Optional AI evaluation has separate provider requirements; deterministic replay does not use them.

@@ -7,6 +7,7 @@ Generated from MCP resources. Each schema enumerates nested fields, types, requi
 - [evidence-schema](schemas/evidence-schema.json)
 - [run-schema](schemas/run-schema.json)
 - [config-schema](schemas/config-schema.json)
+- [app-version-schema](schemas/app-version-schema.json)
 - [devtools-report-schema](schemas/devtools-report-schema.json)
 - [watch-server-schema](schemas/watch-server-schema.json)
 - [compare-composition-schema](schemas/compare-composition-schema.json)

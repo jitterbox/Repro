@@ -1,4 +1,4 @@
-import { artifactSlug } from '@repro/core';
+import { artifactSlug, artifactBaseName } from '@repro/core';
 import { ReproConfigSchema } from '@repro/contracts/config';
 import { buildDevToolsReport } from './devtools-export.js';
 import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@repro/render';
@@ -133,7 +133,13 @@ export async function exportEvidence(
   outDir: string,
   baseline?: string,
   draft = false,
-  options: { workItem?: string; devtools?: boolean; config?: string } = {},
+  options: {
+    workItem?: string;
+    description?: string;
+    useWorkItemId?: boolean;
+    devtools?: boolean;
+    config?: string;
+  } = {},
 ) {
   const current = await presentation(directory, draft);
   const previous = baseline ? await presentation(baseline, draft) : undefined;
@@ -192,9 +198,30 @@ export async function exportEvidence(
     : current.run.environment.appliedConfiguration === undefined
       ? undefined
       : ReproConfigSchema.parse(current.run.environment.appliedConfiguration);
-  const workItem = options.workItem ?? configured?.workItem ?? primary.spec.id;
-  if (!workItem.trim() || workItem.length > 200)
+  const capturedConfig = current.run.environment.appliedConfiguration as
+    { workItem?: string } | undefined;
+  const workItem =
+    options.workItem ?? primary.spec.workItem?.id ?? capturedConfig?.workItem;
+  const description =
+    options.description ??
+    primary.spec.workItem?.description ??
+    primary.spec.title;
+  const useWorkItemId =
+    options.useWorkItemId ?? configured?.naming?.useWorkItemId ?? true;
+  const namingText = useWorkItemId && workItem ? workItem : description;
+  const name = artifactBaseName({
+    workItem,
+    description,
+    scenarioId: primary.spec.id,
+    useWorkItemId,
+  });
+  if (workItem !== undefined && (!workItem.trim() || workItem.length > 200))
     throw new Error('workItem must contain 1–200 characters');
+  if (
+    options.description !== undefined &&
+    (!options.description.trim() || options.description.length > 200)
+  )
+    throw new Error('description must contain 1–200 characters');
   const includeDevtools =
     options.devtools ?? configured?.export?.devtools ?? true;
   const assets: EvidenceAssetInput[] = [];
@@ -203,7 +230,7 @@ export async function exportEvidence(
   >[number][] = [];
   const stems = new Set<string>();
   for (const item of items) {
-    const stem = `${artifactSlug(workItem)}_${artifactSlug(item.run.variant.id)}`;
+    const stem = `${name}_${artifactSlug(item.run.variant.id)}`;
     if (stems.has(stem))
       throw new Error(
         'Export variants have colliding filenames; choose distinct variant IDs',
@@ -234,7 +261,7 @@ export async function exportEvidence(
           directory: item.directory,
           run: item.run,
           plan: item.plan,
-          workItem,
+          workItem: workItem ?? description,
           video: `${stem}_repro.mp4`,
           durationMs: item.presentationDurationMs,
           patterns: item.spec.privacy.patterns,
@@ -283,7 +310,7 @@ export async function exportEvidence(
       ...new Set(items.flatMap((item) => item.spec.privacy.patterns)),
     ],
     assets,
-    workItem,
+    workItem: namingText,
     devtools,
   });
 }

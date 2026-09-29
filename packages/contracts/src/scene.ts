@@ -163,6 +163,7 @@ export const sceneCueSchema = z.strictObject({
   id,
   kind: z.enum([
     'title',
+    'app-version',
     'step',
     'highlight',
     'magnifier',

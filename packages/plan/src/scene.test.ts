@@ -205,3 +205,23 @@ it('compiles project preferences into scene dimensions without changing the sour
   expect(scene.viewport).toEqual({ width: 1280, height: 720 });
   expect(scene.encoding).toEqual({ crf: 22, preset: 'slow' });
 });
+
+it('keeps known app version context for every output segment and omits absent metadata', () => {
+  const plain = { ...input, treatments: { schemaVersion: '1.0.0' } };
+  expect(compileScene(plain).cues.some((c) => c.kind === 'app-version')).toBe(
+    false,
+  );
+  const scene = compileScene({
+    ...plain,
+    appVersion: 'Version 2.7.1\nBuild qa-42',
+  });
+  const cue = scene.cues.find((c) => c.kind === 'app-version');
+  expect(cue).toMatchObject({
+    startMs: 0,
+    detail: 'Version 2.7.1\nBuild qa-42',
+    layer: 60,
+  });
+  expect(cue?.endMs).toBe(
+    scene.segments.reduce((sum, segment) => sum + segment.outDurationMs, 0),
+  );
+});

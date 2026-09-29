@@ -384,6 +384,7 @@
             "type": "string",
             "enum": [
               "title",
+              "app-version",
               "step",
               "highlight",
               "magnifier",

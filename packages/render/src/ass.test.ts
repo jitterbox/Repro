@@ -128,3 +128,30 @@ function planFixture(): ReproPlan {
     viewport: { deviceScaleFactor: 1, height: 720, width: 1280 },
   };
 }
+
+it('keeps version plates visible at both ends and preserves every wrapped line', () => {
+  const fixture = planFixture();
+  const template = fixture.annotations[0];
+  if (!template) throw new Error('Missing annotation');
+  const ass = generateAss({
+    plan: {
+      ...fixture,
+      chapters: [],
+      annotations: [
+        {
+          ...template,
+          id: 'app-version',
+          component: 'plate',
+          label: 'Version 2.7.1\nBuild qa-42',
+          bounds: { x: 24, y: 84, width: 320, height: 90 },
+          timeRange: { start: 0, end: 10000 },
+          outTimeRange: { start: 0, end: 10000 },
+        },
+      ],
+    },
+  });
+  expect(ass).toContain('Version 2.7.1');
+  expect(ass).toContain('Build qa-42');
+  expect(ass).not.toContain('\\fad(');
+  expect(ass).toContain('0:00:00.00,0:00:10.00');
+});

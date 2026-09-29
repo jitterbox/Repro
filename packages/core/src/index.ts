@@ -15,4 +15,4 @@ export * from './mask-regions.js';
 export { enumerateFonts, type FontManifestEntry } from './fonts.js';
 export { mapBounded } from './workers.js';
 
-export { artifactSlug } from './artifact-name.js';
+export { artifactSlug, artifactBaseName } from './artifact-name.js';

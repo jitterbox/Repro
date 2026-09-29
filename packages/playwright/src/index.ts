@@ -1,4 +1,5 @@
-import { artifactSlug } from '@repro/core';
+import { observeAppVersion } from './app-version.js';
+import { artifactSlug, artifactBaseName } from '@repro/core';
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page, TestInfo, Response } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
@@ -617,8 +618,26 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
               viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
             },
       );
-      if (process.env.REPRO_WORK_ITEM)
-        config.workItem = process.env.REPRO_WORK_ITEM;
+      if (process.env.REPRO_WORK_ITEM || process.env.REPRO_DESCRIPTION)
+        spec.workItem = {
+          ...spec.workItem,
+          ...(process.env.REPRO_WORK_ITEM
+            ? { id: process.env.REPRO_WORK_ITEM }
+            : {}),
+          ...(process.env.REPRO_DESCRIPTION
+            ? { description: process.env.REPRO_DESCRIPTION }
+            : {}),
+        };
+      if (process.env.REPRO_USE_WORK_ITEM_ID !== undefined)
+        config.naming = {
+          useWorkItemId: process.env.REPRO_USE_WORK_ITEM_ID === 'true',
+        };
+      if (process.env.REPRO_VERSION_OVERLAY !== undefined)
+        config.versionOverlay = {
+          discover: true,
+          ...config.versionOverlay,
+          enabled: process.env.REPRO_VERSION_OVERLAY === 'true',
+        };
       if (process.env.REPRO_EXPORT_DEVTOOLS !== undefined) {
         if (!['true', 'false'].includes(process.env.REPRO_EXPORT_DEVTOOLS))
           throw new Error('REPRO_EXPORT_DEVTOOLS must be true or false');
@@ -644,7 +663,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         throw new Error(validation.errors.map((e) => e.message).join('; '));
       const directory = join(
         process.env.REPRO_OUT ?? testInfo.outputDir,
-        `${artifactSlug(config.workItem ?? spec.id)}-${artifactSlug(spec.variant.id)}-${randomUUID()}`,
+        `${artifactBaseName({ workItem: spec.workItem?.id, description: spec.workItem?.description ?? spec.title, scenarioId: spec.id, useWorkItemId: config.naming?.useWorkItemId })}-${artifactSlug(spec.variant.id)}-${randomUUID()}`,
       );
       await mkdir(directory, { recursive: true });
       const executableIdentity =
@@ -670,6 +689,16 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         fixtureError = error;
       }
       {
+        const appVersion = await observeAppVersion(
+          page,
+          config.versionOverlay,
+          {
+            version: process.env.REPRO_APP_VERSION,
+            build: process.env.REPRO_BUILD_ID,
+          },
+          () => session.clock.nowMono(),
+        );
+        session.emitSemantic('app.version', appVersion);
         await recorder.dispose();
         const scenarioCompletedAt = performance.now();
         const durationMs = session.clock.nowMono();
@@ -701,6 +730,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
           segments: recorder.segments,
           errors: testInfo.errors.map((e) => e.message ?? 'Test failed'),
           config,
+          appVersion,
           designatedChecks: recorder.designatedChecks,
           testFailed: failed(testInfo),
           ...(process.env.REPRO_BUILD_ID

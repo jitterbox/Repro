@@ -30,7 +30,7 @@ jobs:
           Add-Content $env:GITHUB_PATH 'C:\Program Files\Tesseract-OCR'
           node packages/cli/dist/bin.js setup
       - name: Process, setup, defaults and renderer platform tests
-        run: pnpm exec vitest run packages/core/src/artifact-name.test.ts packages/cli/src/work-item.test.ts packages/pipeline/src/devtools-export.test.ts packages/pipeline/src/export-options.test.ts packages/core/src/media.test.ts packages/core/src/lock.test.ts packages/core/src/fonts.test.ts packages/pipeline/src/setup.test.ts packages/pipeline/src/execute.test.ts packages/cli/src/defaults.test.ts packages/compositor/src/browser-path.test.ts packages/render/src/filtergraph.test.ts packages/render/src/ass-source.test.ts
+        run: pnpm exec vitest run packages/pipeline/src/app-version.test.ts packages/pipeline/src/evidence-presentation.test.ts packages/plan/src/scene.test.ts packages/core/src/artifact-name.test.ts packages/cli/src/work-item.test.ts packages/pipeline/src/devtools-export.test.ts packages/pipeline/src/export-options.test.ts packages/core/src/media.test.ts packages/core/src/lock.test.ts packages/core/src/fonts.test.ts packages/pipeline/src/setup.test.ts packages/pipeline/src/execute.test.ts packages/cli/src/defaults.test.ts packages/compositor/src/browser-path.test.ts packages/render/src/filtergraph.test.ts packages/render/src/ass-source.test.ts
       - name: Packed consumer capture, custom scene, strict OCR export and review
         run: pnpm test:clean-install
         env:

@@ -28,6 +28,7 @@ import {
   renderScenePair,
 } from '@repro/pipeline';
 import {
+  appVersionJsonSchema,
   bugBriefJsonSchema,
   discoveryAssessmentJsonSchema,
   evidenceJsonSchema,
@@ -152,8 +153,12 @@ export function createReproMcpServer() {
         playwrightConfig: z.string().optional(),
         config: z.string().optional(),
         project: z.string().optional(),
+        appVersion: z.string().trim().min(1).max(160).optional(),
+        versionOverlay: z.boolean().optional(),
         buildId: z.string().optional(),
         workItem: z.string().trim().min(1).max(200).optional(),
+        description: z.string().trim().min(1).max(200).optional(),
+        useWorkItemId: z.boolean().optional(),
         devtools: z.boolean().optional(),
         repeat: z.number().int().positive().optional(),
         baseline: z.string().optional(),
@@ -225,16 +230,30 @@ export function createReproMcpServer() {
       inputSchema: {
         run: z.string(),
         evidence: z.string().optional(),
+        appVersion: z.string().trim().min(1).max(160).optional(),
+        buildId: z.string().trim().min(1).max(160).optional(),
+        versionOverlay: z.boolean().optional(),
         renderer: z.enum(['legacy', 'hyperframes']).optional(),
         treatment: z.string().optional(),
       },
     },
-    async ({ run, evidence, renderer, treatment }) =>
+    async ({
+      run,
+      evidence,
+      renderer,
+      treatment,
+      appVersion,
+      buildId,
+      versionOverlay,
+    }) =>
       json(
         await renderEvidence(run, {
           ...(evidence ? { evidence } : {}),
           ...(renderer ? { renderer } : {}),
           ...(treatment ? { treatment } : {}),
+          ...(appVersion ? { appVersion } : {}),
+          ...(buildId ? { buildId } : {}),
+          ...(versionOverlay === undefined ? {} : { versionOverlay }),
         }),
       ),
   );
@@ -248,15 +267,33 @@ export function createReproMcpServer() {
         baseline: z.string().optional(),
         draft: z.boolean().optional(),
         workItem: z.string().trim().min(1).max(200).optional(),
+        description: z.string().trim().min(1).max(200).optional(),
+        useWorkItemId: z.boolean().optional(),
         devtools: z.boolean().optional(),
         config: z.string().optional(),
       },
     },
-    async ({ run, outDir, baseline, draft, workItem, devtools, config }) =>
+    async ({
+      run,
+      outDir,
+      baseline,
+      draft,
+      workItem,
+      description,
+      useWorkItemId,
+      devtools,
+      config,
+    }) =>
       json(
-        workItem !== undefined || devtools !== undefined || config !== undefined
+        workItem !== undefined ||
+          description !== undefined ||
+          useWorkItemId !== undefined ||
+          devtools !== undefined ||
+          config !== undefined
           ? await exportEvidence(run, outDir, baseline, draft, {
               ...(workItem === undefined ? {} : { workItem }),
+              ...(description === undefined ? {} : { description }),
+              ...(useWorkItemId === undefined ? {} : { useWorkItemId }),
               ...(devtools === undefined ? {} : { devtools }),
               ...(config === undefined ? {} : { config }),
             })
@@ -279,6 +316,7 @@ export function createReproMcpServer() {
     'evidence-schema': evidenceJsonSchema,
     'run-schema': runJsonSchema,
     'config-schema': configJsonSchema,
+    'app-version-schema': appVersionJsonSchema,
     'devtools-report-schema': devToolsReportJsonSchema,
     'watch-server-schema': z.toJSONSchema(watchServerSchema),
     'compare-composition-schema': compareCompositionJsonSchema,

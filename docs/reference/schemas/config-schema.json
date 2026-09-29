@@ -11,9 +11,50 @@
       ]
     },
     "workItem": {
+      "description": "Deprecated: older run snapshots only; supply issue identity per scenario/run",
       "type": "string",
       "minLength": 1,
       "maxLength": 200
+    },
+    "naming": {
+      "type": "object",
+      "properties": {
+        "useWorkItemId": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "versionOverlay": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "type": "boolean"
+        },
+        "discover": {
+          "default": true,
+          "type": "boolean"
+        },
+        "versionSelector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "buildSelector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "versionPath": {
+          "type": "string",
+          "pattern": "^[A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*$"
+        },
+        "buildPath": {
+          "type": "string",
+          "pattern": "^[A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*$"
+        }
+      },
+      "additionalProperties": false
     },
     "export": {
       "type": "object",

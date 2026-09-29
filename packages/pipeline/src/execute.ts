@@ -6,8 +6,8 @@ import { compareEvidence } from './comparison.js';
 import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, writeFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { runProcess, artifactSlug, ReproConfigSchema } from '@repro/core';
-import { validateEvidence } from '@repro/contracts';
+import { runProcess, artifactBaseName, ReproConfigSchema } from '@repro/core';
+import { validateEvidence, appVersionSchema } from '@repro/contracts';
 import { recipes } from './discovery.js';
 import { readRun } from './evidence-run.js';
 import { scenarioPlaywrightRunner } from './playwright-runner.js';
@@ -15,6 +15,10 @@ const require = createRequire(import.meta.url);
 export interface RunOptions {
   spec: string;
   workItem?: string | undefined;
+  description?: string | undefined;
+  useWorkItemId?: boolean | undefined;
+  appVersion?: string | undefined;
+  versionOverlay?: boolean | undefined;
   devtools?: boolean | undefined;
   url?: string | undefined;
   evidence: string;
@@ -38,9 +42,30 @@ export async function runScenario(options: RunOptions) {
         JSON.parse(await readFile(resolve(options.config), 'utf8')),
       )
     : undefined;
-  const workItem = options.workItem ?? configured?.workItem ?? evidenceSpec.id;
-  if (!workItem.trim() || workItem.length > 200)
+  const workItem = options.workItem ?? evidenceSpec.workItem?.id;
+  const description =
+    options.description ??
+    evidenceSpec.workItem?.description ??
+    evidenceSpec.title;
+  const useWorkItemId =
+    options.useWorkItemId ?? configured?.naming?.useWorkItemId ?? true;
+  const name = artifactBaseName({
+    workItem,
+    description,
+    scenarioId: evidenceSpec.id,
+    useWorkItemId,
+  });
+  if (workItem !== undefined && (!workItem.trim() || workItem.length > 200))
     throw new Error('workItem must contain 1–200 characters');
+  if (
+    options.description !== undefined &&
+    (!options.description.trim() || options.description.length > 200)
+  )
+    throw new Error('description must contain 1–200 characters');
+  appVersionSchema.parse({
+    version: options.appVersion,
+    build: options.buildId,
+  });
   const root = resolve(options.outDir ?? '.repro/runs');
   await mkdir(root, { recursive: true });
   const args = [
@@ -68,14 +93,21 @@ export async function runScenario(options: RunOptions) {
   ]);
   // Each invocation owns its attempt directory, including failures without a
   // manifest. Directory snapshots cannot distinguish concurrent invocations.
-  const out = await mkdtemp(join(root, `${artifactSlug(workItem)}-`));
+  const out = await mkdtemp(join(root, `${name}-`));
   let executionError: string | null = null;
   try {
     await runProcess(process.execPath, args, {
       env: {
         ...process.env,
         REPRO_EVIDENCE: evidence,
-        REPRO_WORK_ITEM: workItem,
+        REPRO_WORK_ITEM: workItem ?? '',
+        REPRO_DESCRIPTION:
+          options.description ?? evidenceSpec.workItem?.description ?? '',
+        REPRO_USE_WORK_ITEM_ID: String(useWorkItemId),
+        REPRO_APP_VERSION: options.appVersion ?? '',
+        REPRO_VERSION_OVERLAY: String(
+          options.versionOverlay ?? configured?.versionOverlay?.enabled ?? true,
+        ),
         REPRO_EXPORT_DEVTOOLS: String(
           options.devtools ?? configured?.export?.devtools ?? true,
         ),
@@ -144,9 +176,15 @@ export async function runScenario(options: RunOptions) {
 export async function initScenario(
   directory = process.cwd(),
   workItem?: string,
+  description?: string,
 ) {
   if (workItem !== undefined && (!workItem.trim() || workItem.length > 200))
     throw new Error('workItem must contain 1–200 characters');
+  if (
+    description !== undefined &&
+    (!description.trim() || description.length > 200)
+  )
+    throw new Error('description must contain 1–200 characters');
   await mkdir(directory, { recursive: true });
   const files: Record<string, string> = {
     'tsconfig.json':
@@ -162,12 +200,28 @@ export async function initScenario(
         null,
         2,
       ) + '\n',
-    'evidence.json': JSON.stringify(recipes[0], null, 2) + '\n',
+    'evidence.json':
+      JSON.stringify(
+        {
+          ...recipes[0],
+          ...(workItem || description
+            ? {
+                workItem: {
+                  ...(workItem ? { id: workItem.trim() } : {}),
+                  ...(description ? { description: description.trim() } : {}),
+                },
+              }
+            : {}),
+        },
+        null,
+        2,
+      ) + '\n',
     'repro.config.json':
       JSON.stringify(
         {
           mode: 'repro',
-          ...(workItem ? { workItem: workItem.trim() } : {}),
+          naming: { useWorkItemId: true },
+          versionOverlay: { enabled: true, discover: true },
           export: { devtools: true },
           surfaceCapture: 'page',
           profile: 'controlled',

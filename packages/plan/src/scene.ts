@@ -26,6 +26,7 @@ export function compileScene(input: {
   viewport: { width: number; height: number };
   offset: number;
   treatments?: unknown;
+  appVersion?: string | undefined;
 }) {
   const { spec, run, viewport, events } = input;
   const treatment = parseTreatmentPlan(
@@ -516,6 +517,17 @@ export function compileScene(input: {
       !segments.some((s) => s.id === t.id)
     )
       throw new Error(`Required treatment was not compiled: ${t.id}`);
+  if (input.appVersion)
+    add({
+      id: 'app-version',
+      kind: 'app-version',
+      startMs: 0,
+      endMs: output,
+      layer: 60,
+      title: 'App version / build',
+      detail: input.appVersion,
+      evidenceRefs: [],
+    });
   add({
     id: 'title',
     kind: 'title',

@@ -149,6 +149,16 @@ export function createReproProgram(writer: Writer = console.log): Command {
     });
   program
     .command('render <run>')
+    .option('--app-version <value>', 'Target application version')
+    .option(
+      '--version-overlay',
+      'Show known app version/build throughout the video (default on)',
+    )
+    .option('--no-version-overlay', 'Omit the app version/build textbox')
+    .option(
+      '--build-id <id>',
+      'Target application build label for presentation',
+    )
     .option('--renderer <backend>', 'legacy or hyperframes', 'legacy')
     .option('--treatment <file>', 'Evidence-referenced scene treatments')
     .option(
@@ -172,6 +182,9 @@ export function createReproProgram(writer: Writer = console.log): Command {
           treatment?: string;
           baseline?: string;
           observational?: boolean;
+          appVersion?: string;
+          buildId?: string;
+          versionOverlay?: boolean;
         },
       ) => {
         if (options.renderer !== 'legacy' && options.renderer !== 'hyperframes')
@@ -182,7 +195,10 @@ export function createReproProgram(writer: Writer = console.log): Command {
           if (
             options.renderer !== 'hyperframes' ||
             options.treatment ||
-            options.evidence
+            options.evidence ||
+            options.appVersion ||
+            options.buildId ||
+            options.versionOverlay !== undefined
           )
             throw new Error(
               'Render each scene first, then compare with --renderer hyperframes --baseline',
@@ -217,6 +233,18 @@ export function createReproProgram(writer: Writer = console.log): Command {
   program
     .command('export <run>')
     .option(
+      '--description <text>',
+      'Brief issue description used for descriptive filenames',
+    )
+    .option(
+      '--use-work-item-id',
+      'Prefer the supplied issue ID for names (default on)',
+    )
+    .option(
+      '--no-use-work-item-id',
+      'Name artifacts by description with a stable uniqueness suffix',
+    )
+    .option(
       '--work-item <id-or-name>',
       'Override the work item used in exported filenames',
     )
@@ -243,6 +271,8 @@ export function createReproProgram(writer: Writer = console.log): Command {
           baseline?: string;
           draft?: boolean;
           workItem?: string;
+          description?: string;
+          useWorkItemId?: boolean;
           devtools?: boolean;
           config?: string;
         },
@@ -258,6 +288,12 @@ export function createReproProgram(writer: Writer = console.log): Command {
                 ...(options.workItem === undefined
                   ? {}
                   : { workItem: options.workItem }),
+                ...(options.description === undefined
+                  ? {}
+                  : { description: options.description }),
+                ...(options.useWorkItemId === undefined
+                  ? {}
+                  : { useWorkItemId: options.useWorkItemId }),
                 ...(options.devtools === undefined
                   ? {}
                   : { devtools: options.devtools }),
@@ -314,15 +350,26 @@ export function createReproProgram(writer: Writer = console.log): Command {
   });
   program
     .command('init [work-item]')
+    .option(
+      '--description <text>',
+      'Brief description for this issue, stored with scenario metadata',
+    )
     .description(
       'Create a scenario; optionally name artifacts with a bug/work-item ID or name',
     )
     .option('--directory <path>')
     .action(
-      async (workItem: string | undefined, options: { directory?: string }) => {
+      async (
+        workItem: string | undefined,
+        options: { directory?: string; description?: string },
+      ) => {
         writer(
           JSON.stringify(
-            await initScenario(options.directory, workItem),
+            await initScenario(
+              options.directory,
+              workItem,
+              options.description,
+            ),
             null,
             2,
           ),
@@ -339,6 +386,24 @@ export function createReproProgram(writer: Writer = console.log): Command {
     });
   program
     .command('run <spec>')
+    .option(
+      '--description <text>',
+      'Brief issue description used for descriptive filenames',
+    )
+    .option(
+      '--use-work-item-id',
+      'Prefer the supplied issue ID for names (default on)',
+    )
+    .option(
+      '--no-use-work-item-id',
+      'Name artifacts by description with a stable uniqueness suffix',
+    )
+    .option('--app-version <value>', 'Target application version')
+    .option(
+      '--version-overlay',
+      'Show known app version/build throughout the video (default on)',
+    )
+    .option('--no-version-overlay', 'Omit the app version/build textbox')
     .option(
       '--work-item <id-or-name>',
       'Work item used for run and exported artifact names',

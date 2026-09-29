@@ -228,3 +228,34 @@ it('labels an unmet expectation as expected rather than reporting it as the obse
     `Bug reproduced: Expected: ${spec.expected}`,
   );
 });
+
+it('keeps legacy version text complete, wraps it, and avoids measured evidence', () => {
+  const version =
+    'Version 2.7.1\nBuild release-2026-with-a-long-unique-build-description';
+  const run = {
+    steps: [
+      { id: 'trigger', title: 'Click', index: 1, startMs: 100, endMs: 900 },
+    ],
+    observations: [],
+    durationMs: 1000,
+    scenarioOutcome: 'passed' as const,
+  };
+  const result = compileEvidencePresentation(
+    spec,
+    run,
+    { width: 393, height: 852, deviceScaleFactor: 1 },
+    0,
+    true,
+    version,
+  );
+  const card = result.annotations.find((a) => a.id === 'app-version');
+  expect(card?.label.replaceAll('\n', '')).toBe(version.replaceAll('\n', ''));
+  expect(card?.timeRange).toEqual({ start: 0, end: result.outputDuration });
+  expect(card).toBeDefined();
+  if (!card) throw new Error('Missing version card');
+  expect(
+    result.annotations
+      .filter((a) => a.id !== card.id)
+      .every((a) => !intersects(a.bounds, card.bounds)),
+  ).toBe(true);
+});

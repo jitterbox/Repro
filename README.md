@@ -26,7 +26,7 @@ Once 0.2.0 is published, from an evidence project with Node 22+:
 npm install --save-dev @repro/cli@0.2.0 @repro/playwright@0.2.0
 npx repro setup --system
 npx repro doctor
-npx repro init DASH2R-949
+npx repro init DASH2R-949 --description "Mobile metric overflow"
 ```
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
@@ -56,7 +56,9 @@ npx repro review path/to/run
 npx repro export path/to/run --draft --out-dir evidence-bundle
 ```
 
-Use a work-item ID or a quoted name such as `repro init "Mobile metric overflow"`. Exported files share that name: `DASH2R-949_before_repro.mp4` and, by default, `DASH2R-949_before_devtools.json`. The sanitized diagnostic JSON includes captured browser events, coverage and video timing mappings. Use `--no-devtools` on `run` or `export` to opt out, or set `"export": { "devtools": false }` in `repro.config.json`. [Naming, overrides and diagnostic contents →](docs/configuration.md#work-item-names-and-browser-diagnostics)
+Issue IDs/descriptions belong to each scenario or run. The app-level `naming.useWorkItemId` policy defaults to true: prefer a supplied ID, otherwise use a brief description plus a stable uniqueness suffix. Set it to false or pass `--no-use-work-item-id` to always use descriptive names. Videos and the default sanitized DevTools JSON share the same base name; `--no-devtools` disables diagnostic export. [Naming and export settings →](docs/configuration.md#work-item-names-and-browser-diagnostics)
+
+A persistent app version/build textbox is **on by default when values are known**. Supply `--app-version` / `--build-id`, or let Repro read declared version metadata at runtime. Configure app-specific selectors/property paths, or disable it with `versionOverlay.enabled: false` / `--no-version-overlay`. [Version/build settings →](docs/configuration.md#persistent-application-versionbuild-textbox)
 
 Add relevant treatments and step descriptions to `treatment.json` before rendering. Inspect the actual frames and motion; a valid plan alone does not establish good evidence. Hyperframes is currently an opt-in renderer with audited draft export. The legacy renderer remains the default while final promotion gates are completed. `--draft` never bypasses privacy/OCR checks. [Scene workflow and current limits →](docs/scene-renderer.md)
 

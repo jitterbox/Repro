@@ -152,13 +152,18 @@ Options:
 Usage: repro render [options] <run>
 
 Options:
-  --renderer <backend>  legacy or hyperframes (default: "legacy")
-  --treatment <file>    Evidence-referenced scene treatments
-  --baseline <run>      Compare two previously rendered scene compositions
-  --observational       Label faithful paired playback without controlled proof
-  --evidence <file>     Presentation-only revision of the committed evidence
-                        specification
-  -h, --help            display help for command
+  --app-version <value>  Target application version
+  --version-overlay      Show known app version/build throughout the video
+                         (default on)
+  --no-version-overlay   Omit the app version/build textbox
+  --build-id <id>        Target application build label for presentation
+  --renderer <backend>   legacy or hyperframes (default: "legacy")
+  --treatment <file>     Evidence-referenced scene treatments
+  --baseline <run>       Compare two previously rendered scene compositions
+  --observational        Label faithful paired playback without controlled proof
+  --evidence <file>      Presentation-only revision of the committed evidence
+                         specification
+  -h, --help             display help for command
 ```
 
 ## repro export
@@ -167,6 +172,11 @@ Options:
 Usage: repro export [options] <run>
 
 Options:
+  --description <text>      Brief issue description used for descriptive
+                            filenames
+  --use-work-item-id        Prefer the supplied issue ID for names (default on)
+  --no-use-work-item-id     Name artifacts by description with a stable
+                            uniqueness suffix
   --work-item <id-or-name>  Override the work item used in exported filenames
   --config <path>           Read naming and export preferences from a Repro
                             config
@@ -257,8 +267,10 @@ Usage: repro init [options] [work-item]
 Create a scenario; optionally name artifacts with a bug/work-item ID or name
 
 Options:
+  --description <text>  Brief description for this issue, stored with scenario
+                        metadata
   --directory <path>
-  -h, --help          display help for command
+  -h, --help            display help for command
 ```
 
 ## repro record
@@ -277,6 +289,16 @@ Options:
 Usage: repro run [options] <spec>
 
 Options:
+  --description <text>        Brief issue description used for descriptive
+                              filenames
+  --use-work-item-id          Prefer the supplied issue ID for names (default
+                              on)
+  --no-use-work-item-id       Name artifacts by description with a stable
+                              uniqueness suffix
+  --app-version <value>       Target application version
+  --version-overlay           Show known app version/build throughout the video
+                              (default on)
+  --no-version-overlay        Omit the app version/build textbox
   --work-item <id-or-name>    Work item used for run and exported artifact names
   --devtools                  Export sanitized browser diagnostics by default
                               for this run

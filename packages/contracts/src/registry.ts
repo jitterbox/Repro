@@ -103,7 +103,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'render',
       'Render a run presentation',
       'repro render run',
-      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.',
+      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.',
       [
         'run directory',
         'optional --evidence edited.json with checkpoint highlights: [{target, label}]',
@@ -115,8 +115,8 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'export',
       'Export audited presentation',
       'repro export run --out-dir bundle --work-item DASH2R-949',
-      'Package complete presentation evidence after a real-frame privacy audit. Filenames use the work-item ID/name and variant. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.',
-      ['complete run', 'optional workItem, devtools, config overrides'],
+      'Package complete presentation evidence after a real-frame privacy audit. Filenames follow naming.useWorkItemId (default true): prefer a supplied per-run ID, otherwise use a brief description and stable scenario suffix. --no-use-work-item-id selects descriptive naming. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.',
+      ['complete run', 'optional workItem, description, useWorkItemId, devtools, config overrides'],
       [
         'named media and checkpoints',
         'DevTools report (default on)',
@@ -173,7 +173,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'init',
       'Create a scenario',
       'repro init DASH2R-949',
-      'Accept an optional work-item ID or name for artifact naming. Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
+      'Store an optional work-item ID and --description in scenario metadata; app config stores naming.useWorkItemId and versionOverlay policy, not changing issue IDs or version values. Create an editable Checkout example, evidence spec and capture config. This is a starting example, not automatic bug understanding. During discovery, read the bug and acceptance criteria; distinguish reported behavior from measured facts; choose interaction, geometry or transient recipe; replace fixture titles, meaningful steps, trigger, targets and designated outcome checks. Bind locators from the actual application. Choose checkpoint highlights for the intended control and decisive result, using descriptive labels rather than unverified causes. Commit both files, run, inspect actual pixels, then verify before exporting.',
       [],
       ['committed input files'],
       'Run generated scenario against a supplied URL.',

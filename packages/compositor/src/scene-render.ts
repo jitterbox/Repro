@@ -141,8 +141,12 @@ function sceneRuntime(
     }[] = [];
     for (const group of [...groups].sort(
       (a, b) =>
-        Number(b.dataset.kind === 'marker') -
-        Number(a.dataset.kind === 'marker'),
+        (b.dataset.kind === 'app-version'
+          ? 2
+          : Number(b.dataset.kind === 'marker')) -
+        (a.dataset.kind === 'app-version'
+          ? 2
+          : Number(a.dataset.kind === 'marker')),
     )) {
       const cue = required(scene.cues.find((c) => c.id === group.dataset.cue));
       const card = group.querySelector<HTMLElement>('.card');
@@ -407,14 +411,17 @@ function sceneRuntime(
     for (const group of groups) {
       const cue = required(scene.cues.find((c) => c.id === group.dataset.cue));
       const active = t >= cue.startMs && t < cue.endMs;
-      const alpha = Math.max(
-        0,
-        Math.min(
-          1,
-          (t - cue.startMs) / Math.max(1, scene.timing.entryMs),
-          (cue.endMs - t) / Math.max(1, scene.timing.exitMs),
-        ),
-      );
+      const alpha =
+        cue.kind === 'app-version'
+          ? 1
+          : Math.max(
+              0,
+              Math.min(
+                1,
+                (t - cue.startMs) / Math.max(1, scene.timing.entryMs),
+                (cue.endMs - t) / Math.max(1, scene.timing.exitMs),
+              ),
+            );
       group.style.opacity = active ? String(alpha) : '0';
       for (const child of Array.from(group.children))
         (child as HTMLElement).style.opacity = group.style.opacity;
@@ -898,13 +905,15 @@ function sceneMarkup(scene: ScenePlan) {
             { className: 'eyebrow' },
             c.severity === 'critical'
               ? 'BUG DETAIL'
-              : c.kind === 'title'
-                ? c.detail
-                : c.kind === 'step'
-                  ? 'REPRODUCTION'
-                  : c.kind === 'outcome'
-                    ? 'VERIFIED OUTCOME'
-                    : 'EVIDENCE',
+              : c.kind === 'app-version'
+                ? 'APPLICATION'
+                : c.kind === 'title'
+                  ? c.detail
+                  : c.kind === 'step'
+                    ? 'REPRODUCTION'
+                    : c.kind === 'outcome'
+                      ? 'VERIFIED OUTCOME'
+                      : 'EVIDENCE',
           ),
           e(
             'div',
@@ -1066,7 +1075,7 @@ export async function renderSceneInProcess(input: {
   }
   const fonts = await fontCss();
   const style = scene.style;
-  const css = `${fonts.css}*{box-sizing:border-box}[data-cue]>*{will-change:opacity}[data-cue]>svg{z-index:30}[data-kind=marker]>svg,[data-kind=pointer]>svg{z-index:55}.card{z-index:50}.card.title{z-index:60}.critical{border-color:${style.criticalAccent}!important;border-left:4px solid ${style.criticalAccent}!important;background:${style.criticalBackground}!important}.critical .eyebrow{color:#ffc994}.expectation,.observation{font-size:${style.bodyFontSize}px;line-height:1.35;margin-top:10px}.expectation b,.observation b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;color:#b6c5d2;margin-bottom:3px}.observation{color:#ffd3a6}.sparkline{display:block;width:100%;height:56px;margin-top:12px}html,body{margin:0;width:${scene.output.width}px;height:${scene.output.height}px;overflow:hidden;background:${style.background};color:${style.foreground};font:${style.bodyFontSize}px 'Source Sans 3'}main{position:relative;width:${scene.output.width}px;height:${scene.output.height}px;background:${style.background}}#source{box-shadow:0 0 0 1px #344050}.card{position:absolute;width:${style.cardWidth}px;padding:${style.cardPadding}px;border:1px solid #3b4654;border-radius:${style.cardRadius}px;background:${style.cardBackground};box-shadow:0 4px 12px #0004;overflow-wrap:anywhere}.eyebrow{font-size:11px;font-weight:600;letter-spacing:1.6px;color:#98b0c4;margin-bottom:6px}.heading{display:flex;align-items:flex-start;gap:10px;font-size:${style.headingFontSize}px;font-weight:600;line-height:1.25}.title .heading{font-size:${style.titleFontSize}px}.number{flex-shrink:0;display:grid;place-items:center;border-radius:50%;width:30px;height:30px;background:#b7d9ef;color:#101721;font-size:17px}.detail{margin-top:10px;color:#c5d4df;line-height:${style.lineHeight}}.value{font:${style.dataFontSize}px/1.5 'Source Code Pro';margin-top:12px;white-space:pre-wrap;min-height:88px}.magnifier-viewport{position:relative;margin-top:12px;box-shadow:0 3px 8px #0007;border-radius:4px;overflow:hidden;width:${style.cardWidth - style.cardPadding * 2 - 5}px;height:176px}.zoom{position:absolute;right:6px;bottom:6px;background:#101721;padding:3px 6px;font-size:12px;border-radius:4px}#speed,#clock{position:absolute;bottom:14px;font:12px 'Source Code Pro';color:#aac0d0}#speed{left:24px;color:#f0c888}#clock{right:24px}`;
+  const css = `${fonts.css}*{box-sizing:border-box}[data-cue]>*{will-change:opacity}[data-cue]>svg{z-index:30}[data-kind=marker]>svg,[data-kind=pointer]>svg{z-index:55}.card{z-index:50}.card.title,.card.app-version{z-index:60}.app-version .detail{white-space:pre-wrap;font-family:'Source Code Pro';font-size:${style.dataFontSize}px}.critical{border-color:${style.criticalAccent}!important;border-left:4px solid ${style.criticalAccent}!important;background:${style.criticalBackground}!important}.critical .eyebrow{color:#ffc994}.expectation,.observation{font-size:${style.bodyFontSize}px;line-height:1.35;margin-top:10px}.expectation b,.observation b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;color:#b6c5d2;margin-bottom:3px}.observation{color:#ffd3a6}.sparkline{display:block;width:100%;height:56px;margin-top:12px}html,body{margin:0;width:${scene.output.width}px;height:${scene.output.height}px;overflow:hidden;background:${style.background};color:${style.foreground};font:${style.bodyFontSize}px 'Source Sans 3'}main{position:relative;width:${scene.output.width}px;height:${scene.output.height}px;background:${style.background}}#source{box-shadow:0 0 0 1px #344050}.card{position:absolute;width:${style.cardWidth}px;padding:${style.cardPadding}px;border:1px solid #3b4654;border-radius:${style.cardRadius}px;background:${style.cardBackground};box-shadow:0 4px 12px #0004;overflow-wrap:anywhere}.eyebrow{font-size:11px;font-weight:600;letter-spacing:1.6px;color:#98b0c4;margin-bottom:6px}.heading{display:flex;align-items:flex-start;gap:10px;font-size:${style.headingFontSize}px;font-weight:600;line-height:1.25}.title .heading{font-size:${style.titleFontSize}px}.number{flex-shrink:0;display:grid;place-items:center;border-radius:50%;width:30px;height:30px;background:#b7d9ef;color:#101721;font-size:17px}.detail{margin-top:10px;color:#c5d4df;line-height:${style.lineHeight}}.value{font:${style.dataFontSize}px/1.5 'Source Code Pro';margin-top:12px;white-space:pre-wrap;min-height:88px}.magnifier-viewport{position:relative;margin-top:12px;box-shadow:0 3px 8px #0007;border-radius:4px;overflow:hidden;width:${style.cardWidth - style.cardPadding * 2 - 5}px;height:176px}.zoom{position:absolute;right:6px;bottom:6px;background:#101721;padding:3px 6px;font-size:12px;border-radius:4px}#speed,#clock{position:absolute;bottom:14px;font:12px 'Source Code Pro';color:#aac0d0}#speed{left:24px;color:#f0c888}#clock{right:24px}`;
   const html = `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; font-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'"><style>${css}</style>${sceneMarkup(scene)}<script>const routeLeader=${routeLeader.toString()};const magnifierRegion=${magnifierRegion.toString()};(${sceneRuntime.toString()})(${escapeJson(scene)},${escapeJson(frames)});</script>`;
   await writeFile(join(input.outDir, 'composition.html'), html);
   await writeFile(

@@ -1,6 +1,7 @@
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { artifactBaseName } from '@repro/core';
 import { expect, it, vi } from 'vitest';
 import type { RunManifest } from '@repro/contracts';
 import type * as Render from '@repro/render';
@@ -92,15 +93,19 @@ it('defaults diagnostics on, resolves CLI over config over stored config, and na
     delete state.run.environment.appliedConfiguration;
     await exportEvidence(directory, 'bundle');
     expect(state.package.mock.lastCall?.[0]).toMatchObject({
-      workItem: recipes[0]?.id,
-      devtools: [{ fileName: `${recipes[0]?.id}_before_devtools.json` }],
+      workItem: recipes[0]?.title,
+      devtools: [
+        {
+          fileName: `${artifactBaseName({ description: recipes[0]?.title ?? '', scenarioId: recipes[0]?.id ?? '' })}_before_devtools.json`,
+        },
+      ],
     });
     const file = join(directory, 'override.json');
     await writeFile(
       file,
       JSON.stringify({
         ...config,
-        workItem: 'BUG-777',
+        naming: { useWorkItemId: false },
         export: { devtools: true },
       }),
     );
@@ -109,7 +114,7 @@ it('defaults diagnostics on, resolves CLI over config over stored config, and na
       devtools: false,
     });
     expect(state.package.mock.lastCall?.[0]).toMatchObject({
-      workItem: 'BUG-777',
+      workItem: recipes[0]?.title,
       devtools: [],
     });
   } finally {

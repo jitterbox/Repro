@@ -1,3 +1,4 @@
+import { appVersionLabel, type VersionOverlayOptions } from './app-version.js';
 import { sceneReviewHtml } from './scene-review.js';
 import { readFile, mkdir, copyFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -28,7 +29,7 @@ import { compileEvidencePresentation } from './evidence-presentation.js';
 
 export async function renderSceneEvidence(
   directory: string,
-  options: { evidence?: string; treatment?: string },
+  options: { evidence?: string; treatment?: string } & VersionOverlayOptions,
 ) {
   const run = await verifyRun(directory);
   run.stages.presentation = {
@@ -71,6 +72,7 @@ export async function renderSceneEvidence(
     events,
     viewport: config.viewport,
     offset,
+    appVersion: appVersionLabel(run, config, spec.privacy.patterns, options),
     ...(treatment ? { treatments: treatment } : {}),
   });
   const safeText = (text: string) =>

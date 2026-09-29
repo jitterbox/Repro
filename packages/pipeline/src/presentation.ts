@@ -1,3 +1,4 @@
+import { appVersionLabel, type VersionOverlayOptions } from './app-version.js';
 import { renderSceneEvidence } from './scene-presentation.js';
 import { screenshotForBounds } from './checkpoint-geometry.js';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -36,7 +37,7 @@ export async function renderEvidence(
     evidence?: string;
     renderer?: 'legacy' | 'hyperframes';
     treatment?: string;
-  } = {},
+  } & VersionOverlayOptions = {},
 ) {
   if (options.treatment && options.renderer !== 'hyperframes')
     throw new Error('Treatments require the hyperframes renderer');
@@ -48,7 +49,7 @@ export async function renderEvidence(
 }
 async function renderEvidenceLocked(
   directory: string,
-  options: { evidence?: string },
+  options: { evidence?: string } & VersionOverlayOptions,
 ) {
   const run = await verifyRun(directory);
   const recording = run.artifacts.find(
@@ -71,7 +72,14 @@ async function renderEvidenceLocked(
     annotations,
     outputDuration,
     cues: visualCues,
-  } = compileEvidencePresentation(spec, run, config.viewport, offset);
+  } = compileEvidencePresentation(
+    spec,
+    run,
+    config.viewport,
+    offset,
+    true,
+    appVersionLabel(run, config, spec.privacy.patterns, options),
+  );
   const events = (await readFile(join(directory, 'events.jsonl'), 'utf8'))
     .trim()
     .split('\n')
@@ -205,6 +213,7 @@ async function renderEvidenceLocked(
     const cues = plan.annotations.filter(
       (annotation) =>
         annotation.id === 'title' ||
+        annotation.id === 'app-version' ||
         annotation.id === definition?.step ||
         measuredIds.has(annotation.id) ||
         (annotation.anchor?.evidenceRef !== undefined &&
@@ -279,7 +288,8 @@ async function renderEvidenceLocked(
         ...plan,
         annotations: [
           ...plan.annotations.filter(
-            (a) => a.id === 'title' || a.id === step?.id,
+            (a) =>
+              a.id === 'title' || a.id === 'app-version' || a.id === step?.id,
           ),
           {
             ...template,

@@ -28,6 +28,13 @@ export const evidenceSpecSchema = z
     schemaVersion: z.literal('1.0.0'),
     id,
     title: text,
+    workItem: z
+      .object({
+        id: text.max(200).optional(),
+        description: text.max(200).optional(),
+      })
+      .strict()
+      .optional(),
     variant: z.object({
       id,
       role: z.enum(['before', 'after', 'standalone']),

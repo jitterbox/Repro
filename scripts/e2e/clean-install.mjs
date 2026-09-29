@@ -69,7 +69,12 @@ await exec(
 );
 await writeFile(
   join(project, 'server.mjs'),
-  await readFile(resolve('packages/playwright/examples/server.mjs')),
+  (
+    await readFile(resolve('packages/playwright/examples/server.mjs'), 'utf8')
+  ).replace(
+    '<title>',
+    '<meta name="app-version" content="2.7.1"><meta name="build-id" content="runtime-42"><title>',
+  ),
 );
 const configPath = join(project, 'playwright.config.ts');
 await writeFile(
@@ -97,6 +102,14 @@ const captured = await exec(
   { cwd: project, maxBuffer: 8 * 1024 * 1024 },
 );
 assert.equal(JSON.parse(captured.stdout).ok, true);
+const discovered = JSON.parse(
+  await readFile(
+    join(JSON.parse(captured.stdout).runs[0].directory, 'run.json'),
+    'utf8',
+  ),
+);
+assert.equal(discovered.environment.appVersion.version, '2.7.1');
+assert.equal(discovered.environment.appVersion.sources.version, 'runtime');
 // An external CLI must launch the consumer fixture's runner, not its own copy.
 const external = await exec(
   process.execPath,
@@ -114,10 +127,23 @@ const external = await exec(
     'http://127.0.0.1:3198',
     '--out-dir',
     '.repro/external-cli',
+    '--app-version',
+    '3.0.0',
+    '--build-id',
+    'provided-99',
   ],
   { cwd: project, maxBuffer: 8 * 1024 * 1024 },
 );
 assert.equal(JSON.parse(external.stdout).ok, true);
+const suppliedVersion = JSON.parse(
+  await readFile(
+    join(JSON.parse(external.stdout).runs[0].directory, 'run.json'),
+    'utf8',
+  ),
+).environment.appVersion;
+assert.equal(suppliedVersion.version, '3.0.0');
+assert.equal(suppliedVersion.build, 'provided-99');
+assert.equal(suppliedVersion.sources.version, 'provided');
 console.log(`Clean installation passed: ${project}`);
 
 // Exercise the packaged scene compositor with non-default typography/layout/encoding.
@@ -191,6 +217,14 @@ const scene = JSON.parse(
 assert.equal(scene.output.width, scene.viewport.width + 400 + 64 + 32);
 assert.equal(scene.style.bodyFontSize, 20);
 assert.equal(scene.encoding.crf, 22);
+const versionCue = scene.cues.find((cue) => cue.kind === 'app-version');
+assert.ok(versionCue, 'Runtime app version is displayed by default');
+assert.equal(versionCue.detail, 'Version 2.7.1\nBuild runtime-42');
+assert.equal(versionCue.startMs, 0);
+assert.equal(
+  versionCue.endMs,
+  scene.segments.at(-1).outStartMs + scene.segments.at(-1).outDurationMs,
+);
 const layout = JSON.parse(
   await readFile(join(rendered.directory, 'layout.json'), 'utf8'),
 );

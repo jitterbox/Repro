@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "build": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "sources": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "enum": [
+            "provided",
+            "runtime"
+          ]
+        },
+        "build": {
+          "type": "string",
+          "enum": [
+            "provided",
+            "runtime"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "methods": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "origin": {
+      "type": "string"
+    },
+    "observedAtMs": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "sources",
+    "methods"
+  ],
+  "additionalProperties": false
+}

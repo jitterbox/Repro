@@ -198,6 +198,14 @@ Execute public Playwright tests in an isolated context; record every attempt. --
     "project": {
       "type": "string"
     },
+    "appVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "versionOverlay": {
+      "type": "boolean"
+    },
     "buildId": {
       "type": "string"
     },
@@ -205,6 +213,14 @@ Execute public Playwright tests in an isolated context; record every attempt. --
       "type": "string",
       "minLength": 1,
       "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "useWorkItemId": {
+      "type": "boolean"
     },
     "devtools": {
       "type": "boolean"
@@ -328,7 +344,7 @@ Render two scene presentations at equal scale with independent clocks. Observati
 
 ## render
 
-Render titles, steps, measured highlights and reading holds from a committed evidence run. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.
+Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.
 
 ```json
 {
@@ -339,6 +355,19 @@ Render titles, steps, measured highlights and reading holds from a committed evi
     },
     "evidence": {
       "type": "string"
+    },
+    "appVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "buildId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "versionOverlay": {
+      "type": "boolean"
     },
     "renderer": {
       "type": "string",
@@ -360,7 +389,7 @@ Render titles, steps, measured highlights and reading holds from a committed evi
 
 ## export
 
-Package complete presentation evidence after a real-frame privacy audit. Filenames use the work-item ID/name and variant. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.
+Package complete presentation evidence after a real-frame privacy audit. Filenames follow naming.useWorkItemId (default true): prefer a supplied per-run ID, otherwise use a brief description and stable scenario suffix. --no-use-work-item-id selects descriptive naming. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.
 
 ```json
 {
@@ -382,6 +411,14 @@ Package complete presentation evidence after a real-frame privacy audit. Filenam
       "type": "string",
       "minLength": 1,
       "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "useWorkItemId": {
+      "type": "boolean"
     },
     "devtools": {
       "type": "boolean"
@@ -420,6 +457,7 @@ Choose a committed specification for the claim.
 - `repro://evidence-schema`: Authoritative Repro evidence-schema
 - `repro://run-schema`: Authoritative Repro run-schema
 - `repro://config-schema`: Authoritative Repro config-schema
+- `repro://app-version-schema`: Authoritative Repro app-version-schema
 - `repro://devtools-report-schema`: Authoritative Repro devtools-report-schema
 - `repro://watch-server-schema`: Authoritative Repro watch-server-schema
 - `repro://compare-composition-schema`: Authoritative Repro compare-composition-schema

@@ -20,3 +20,15 @@ export function artifactSlug(value: string): string {
   }
   return slug;
 }
+
+/** Policy is reusable; issue identity belongs to a particular scenario/run. */
+export function artifactBaseName(input: {
+  workItem?: string | undefined;
+  description: string;
+  scenarioId: string;
+  useWorkItemId?: boolean | undefined;
+}): string {
+  if ((input.useWorkItemId ?? true) && input.workItem?.trim())
+    return artifactSlug(input.workItem);
+  return `${artifactSlug(input.description)}-${createHash('sha256').update(input.scenarioId).digest('hex').slice(0, 8)}`;
+}
