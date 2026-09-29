@@ -22,6 +22,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm docs:check
+      - run: node --test scripts/stage-ci-artifacts.test.mjs
       - name: Provision Windows media and OCR tools
         shell: pwsh
         run: |

@@ -27,6 +27,8 @@ jobs:
         run: pnpm typecheck
       - name: Lint (blocking)
         run: pnpm lint
+      - name: Evidence artifact staging excludes dependency links
+        run: node --test scripts/stage-ci-artifacts.test.mjs
       - name: Install FFmpeg for filtergraph integration tests
         run: |
           sudo apt-get update
@@ -159,39 +161,18 @@ jobs:
         run: pnpm test:clean-install
       - name: Agent mock evaluation (no model or API keys)
         run: pnpm --filter @repro/agent-e2e test
+      - name: Builds and tests leave tracked sources unchanged
+        run: git diff --exit-code
+      - name: Stage evidence without linked dependencies
+        if: always()
+        run: node scripts/stage-ci-artifacts.mjs
       - name: Preserve acceptance and failure artifacts
         if: always()
+        timeout-minutes: 5
         uses: actions/upload-artifact@v4
         with:
           name: browser-evidence-${{ github.run_id }}
           include-hidden-files: true
-          path: |
-            .repro/ci
-            .repro/annotation-benchmark
-            .repro/fresh-agent-replay
-            .repro/review-matrix
-            .repro/discovery
-            .repro/delivery
-            .repro/export-cache
-            .repro/observations
-            .repro/watch-acceptance
-            .repro/public-acceptance
-            .repro/timing-acceptance
-            .repro/timing-trace-acceptance
-            .repro/hidpi-acceptance
-            .repro/hidpi-private
-            .repro/interaction-diagnostics
-            .repro/moving-privacy
-            .repro/checkpoint-checks
-            .repro/synchronization
-            .repro/browser-diagnostics
-            .repro/transient
-            .repro/recipes
-            .repro/har-privacy
-            .repro/review-acceptance
-            .repro/fixture-videos
-            packages/*/test-results
-            packages/e2e-fixture/artifacts
+          compression-level: 0
+          path: .repro/ci-artifacts/
           retention-days: 7
-      - name: Builds and tests leave tracked sources unchanged
-        run: git diff --exit-code
