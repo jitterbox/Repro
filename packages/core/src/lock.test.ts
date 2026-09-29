@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -72,6 +72,28 @@ it('recovers an OS-owned lock after an abruptly terminated writer', async () => 
     ).resolves.toBe('recovered');
   } finally {
     child.kill();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+it('locks deeply nested named artifacts without exceeding the Windows SQLite journal limit', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'repro-long-lock-'));
+  const directory = join(
+    root,
+    ...Array.from({ length: 6 }, () => 'named-work-item-directory'),
+  );
+  const path = join(directory, `${'a'.repeat(64)}.lock`);
+  try {
+    await mkdir(directory, { recursive: true });
+    await withFileLock(path, async () => {
+      await expect(
+        withFileLock(path, () => Promise.resolve('unsafe'), 30),
+      ).rejects.toThrow('another writer');
+    });
+    await expect(
+      withFileLock(path, () => Promise.resolve('released')),
+    ).resolves.toBe('released');
+  } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
