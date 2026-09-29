@@ -1,4 +1,4 @@
-import type { ShareReport } from '@repro/contracts';
+import type { ShareReport } from '@jitterbox/repro-contracts';
 import { mapComparisonTime } from './sync-time.js';
 import type { SyncKnot } from './sync-time.js';
 export type { SyncKnot } from './sync-time.js';

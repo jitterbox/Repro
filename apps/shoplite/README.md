@@ -20,7 +20,7 @@ in broken mode; fixed mode disables defects. The selected bug is recorded in
 ## Dev server
 
 ```bash
-pnpm --filter @repro/shoplite dev
+pnpm --filter @jitterbox/repro-shoplite dev
 # http://localhost:5177/?fixture=broken
 ```
 

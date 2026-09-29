@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, realpath } from 'node:fs/promises';
 import { basename, join, resolve, relative } from 'node:path';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { bugBriefSchema } from '@repro/contracts';
+import { bugBriefSchema } from '@jitterbox/repro-contracts';
 
 const issueSchema = z.object({
   key: z.string(),

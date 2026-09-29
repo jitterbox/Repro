@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildPlan } from './planner.js';
 
-import type { EventRecord, ReproConfig } from '@repro/core';
+import type { EventRecord, ReproConfig } from '@jitterbox/repro-core';
 
 const config = {
   features: {

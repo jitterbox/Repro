@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Content keeps its measured horizontal position after loading', async ({
   page,
   repro,

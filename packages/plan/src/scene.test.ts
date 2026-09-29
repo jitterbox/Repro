@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { validateEvidence } from '@repro/contracts';
+import { validateEvidence } from '@jitterbox/repro-contracts';
 import { compileScene } from './scene.js';
 
 const spec = validateEvidence({

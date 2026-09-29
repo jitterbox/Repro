@@ -1,4 +1,4 @@
-import { parsePlan } from '@repro/contracts';
+import { parsePlan } from '@jitterbox/repro-contracts';
 import { placeAnnotations } from './collision.js';
 import { emitFeatureAnnotations } from './features.js';
 import {
@@ -21,7 +21,7 @@ import type {
   ReproPlan,
   TimeRange,
 } from './types.js';
-import type { Annotation } from '@repro/core';
+import type { Annotation } from '@jitterbox/repro-core';
 
 export function buildPlan(input: BuildPlanInput): ReproPlan {
   const emitted = emitFeatureAnnotations(input);

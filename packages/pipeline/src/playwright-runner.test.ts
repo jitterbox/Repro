@@ -9,7 +9,7 @@ it('uses the fixture runner from an external consumer and rejects a missing fixt
   try {
     const spec = join(directory, 'tests', 'scenario.spec.ts');
     await mkdir(join(directory, 'tests'));
-    const fixture = join(directory, 'node_modules', '@repro', 'playwright');
+    const fixture = join(directory, 'node_modules', '@jitterbox', 'playwright');
     const runner = join(fixture, 'node_modules', '@playwright', 'test');
     await mkdir(runner, { recursive: true });
     // Block resolution explicitly: some hosts expose workspace dependencies
@@ -18,7 +18,7 @@ it('uses the fixture runner from an external consumer and rejects a missing fixt
       directory,
       'blocked',
       'node_modules',
-      '@repro',
+      '@jitterbox',
       'playwright',
     );
     await mkdir(blocked, { recursive: true });
@@ -31,7 +31,7 @@ it('uses the fixture runner from an external consumer and rejects a missing fixt
     ).toThrow('Install the public fixture');
     await writeFile(
       join(fixture, 'package.json'),
-      JSON.stringify({ name: '@repro/playwright', main: 'index.js' }),
+      JSON.stringify({ name: '@jitterbox/repro-playwright', main: 'index.js' }),
     );
     await writeFile(join(fixture, 'index.js'), '');
     await writeFile(

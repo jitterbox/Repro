@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { runProcess, h264Profile } from '@repro/core';
+import { runProcess, h264Profile } from '@jitterbox/repro-core';
 
 import { generateAss } from './ass.js';
 import { withAssSource } from './ass-source.js';
@@ -8,7 +8,7 @@ import { buildFilterGraph } from './filtergraph.js';
 import { writeVtt } from './voiceover.js';
 
 import type { CompositorOverlayInput } from './filtergraph.js';
-import type { ReproPlan } from '@repro/plan';
+import type { ReproPlan } from '@jitterbox/repro-plan';
 
 export interface TimedCompositorInput {
   readonly path: string;

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
-import { runProcess } from '@repro/core';
+import { runProcess } from '@jitterbox/repro-core';
 import { readdir } from 'node:fs/promises';
 import type { GateResult } from '../types/gate.js';
 export interface DeterminismGateInput {

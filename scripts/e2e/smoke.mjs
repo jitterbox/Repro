@@ -7,11 +7,11 @@ import { fileURLToPath } from 'node:url';
 
 const workDir = await mkdtemp(join(tmpdir(), 'repro-smoke-'));
 
-const { runCapture } = await importDist('@repro/capture');
-const { ReproStore } = await importDist('@repro/core');
-const { buildPlan } = await importDist('@repro/plan');
-const { renderPlan } = await importDist('@repro/render');
-const { packageCommand } = await importDist('@repro/cli');
+const { runCapture } = await importDist('@jitterbox/repro-capture');
+const { ReproStore } = await importDist('@jitterbox/repro-core');
+const { buildPlan } = await importDist('@jitterbox/repro-plan');
+const { renderPlan } = await importDist('@jitterbox/repro-render');
+const { packageCommand } = await importDist('@jitterbox/repro-cli');
 
 const config = {
   features: {
@@ -119,7 +119,7 @@ try {
 }
 
 async function importDist(packageName) {
-  const path = packageName.replace('@repro/', '');
+  const path = packageName.replace('@jitterbox/repro-', '');
 
   try {
     return await import(`../../packages/${path}/dist/index.js`);

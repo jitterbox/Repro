@@ -1,5 +1,5 @@
 {
-  "name": "@repro/evaluation",
+  "name": "@jitterbox/repro-evaluation",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -22,9 +22,9 @@
   "dependencies": {
     "pixelmatch": "7.2.0",
     "pngjs": "7.0.0",
-    "@repro/core": "workspace:*",
-    "@repro/render": "workspace:*",
-    "@repro/contracts": "workspace:*"
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-render": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/pngjs": "6.0.5"
@@ -45,5 +45,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/evaluation \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-evaluation \u2014 Repro browser evidence and annotated video pipeline"
 }

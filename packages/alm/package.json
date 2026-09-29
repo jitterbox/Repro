@@ -1,5 +1,5 @@
 {
-  "name": "@repro/alm",
+  "name": "@jitterbox/repro-alm",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,7 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/core": "workspace:*"
+    "@jitterbox/repro-core": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -37,5 +37,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/alm \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-alm \u2014 Repro browser evidence and annotated video pipeline"
 }

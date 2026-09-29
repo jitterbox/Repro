@@ -1,5 +1,5 @@
 {
-  "name": "@repro/plan",
+  "name": "@jitterbox/repro-plan",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,8 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/contracts": "workspace:*",
-    "@repro/core": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
     "opentype.js": "^1.3.4"
   },
   "devDependencies": {
@@ -42,5 +42,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/plan \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-plan \u2014 Repro browser evidence and annotated video pipeline"
 }

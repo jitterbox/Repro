@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('FA-01 A normal pointer click approves the shipment.', async ({page,repro})=>{
  const target=page.getByRole('button',{name:'Approve shipment',exact:true}); const reference=page.getByRole('status');
  await repro.step('prepare',async()=>{await page.goto(process.env.REPRO_URL!);repro.target('target',target);repro.target('reference',reference);await repro.check('ready','Correct page and enabled opener',async()=>{await expect(page.getByRole('heading',{name:'Shipment approval',exact:true})).toBeVisible();await expect(target).toBeEnabled();});await repro.checkpoint('ready');});

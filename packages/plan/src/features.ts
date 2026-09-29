@@ -1,6 +1,6 @@
-import { overlayTheme } from '@repro/contracts';
-import { motionMaskEnvelopes } from '@repro/core';
-import type { MaskSample } from '@repro/core';
+import { overlayTheme } from '@jitterbox/repro-contracts';
+import { motionMaskEnvelopes } from '@jitterbox/repro-core';
+import type { MaskSample } from '@jitterbox/repro-core';
 
 import { measureTextWidth, measureOverlayTextWidth } from './text.js';
 
@@ -14,8 +14,8 @@ import type {
   Rect,
   Segment,
 } from './types.js';
-import type { AnnotationComponent } from '@repro/contracts';
-import type { EventRecord, JsonValue, TimeRange } from '@repro/core';
+import type { AnnotationComponent } from '@jitterbox/repro-contracts';
+import type { EventRecord, JsonValue, TimeRange } from '@jitterbox/repro-core';
 
 type PayloadObject = Readonly<Record<string, JsonValue>>;
 

@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url';
-import { runProcess } from '@repro/core';
+import { runProcess } from '@jitterbox/repro-core';
 
 /** Own the worker/browser process group even when invoked directly by the CLI. */
 export async function runSceneWorker(request: string, signal?: AbortSignal) {

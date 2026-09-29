@@ -4,9 +4,9 @@ import {
   parseScenePlan,
   type DevToolsReport,
   type RunManifest,
-} from '@repro/contracts';
-import { createPresidioLikeRedactor } from '@repro/core/redactor';
-import type { ReproPlan } from '@repro/plan';
+} from '@jitterbox/repro-contracts';
+import { createPresidioLikeRedactor } from '@jitterbox/repro-core/redactor';
+import type { ReproPlan } from '@jitterbox/repro-plan';
 import { containedArtifact } from './evidence-run.js';
 
 const privateKey =

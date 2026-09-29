@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { loadBug } from '@repro/e2e-fixture';
+import { loadBug } from '@jitterbox/repro-e2e-fixture';
 
 import { expectedFiledFeatures } from '../src/bug-drivers.js';
 import { runAgent, runMockAgent } from '../src/run-agent.js';

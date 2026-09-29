@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { expect, it, vi } from 'vitest';
 import type { Page } from '@playwright/test';
-import type { CaptureSession } from '@repro/capture';
-import { validateEvidence } from '@repro/contracts';
+import type { CaptureSession } from '@jitterbox/repro-capture';
+import { validateEvidence } from '@jitterbox/repro-contracts';
 import { EvidenceRecorder } from './index.js';
 
 it('records ordinary checkpoint checks without treating their failures as reproduced bugs', async () => {

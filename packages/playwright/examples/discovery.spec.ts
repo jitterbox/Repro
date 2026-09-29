@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 
 // The assessment supplies intent; executable locator bindings come from inspecting the app.
 test('Discovery claim: Checkout accepts its intended pointer action', async ({

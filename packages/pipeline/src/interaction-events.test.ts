@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import type { Observation } from '@repro/contracts';
+import type { Observation } from '@jitterbox/repro-contracts';
 import { correlateInteractionEvents } from './interaction-events.js';
 import type { CapturedEvent } from './interaction-events.js';
 

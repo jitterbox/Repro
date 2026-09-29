@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
-import { MonotonicClockBridge } from '@repro/core';
-import type { ReproStore } from '@repro/core';
+import { MonotonicClockBridge } from '@jitterbox/repro-core';
+import type { ReproStore } from '@jitterbox/repro-core';
 import { StoreEventSink } from './events.js';
 
 it('does not borrow another document calibration when fixed-date origins are equal', () => {

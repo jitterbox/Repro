@@ -1,7 +1,7 @@
 import { compareEvidence } from '../comparison.js';
 import { writeFile, stat } from 'node:fs/promises';
 
-import { compareRuns } from '@repro/compare';
+import { compareRuns } from '@jitterbox/repro-compare';
 
 export interface CompareCommandOptions {
   readonly left: string;

@@ -888,7 +888,7 @@ Use repository scripts, adding focused scripts where they do not exist:
 pnpm build
 pnpm test
 pnpm test:e2e-fixture
-pnpm --filter @repro/agent-e2e test
+pnpm --filter @jitterbox/repro-agent-e2e test
 node scripts/e2e/smoke.mjs
 repro validate-config --config <fixture>/repro.config.json
 repro compare --config <fixture>/repro.config.json

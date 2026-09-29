@@ -1,5 +1,5 @@
 import type { CDPSession, Page } from 'playwright';
-import type { JsonValue } from '@repro/core';
+import type { JsonValue } from '@jitterbox/repro-core';
 
 import type { CaptureEventSink } from './events.js';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@repro/agent-e2e",
+  "name": "@jitterbox/repro-agent-e2e",
   "version": "0.2.1",
   "private": true,
   "type": "module",
@@ -17,12 +17,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/capture": "workspace:*",
-    "@repro/cli": "workspace:*",
-    "@repro/compare": "workspace:*",
-    "@repro/core": "workspace:*",
-    "@repro/e2e-fixture": "workspace:*",
-    "@repro/evaluation": "workspace:*"
+    "@jitterbox/repro-capture": "workspace:*",
+    "@jitterbox/repro-cli": "workspace:*",
+    "@jitterbox/repro-compare": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-e2e-fixture": "workspace:*",
+    "@jitterbox/repro-evaluation": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^3.0.2"

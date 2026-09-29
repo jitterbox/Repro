@@ -1,5 +1,5 @@
-import type { RunManifest, LowConfidenceSpan } from '@repro/contracts';
-import { overlayTheme, hitTestOutline } from '@repro/contracts';
+import type { RunManifest, LowConfidenceSpan } from '@jitterbox/repro-contracts';
+import { overlayTheme, hitTestOutline } from '@jitterbox/repro-contracts';
 import { mapComparisonTime } from './sync-time.js';
 import type { SyncKnot } from './sync-time.js';
 export interface ReviewPane {

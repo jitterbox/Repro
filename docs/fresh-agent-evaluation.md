@@ -59,7 +59,7 @@ discovery agents must not read it until their submissions are frozen.
 
 ## Live versus mock
 
-The legacy `@repro/agent-e2e` package has no live provider adapter. Requesting
+The legacy `@jitterbox/repro-agent-e2e` package has no live provider adapter. Requesting
 `REPRO_AGENT_E2E=1` fails explicitly rather than running a mock under a live label.
 The nightly workflow reports this limitation. External fresh agents can execute
 the protocol above without adding a hosted model dependency to committed replay.

@@ -1,9 +1,9 @@
 # Playwright scenarios and observations
 
-Import `test`, `expect` and `humanPointer` from `@repro/playwright`. Ordinary Playwright setup, locators, frames, authentication, assertions, projects and retries remain available. The `repro` fixture owns capture and its clock. IDs must be declared in the committed evidence specification. Run via `repro run` so provenance, output paths and runner selection are established consistently.
+Import `test`, `expect` and `humanPointer` from `@jitterbox/repro-playwright`. Ordinary Playwright setup, locators, frames, authentication, assertions, projects and retries remain available. The `repro` fixture owns capture and its clock. IDs must be declared in the committed evidence specification. Run via `repro run` so provenance, output paths and runner selection are established consistently.
 
 ```ts
-import { test, expect, humanPointer } from '@repro/playwright';
+import { test, expect, humanPointer } from '@jitterbox/repro-playwright';
 
 test('Open report settings', async ({ page, repro }) => {
   const pointer = humanPointer(page);

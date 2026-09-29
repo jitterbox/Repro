@@ -10,7 +10,7 @@ import {
   extractContactSheet,
   meanLuminance,
   probeDurationMs,
-} from '@repro/evaluation';
+} from '@jitterbox/repro-evaluation';
 
 import { getRepoRoot } from '../src/bugs.js';
 

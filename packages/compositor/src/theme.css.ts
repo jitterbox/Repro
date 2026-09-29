@@ -1,4 +1,4 @@
-import { overlayTheme } from '@repro/contracts';
+import { overlayTheme } from '@jitterbox/repro-contracts';
 
 const { colors, burnInFont, safeZones, type: typeScale } = overlayTheme;
 

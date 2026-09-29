@@ -4,7 +4,7 @@ import { arch, platform } from 'node:process';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import type { Viewport } from '@repro/core';
+import type { Viewport } from '@jitterbox/repro-core';
 import type { Browser } from 'playwright';
 
 const execFileAsync = promisify(execFile);
@@ -15,8 +15,8 @@ export interface EnvironmentViewport {
   readonly deviceScaleFactor: number;
 }
 
-export type { FontManifestEntry } from '@repro/core';
-import { enumerateFonts, type FontManifestEntry } from '@repro/core';
+export type { FontManifestEntry } from '@jitterbox/repro-core';
+import { enumerateFonts, type FontManifestEntry } from '@jitterbox/repro-core';
 
 export interface EnvironmentManifest {
   readonly reproTracing?: {

@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 
 test('Uneven sequence retains each semantic checkpoint in comparison', async ({
   page,

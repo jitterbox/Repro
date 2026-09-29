@@ -80,7 +80,7 @@ export interface BoundingBox {
   height: number;
 }
 
-/** Runtime time range — matches @repro/core. */
+/** Runtime time range — matches @jitterbox/repro-core. */
 export interface TimeRange {
   start: number;
   end: number;

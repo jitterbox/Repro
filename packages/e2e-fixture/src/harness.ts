@@ -2,25 +2,25 @@ import {readFile} from 'node:fs/promises';
 import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { normalizeCapture, runCapture } from '@repro/capture';
-import { annotateCommand, packageCommand } from '@repro/cli';
-import { compareRuns } from '@repro/compare';
-import { ReproStore, validateConfig } from '@repro/core';
+import { normalizeCapture, runCapture } from '@jitterbox/repro-capture';
+import { annotateCommand, packageCommand } from '@jitterbox/repro-cli';
+import { compareRuns } from '@jitterbox/repro-compare';
+import { ReproStore, validateConfig } from '@jitterbox/repro-core';
 import {
   buildQualityReport,
   metricStatus,
   runDeterministicGates,
-} from '@repro/evaluation';
-import { renderCompare } from '@repro/render';
+} from '@jitterbox/repro-evaluation';
+import { renderCompare } from '@jitterbox/repro-render';
 
 import { getRepoRoot } from './bugs.js';
 import { startShopliteServer } from './server.js';
 
 import type { BugWorkItem } from './bugs.js';
 import type { FixtureMode, ShopliteServer } from './server.js';
-import type { CaptureSession } from '@repro/capture';
-import type { CompareManifest, CompareRunResult } from '@repro/compare';
-import type { ReproConfig } from '@repro/core';
+import type { CaptureSession } from '@jitterbox/repro-capture';
+import type { CompareManifest, CompareRunResult } from '@jitterbox/repro-compare';
+import type { ReproConfig } from '@jitterbox/repro-core';
 import type { Page } from 'playwright';
 
 export interface ScenarioContext {

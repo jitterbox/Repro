@@ -1,5 +1,5 @@
 {
-  "name": "@repro/compare",
+  "name": "@jitterbox/repro-compare",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,8 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/contracts": "workspace:*",
-    "@repro/core": "workspace:*"
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -38,5 +38,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/compare \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-compare \u2014 Repro browser evidence and annotated video pipeline"
 }

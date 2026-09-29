@@ -1,4 +1,4 @@
-import {test,expect} from '@repro/playwright';
+import {test,expect} from '@jitterbox/repro-playwright';
 test('Latest inventory search survives older completion',async({page,repro})=>{
  const query=page.getByRole('textbox',{name:'Search inventory'}); const result=page.getByLabel('Search result'); let responses:any[]=[];
  await repro.step('prepare',async()=>{await page.goto(process.env.REPRO_URL!);await expect(page.getByRole('heading',{name:'Inventory search'})).toBeVisible();repro.target('query',query);repro.target('result',result);});

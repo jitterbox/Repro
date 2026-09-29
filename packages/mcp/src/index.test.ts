@@ -1,13 +1,13 @@
 import { expect, it, vi } from 'vitest';
-import type * as Pipeline from '@repro/pipeline';
+import type * as Pipeline from '@jitterbox/repro-pipeline';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { capabilities } from '@repro/contracts';
+import { capabilities } from '@jitterbox/repro-contracts';
 const calls = vi.hoisted(() => ({
   render: vi.fn(() => Promise.resolve({ ok: true })),
   export: vi.fn(() => Promise.resolve({ ok: true })),
 }));
-vi.mock('@repro/pipeline', async (importOriginal) => ({
+vi.mock('@jitterbox/repro-pipeline', async (importOriginal) => ({
   ...(await importOriginal<typeof Pipeline>()),
   renderEvidence: calls.render,
   exportEvidence: calls.export,

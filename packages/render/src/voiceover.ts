@@ -1,11 +1,11 @@
-import { resolveMediaCommand } from '@repro/core';
+import { resolveMediaCommand } from '@jitterbox/repro-core';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
-import type { Segment } from '@repro/plan';
-import type { TimeRange } from '@repro/core';
+import type { Segment } from '@jitterbox/repro-plan';
+import type { TimeRange } from '@jitterbox/repro-core';
 
 /** Canonical narration document — single source for VO, VTT, transcript. */
 export interface NarrationDocument {

@@ -1,6 +1,6 @@
-import { runProcess } from '@repro/core';
-import { watchServerSchema, type WatchServerOptions } from '@repro/contracts';
-export { watchServerSchema, type WatchServerOptions } from '@repro/contracts';
+import { runProcess } from '@jitterbox/repro-core';
+import { watchServerSchema, type WatchServerOptions } from '@jitterbox/repro-contracts';
+export { watchServerSchema, type WatchServerOptions } from '@jitterbox/repro-contracts';
 import { watchScenario } from './watch.js';
 
 /** One owned build/server process survives isolated Playwright scenario reruns. */

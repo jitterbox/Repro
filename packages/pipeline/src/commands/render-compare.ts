@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import { renderCompare } from '@repro/render';
+import { renderCompare } from '@jitterbox/repro-render';
 
 export interface RenderCompareCommandOptions {
   readonly composition: string;

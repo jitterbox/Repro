@@ -22,8 +22,8 @@ import {
   sceneSourceAt,
   type ScenePlan,
   type SceneRect,
-} from '@repro/contracts';
-import { runProcess, h264Profile } from '@repro/core';
+} from '@jitterbox/repro-contracts';
+import { runProcess, h264Profile } from '@jitterbox/repro-core';
 
 export interface SceneSourceFrame {
   id: string;

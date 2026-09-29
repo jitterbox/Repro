@@ -1,1 +1,1 @@
-export * from '@repro/pipeline/commands/render-compare';
+export * from '@jitterbox/repro-pipeline/commands/render-compare';

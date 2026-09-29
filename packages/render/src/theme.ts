@@ -3,9 +3,9 @@ import {
   overlayTheme,
   severityAss,
   severityColor,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 
-import type { OverlayTheme } from '@repro/contracts';
+import type { OverlayTheme } from '@jitterbox/repro-contracts';
 
 export type Severity = 'info' | 'low' | 'medium' | 'warn' | 'high' | 'critical';
 

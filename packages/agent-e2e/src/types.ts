@@ -1,4 +1,4 @@
-import type { ReproConfig } from '@repro/core';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 export type ReproCliVerb =
   | 'validate-config'

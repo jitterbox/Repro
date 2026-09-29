@@ -1,5 +1,5 @@
-import type { Observation } from '@repro/contracts';
-import { compareDecodedPng } from '@repro/evaluation';
+import type { Observation } from '@jitterbox/repro-contracts';
+import { compareDecodedPng } from '@jitterbox/repro-evaluation';
 
 interface Image {
   observation: Observation;

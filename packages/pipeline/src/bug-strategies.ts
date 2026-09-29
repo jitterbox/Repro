@@ -1,4 +1,4 @@
-import type { DiscoveryConcern } from '@repro/contracts';
+import type { DiscoveryConcern } from '@jitterbox/repro-contracts';
 
 export interface Strategy {
   id: DiscoveryConcern;

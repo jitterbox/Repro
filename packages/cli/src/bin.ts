@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { pipelineProblem } from '@repro/pipeline';
+import { pipelineProblem } from '@jitterbox/repro-pipeline';
 import { runCli } from './index.js';
 try {
   await runCli();

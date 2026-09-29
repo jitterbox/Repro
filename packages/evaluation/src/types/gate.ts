@@ -2,4 +2,4 @@ export type {
   GateResult,
   ReproMode,
   DeterministicGateInput,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';

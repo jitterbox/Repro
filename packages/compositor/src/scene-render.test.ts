@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { parseScenePlan } from '@repro/contracts';
+import { parseScenePlan } from '@jitterbox/repro-contracts';
 import { selectSceneFrame } from './scene-render.js';
 it('selects preceding source pixels on the correct page and rejects missing history', () => {
   const plan = parseScenePlan({

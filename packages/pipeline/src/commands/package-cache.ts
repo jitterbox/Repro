@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir, lstat, writeFile } from 'node:fs/promises';
 import { join, basename } from 'node:path';
-import { implementationDigest, runProcess } from '@repro/core';
+import { implementationDigest, runProcess } from '@jitterbox/repro-core';
 import { createRequire } from 'node:module';
 import type {
   PackageCommandOptions,
@@ -59,9 +59,9 @@ export async function packageCacheKey(
         version: 1,
         implementation: [
           implementationDigest(new URL('../index.js', import.meta.url).href),
-          implementationDigest(require.resolve('@repro/render')),
-          implementationDigest(require.resolve('@repro/core')),
-          implementationDigest(require.resolve('@repro/contracts')),
+          implementationDigest(require.resolve('@jitterbox/repro-render')),
+          implementationDigest(require.resolve('@jitterbox/repro-core')),
+          implementationDigest(require.resolve('@jitterbox/repro-contracts')),
         ],
         tools,
         models,

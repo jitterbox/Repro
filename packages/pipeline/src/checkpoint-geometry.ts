@@ -1,4 +1,4 @@
-import type { Observation } from '@repro/contracts';
+import type { Observation } from '@jitterbox/repro-contracts';
 
 /** A ring belongs to one screenshot on its measured page, never a namesake popup. */
 export function screenshotForBounds(

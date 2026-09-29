@@ -12,7 +12,7 @@ it('preserves short text and truncates wide, multiline and Unicode text without 
 });
 
 it('preserves required callout wording in the planned plate', async () => {
-  const { measureOverlayTextWidth } = await import('@repro/plan');
+  const { measureOverlayTextWidth } = await import('@jitterbox/repro-plan');
   const label = 'Intended Checkout control';
   expect(
     fitOverlayText(

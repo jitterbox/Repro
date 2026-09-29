@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Checkout request failures are correlated with captured evidence', async ({
   page,
   repro,

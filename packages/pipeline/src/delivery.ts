@@ -7,9 +7,9 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
-import { AdoClient, JiraClient, outboxIdempotencyKey } from '@repro/alm';
-import { sha256, withFileLock } from '@repro/core';
-import { enforceOcrAudit } from '@repro/render';
+import { AdoClient, JiraClient, outboxIdempotencyKey } from '@jitterbox/repro-alm';
+import { sha256, withFileLock } from '@jitterbox/repro-core';
+import { enforceOcrAudit } from '@jitterbox/repro-render';
 /** Credentials stay in the process environment; receipts contain only artifact identity and result. */
 export async function deliverEvidence(input: {
   system: 'ado' | 'jira';

@@ -6,14 +6,14 @@ import {
   FrameRecordSchema,
   ReproConfigSchema,
   validateConfig,
-} from '@repro/core';
+} from '@jitterbox/repro-core';
 
 import type {
   EventRecord,
   FrameRecord,
   ReproConfig,
   ValidationResult,
-} from '@repro/core';
+} from '@jitterbox/repro-core';
 
 export async function readJson(path: string): Promise<unknown> {
   return JSON.parse(await readFile(path, 'utf8')) as unknown;

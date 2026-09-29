@@ -7,8 +7,8 @@ import {
   runScenarioAnnotate,
   runScenarioCapture,
   withServer,
-} from '@repro/e2e-fixture';
-import { buildQualityReport, metricStatus } from '@repro/evaluation';
+} from '@jitterbox/repro-e2e-fixture';
+import { buildQualityReport, metricStatus } from '@jitterbox/repro-evaluation';
 
 import { createReproCliTools, recordStep } from './cli-tools.js';
 import { bugCaptureDriver, compareManifestForBug } from './bug-drivers.js';

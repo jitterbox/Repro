@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ReproConfig } from '@repro/core';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 const repoRoot = join(
   dirname(fileURLToPath(import.meta.url)),

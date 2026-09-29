@@ -1,8 +1,8 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { MonotonicClockBridge, ReproStore } from '@repro/core';
-import { startPageScreencast } from '@repro/capture';
+import { MonotonicClockBridge, ReproStore } from '@jitterbox/repro-core';
+import { startPageScreencast } from '@jitterbox/repro-capture';
 import { writeJson } from './evidence-run.js';
 /** Identical capture-owner fixtures; never run native and CDP on the same page. */
 export async function experimentNative(directory: string) {

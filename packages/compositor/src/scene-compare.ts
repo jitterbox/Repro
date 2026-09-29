@@ -1,4 +1,4 @@
-import type { ScenePlan } from '@repro/contracts';
+import type { ScenePlan } from '@jitterbox/repro-contracts';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runSceneWorker } from './scene-process.js';

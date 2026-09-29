@@ -1,2 +1,2 @@
 import { defineConfig } from '@playwright/test';
-export default defineConfig({ testDir: '.', testMatch: 'scenario.spec.ts', use: { viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'UTC', serviceWorkers: 'block', reducedMotion: 'reduce' }, reporter: [['list'], ['@repro/playwright/reporter']] });
+export default defineConfig({ testDir: '.', testMatch: 'scenario.spec.ts', use: { viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1, locale: 'en-US', timezoneId: 'UTC', serviceWorkers: 'block', reducedMotion: 'reduce' }, reporter: [['list'], ['@jitterbox/repro-playwright/reporter']] });

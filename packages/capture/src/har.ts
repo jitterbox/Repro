@@ -1,9 +1,9 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import { denyByDefaultHarPolicy } from '@repro/core/redactor';
+import { denyByDefaultHarPolicy } from '@jitterbox/repro-core/redactor';
 
-import type { HarRedactionPolicy } from '@repro/core/redactor';
+import type { HarRedactionPolicy } from '@jitterbox/repro-core/redactor';
 
 export interface HarSanitizerOptions {
   readonly allowedHeaders?: readonly string[];

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
-import { appVersionSchema, type AppVersion } from '@repro/contracts';
-import type { ReproConfig } from '@repro/core';
+import { appVersionSchema, type AppVersion } from '@jitterbox/repro-contracts';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 /** Read declared target-app metadata, never the evidence repository or Repro package version. */
 export async function observeAppVersion(

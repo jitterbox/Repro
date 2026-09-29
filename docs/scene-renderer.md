@@ -148,7 +148,7 @@ source-time pointer samples, freezes during holds, and rewinds during replay. It
 while pressed and shows a short movement trail. `cursorGlow` defaults to true and can
 be disabled in a treatment plan. The halo uses vector strokes for repeatable seeking.
 
-Committed scenarios can import `humanPointer(page)` from `@repro/playwright`, then
+Committed scenarios can import `humanPointer(page)` from `@jitterbox/repro-playwright`, then
 use `pointer.click(locator)`, `pointer.approach(locator)`, and `pointer.move(x,y)`.
 The helper actually dispatches a deterministic eased, curved approach over 640ms;
 it does not synthesize a path during rendering. Keep all mouse movement on a page

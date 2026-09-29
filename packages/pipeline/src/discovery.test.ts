@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { capabilities, recipes, validateEvidence } from './discovery.js';
-import { capabilitySchema } from '@repro/contracts';
+import { capabilitySchema } from '@jitterbox/repro-contracts';
 describe('AI-readable discovery', () => {
   it('describes every entry with prerequisites, invocation and verification', () => {
     for (const capability of capabilities) {

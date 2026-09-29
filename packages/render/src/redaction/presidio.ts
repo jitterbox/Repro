@@ -1,1 +1,1 @@
-export * from '@repro/core/redactor';
+export * from '@jitterbox/repro-core/redactor';

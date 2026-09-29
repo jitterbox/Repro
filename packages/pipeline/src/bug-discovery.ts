@@ -3,9 +3,9 @@ import {
   discoveryAssessmentSchema,
   validateEvidence,
   capabilities,
-} from '@repro/contracts';
-import type { BugBrief, DiscoveryAssessment } from '@repro/contracts';
-import { FeatureFlagsSchema } from '@repro/contracts/config';
+} from '@jitterbox/repro-contracts';
+import type { BugBrief, DiscoveryAssessment } from '@jitterbox/repro-contracts';
+import { FeatureFlagsSchema } from '@jitterbox/repro-contracts/config';
 import { bugStrategies } from './bug-strategies.js';
 
 const plain = (value: unknown) =>

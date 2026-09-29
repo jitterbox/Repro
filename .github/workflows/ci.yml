@@ -154,13 +154,13 @@ jobs:
         run: node scripts/e2e/review.mjs
       - name: Compositor and fixture coverage
         run: |
-          pnpm --filter @repro/compositor test
+          pnpm --filter @jitterbox/repro-compositor test
           pnpm test:e2e-fixture
           node scripts/e2e/legacy-review-index.mjs
       - name: Clean project installation and public scenario
         run: pnpm test:clean-install
       - name: Agent mock evaluation (no model or API keys)
-        run: pnpm --filter @repro/agent-e2e test
+        run: pnpm --filter @jitterbox/repro-agent-e2e test
       - name: Builds and tests leave tracked sources unchanged
         run: git diff --exit-code
       - name: Stage evidence without linked dependencies

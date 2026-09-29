@@ -21,7 +21,7 @@ export {
 
 export * from './bug-discovery.js';
 
-export { treatmentCatalog, parseTreatmentPlan } from '@repro/contracts';
+export { treatmentCatalog, parseTreatmentPlan } from '@jitterbox/repro-contracts';
 
 export { renderScenePair } from './scene-comparison.js';
 

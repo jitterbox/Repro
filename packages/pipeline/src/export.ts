@@ -1,14 +1,14 @@
-import { artifactSlug, artifactBaseName } from '@repro/core';
-import { ReproConfigSchema } from '@repro/contracts/config';
+import { artifactSlug, artifactBaseName } from '@jitterbox/repro-core';
+import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
 import { buildDevToolsReport } from './devtools-export.js';
-import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@repro/render';
+import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@jitterbox/repro-render';
 import { readFile } from 'node:fs/promises';
 import {
   validateEvidence,
   shareReportSchema,
   parseScenePlan,
-} from '@repro/contracts';
-import { mapTime, type ReproPlan } from '@repro/plan';
+} from '@jitterbox/repro-contracts';
+import { mapTime, type ReproPlan } from '@jitterbox/repro-plan';
 import { join, basename, extname } from 'node:path';
 import { verifyRun } from './evidence-run.js';
 import { compareEvidence } from './comparison.js';

@@ -1,4 +1,4 @@
-import type { Mode, ReproConfig } from '@repro/core';
+import type { Mode, ReproConfig } from '@jitterbox/repro-core';
 
 export interface SlateEnvironment {
   readonly browserLabel: string;

@@ -1,5 +1,5 @@
 {
-  "name": "@repro/render",
+  "name": "@jitterbox/repro-render",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,10 +19,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/compare": "workspace:*",
-    "@repro/contracts": "workspace:*",
-    "@repro/core": "workspace:*",
-    "@repro/plan": "workspace:*"
+    "@jitterbox/repro-compare": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-plan": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -40,5 +40,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/render \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-render \u2014 Repro browser evidence and annotated video pipeline"
 }

@@ -1,4 +1,4 @@
-import { measureOverlayTextWidth } from '@repro/plan';
+import { measureOverlayTextWidth } from '@jitterbox/repro-plan';
 /** Same installed font as libass; conservative fallback when fontconfig is unavailable. */
 export function fitOverlayText(
   text: string,

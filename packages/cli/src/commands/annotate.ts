@@ -1,1 +1,1 @@
-export * from '@repro/pipeline/commands/annotate';
+export * from '@jitterbox/repro-pipeline/commands/annotate';

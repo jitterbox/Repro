@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 
 test('Stationary intervals and a brief color change retain their real timing', async ({
   page,

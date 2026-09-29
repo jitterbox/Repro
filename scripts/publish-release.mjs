@@ -1,14 +1,23 @@
 /** Called only by an explicitly requested release, never by build or installation. */
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import { packageManagerInvocation } from './package-manager.mjs';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 const exec = promisify(execFile);
 const { version } = JSON.parse(await readFile('package.json', 'utf8'));
-if (process.env.GITHUB_REF !== `refs/tags/v${version}`)
+const local = process.argv.includes('--local');
+const tag = `v${version}`;
+const { stdout: head } = await exec('git', ['rev-parse', 'HEAD']);
+const { stdout: tagged } = await exec('git', ['rev-parse', `${tag}^{commit}`]);
+if (head.trim() !== tagged.trim())
+  throw new Error(`Checkout must match ${tag}`);
+const { stdout: dirty } = await exec('git', ['status', '--porcelain']);
+if (dirty.trim()) throw new Error('Publish from a clean checkout');
+if (!local && process.env.GITHUB_REF !== `refs/tags/${tag}`)
   throw new Error(
-    `Dispatch from tag v${version}; never publish an untagged checkout.`,
+    `Dispatch from tag ${tag}, or use --local from that tagged commit.`,
   );
 if (process.argv.includes('--check-tag')) process.exit(0);
 const directory = process.argv[2];
@@ -18,7 +27,7 @@ const checksums = JSON.parse(
 );
 // Verify every archive before the first external write.
 for (const [file, expected] of Object.entries(checksums)) {
-  if (!/^tarballs\/repro-[a-z-]+-[\d.]+\.tgz$/.test(file))
+  if (!/^tarballs\/jitterbox-repro-[a-z-]+-[\d.]+\.tgz$/.test(file))
     throw new Error('Invalid archive path');
   if (
     createHash('sha256')
@@ -36,7 +45,7 @@ for (const file of Object.keys(checksums)) {
     'package/package.json',
   ]);
   const pkg = JSON.parse(stdout);
-  if (pkg.version !== version || !pkg.name.startsWith('@repro/'))
+  if (pkg.version !== version || !pkg.name.startsWith('@jitterbox/repro-'))
     throw new Error('Release version/name mismatch');
   pending.set(pkg.name, {
     file,
@@ -51,16 +60,23 @@ while (pending.size) {
   const [name, pkg] = item;
   // Published versions are immutable. Resume a partial release only after explicit investigation.
   console.log(`Publishing ${name}@${version}`);
-  await exec(
-    'npm',
-    [
-      'publish',
-      join(directory, pkg.file),
-      '--access',
-      'public',
-      '--provenance',
-    ],
-    { maxBuffer: 8 * 1024 * 1024 },
-  );
+  const invocation = packageManagerInvocation('npm', [
+    'publish',
+    join(directory, pkg.file),
+    '--access',
+    'public',
+    ...(local ? [] : ['--provenance']),
+  ]);
+  await new Promise((resolve, reject) => {
+    const child = spawn(invocation.command, invocation.args, {
+      stdio: 'inherit',
+    });
+    child.on('error', reject);
+    child.on('exit', (code, signal) =>
+      code === 0
+        ? resolve()
+        : reject(new Error(`npm publish failed: ${code ?? signal}`)),
+    );
+  });
   pending.delete(name);
 }

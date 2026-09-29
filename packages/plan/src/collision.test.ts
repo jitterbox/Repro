@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { intersects, placeAnnotations } from './collision.js';
 
 import type { AnnotationBox, Rect } from './types.js';
-import type { Viewport } from '@repro/core';
+import type { Viewport } from '@jitterbox/repro-core';
 
 const viewport = {
   deviceScaleFactor: 1,

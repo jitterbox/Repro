@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { runProcess, h264Profile } from '@repro/core';
-import { parseCompareComposition } from '@repro/contracts';
+import { runProcess, h264Profile } from '@jitterbox/repro-core';
+import { parseCompareComposition } from '@jitterbox/repro-contracts';
 import { burnInFont } from './theme.js';
 
 import {
@@ -11,9 +11,9 @@ import {
   edgeOverlayLayout,
   onionLayout,
   wipeLayout,
-} from '@repro/compare';
+} from '@jitterbox/repro-compare';
 
-import type { CompareComposition } from '@repro/compare';
+import type { CompareComposition } from '@jitterbox/repro-compare';
 
 export interface RenderCompareInput {
   readonly composition: CompareComposition | Record<string, unknown>;

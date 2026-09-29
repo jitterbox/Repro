@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Notification preference persists after a three-action menu sequence', async ({
   page,
   repro,

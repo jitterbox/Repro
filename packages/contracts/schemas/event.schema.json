@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/event.schema.json",
   "title": "ReproEvent",
-  "description": "Aligned with @repro/core EventRecordSchema (t_mono, kind).",
+  "description": "Aligned with @jitterbox/repro-core EventRecordSchema (t_mono, kind).",
   "type": "object",
   "required": [
     "id",

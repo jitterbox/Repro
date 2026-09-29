@@ -1,5 +1,5 @@
 {
-  "name": "@repro/pipeline",
+  "name": "@jitterbox/repro-pipeline",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -24,20 +24,20 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/core": "workspace:*",
-    "@repro/contracts": "workspace:*",
-    "@repro/capture": "workspace:*",
-    "@repro/compare": "workspace:*",
-    "@repro/plan": "workspace:*",
-    "@repro/render": "workspace:*",
-    "@repro/compositor": "workspace:*",
-    "@repro/evaluation": "workspace:*",
-    "@repro/alm": "workspace:*",
-    "@repro/vault": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-capture": "workspace:*",
+    "@jitterbox/repro-compare": "workspace:*",
+    "@jitterbox/repro-plan": "workspace:*",
+    "@jitterbox/repro-render": "workspace:*",
+    "@jitterbox/repro-compositor": "workspace:*",
+    "@jitterbox/repro-evaluation": "workspace:*",
+    "@jitterbox/repro-alm": "workspace:*",
+    "@jitterbox/repro-vault": "workspace:*",
     "@playwright/test": "1.62.0",
     "playwright": "1.62.0",
     "zod": "4.4.3",
-    "@repro/viewer": "workspace:*",
+    "@jitterbox/repro-viewer": "workspace:*",
     "esbuild": "0.28.1"
   },
   "engines": {
@@ -56,5 +56,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/pipeline \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-pipeline \u2014 Repro browser evidence and annotated video pipeline"
 }

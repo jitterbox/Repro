@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { canShowActions } from './capture-session.js';
 
-import type { ReproConfig } from '@repro/core';
+import type { ReproConfig } from '@jitterbox/repro-core';
 
 const baseConfig = {
   capturePreviewUi: true,

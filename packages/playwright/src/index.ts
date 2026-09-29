@@ -1,21 +1,21 @@
 import { observeAppVersion } from './app-version.js';
-import { artifactSlug, artifactBaseName } from '@repro/core';
+import { artifactSlug, artifactBaseName } from '@jitterbox/repro-core';
 import { test as base, expect } from '@playwright/test';
 import type { Locator, Page, TestInfo, Response } from '@playwright/test';
 import { AxeBuilder } from '@axe-core/playwright';
 import { readFile, mkdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { CaptureSession } from '@repro/capture';
-import { validateConfig } from '@repro/contracts/config-validator';
-import { ReproConfigSchema } from '@repro/contracts/config';
-import { cropBounds, validateEvidence } from '@repro/contracts';
-import type { EvidenceSpec, Observation, RunManifest } from '@repro/contracts';
+import { CaptureSession } from '@jitterbox/repro-capture';
+import { validateConfig } from '@jitterbox/repro-contracts/config-validator';
+import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
+import { cropBounds, validateEvidence } from '@jitterbox/repro-contracts';
+import type { EvidenceSpec, Observation, RunManifest } from '@jitterbox/repro-contracts';
 import {
   finishEvidence,
   newObservationId,
   scenarioSourceIdentity,
-} from '@repro/pipeline';
+} from '@jitterbox/repro-pipeline';
 
 export { expect };
 export { humanPointer, humanApproach } from './human-pointer.js';

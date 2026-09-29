@@ -1,4 +1,4 @@
-import { test, expect } from '@repro/playwright';
+import { test, expect } from '@jitterbox/repro-playwright';
 test('Invoice total stays aligned after changing account label', async ({ page, repro }) => {
  const total=page.getByLabel('Invoice total',{exact:true});
  const reference=page.getByText('Invoice reference edge',{exact:true});

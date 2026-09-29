@@ -1,5 +1,5 @@
 {
-  "name": "@repro/cli",
+  "name": "@jitterbox/repro-cli",
   "version": "0.2.1",
   "type": "module",
   "bin": {
@@ -26,8 +26,8 @@
   "dependencies": {
     "commander": "^13.1.0",
     "zod": "4.4.3",
-    "@repro/pipeline": "workspace:*",
-    "@repro/contracts": "workspace:*"
+    "@jitterbox/repro-pipeline": "workspace:*",
+    "@jitterbox/repro-contracts": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -45,5 +45,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/cli \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-cli \u2014 Repro browser evidence and annotated video pipeline"
 }

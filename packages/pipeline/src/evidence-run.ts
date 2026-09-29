@@ -1,4 +1,4 @@
-import type { AppVersion } from '@repro/contracts';
+import type { AppVersion } from '@jitterbox/repro-contracts';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   readFile,
@@ -9,15 +9,15 @@ import {
   realpath,
 } from 'node:fs/promises';
 import { join, relative, isAbsolute, sep } from 'node:path';
-import { evidenceRequirements, runManifestSchema } from '@repro/contracts';
-import type { EvidenceSpec, Observation, RunManifest } from '@repro/contracts';
-import { normalizeCapture } from '@repro/capture';
-import type { CaptureRunResult } from '@repro/capture';
-import { ReproStore } from '@repro/core';
+import { evidenceRequirements, runManifestSchema } from '@jitterbox/repro-contracts';
+import type { EvidenceSpec, Observation, RunManifest } from '@jitterbox/repro-contracts';
+import { normalizeCapture } from '@jitterbox/repro-capture';
+import type { CaptureRunResult } from '@jitterbox/repro-capture';
+import { ReproStore } from '@jitterbox/repro-core';
 import { correlateInteractionEvents } from './interaction-events.js';
 import { correlateDiagnostics } from './diagnostics.js';
 import { compileEvidencePresentation } from './evidence-presentation.js';
-import { ReproConfigSchema } from '@repro/contracts/config';
+import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
 import { resolveEventFrames } from './event-frames.js';
 import type { CapturedEvent } from './interaction-events.js';
 

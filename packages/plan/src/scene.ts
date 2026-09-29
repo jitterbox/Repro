@@ -7,7 +7,7 @@ import {
   type EvidenceSpec,
   type RunManifest,
   type SceneRect,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 
 export interface SceneEvent {
   id: string;

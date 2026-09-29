@@ -1,14 +1,14 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { diffGeometry } from '@repro/compare';
-import type { CompareComposition } from '@repro/compare';
-import type { RunManifest } from '@repro/contracts';
+import { diffGeometry } from '@jitterbox/repro-compare';
+import type { CompareComposition } from '@jitterbox/repro-compare';
+import type { RunManifest } from '@jitterbox/repro-contracts';
 import {
   validateEvidence,
   parseCompareComposition,
   observationUncertaintyMs,
   mapComparisonTime,
-} from '@repro/contracts';
+} from '@jitterbox/repro-contracts';
 import { containedArtifact, verifyRun, writeJson } from './evidence-run.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { alignCheckpointImages } from './image-alignment.js';

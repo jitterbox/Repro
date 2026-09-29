@@ -1,11 +1,11 @@
 import {
   driveConsoleSave,
   driveGeometry,
-} from '@repro/e2e-fixture';
+} from '@jitterbox/repro-e2e-fixture';
 
-import type { BugWorkItem } from '@repro/e2e-fixture';
-import type { CaptureSession } from '@repro/capture';
-import type { CompareManifest } from '@repro/compare';
+import type { BugWorkItem } from '@jitterbox/repro-e2e-fixture';
+import type { CaptureSession } from '@jitterbox/repro-capture';
+import type { CompareManifest } from '@jitterbox/repro-compare';
 
 type BugDriver = (session: CaptureSession) => Promise<void>;
 

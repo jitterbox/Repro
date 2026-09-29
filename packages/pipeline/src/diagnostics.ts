@@ -1,4 +1,4 @@
-import type { RunManifest } from '@repro/contracts';
+import type { RunManifest } from '@jitterbox/repro-contracts';
 import type { CapturedEvent } from './interaction-events.js';
 
 export function correlateDiagnostics(

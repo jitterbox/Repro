@@ -1,4 +1,4 @@
-import { test, expect, humanPointer } from '@repro/playwright';
+import { test, expect, humanPointer } from '@jitterbox/repro-playwright';
 test('Demonstrate and measure the selected application defect', async ({
   page,
   repro,

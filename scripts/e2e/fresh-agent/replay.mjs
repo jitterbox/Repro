@@ -75,11 +75,11 @@ try {
     }))
       await copyFile(item[key], join(folder, name));
     const modules = join(folder, 'node_modules');
-    await mkdir(join(modules, '@repro'), { recursive: true });
+    await mkdir(join(modules, '@jitterbox'), { recursive: true });
     await mkdir(join(modules, '@playwright'), { recursive: true });
     await symlink(
       resolve('packages/playwright'),
-      join(modules, '@repro/playwright'),
+      join(modules, '@jitterbox/repro-playwright'),
       'dir',
     );
     const require = createRequire(resolve('packages/playwright/package.json'));

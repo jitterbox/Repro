@@ -30,7 +30,7 @@ const cli = resolve(
   process.env.REPRO_BENCHMARK_CLI ?? 'packages/cli/dist/bin.js',
 );
 const require = createRequire(await realpath(cli));
-const pipelineRequire = createRequire(require.resolve('@repro/pipeline'));
+const pipelineRequire = createRequire(require.resolve('@jitterbox/repro-pipeline'));
 const root = resolve(
   process.env.REPRO_BENCHMARK_OUT ?? '.repro/annotation-benchmark',
 );
@@ -65,15 +65,15 @@ const report = {
   cli,
   implementations: Object.fromEntries(
     [
-      '@repro/cli',
-      '@repro/pipeline',
-      '@repro/render',
-      '@repro/core',
-      '@repro/contracts',
+      '@jitterbox/repro-cli',
+      '@jitterbox/repro-pipeline',
+      '@jitterbox/repro-render',
+      '@jitterbox/repro-core',
+      '@jitterbox/repro-contracts',
     ].map((name) => [
       name,
       implementationDigest(
-        name === '@repro/cli' ? cli : pipelineRequire.resolve(name),
+        name === '@jitterbox/repro-cli' ? cli : pipelineRequire.resolve(name),
       ),
     ]),
   ),

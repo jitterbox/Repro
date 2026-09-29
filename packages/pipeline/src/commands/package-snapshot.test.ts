@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, it, vi } from 'vitest';
 const audit = vi.hoisted(() => vi.fn());
-vi.mock('@repro/render', () => ({ enforceOcrAudit: audit }));
+vi.mock('@jitterbox/repro-render', () => ({ enforceOcrAudit: audit }));
 import { packageCommand } from './package.js';
 
 it('audits a private snapshot even if the original changes during the audit', async () => {

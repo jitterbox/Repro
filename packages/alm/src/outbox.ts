@@ -1,4 +1,4 @@
-import { canonicalJson, sha256 } from '@repro/core';
+import { canonicalJson, sha256 } from '@jitterbox/repro-core';
 
 export type OutboxStatus = 'pending' | 'sent' | 'failed';
 

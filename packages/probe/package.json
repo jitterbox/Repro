@@ -1,5 +1,5 @@
 {
-  "name": "@repro/probe",
+  "name": "@jitterbox/repro-probe",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -46,5 +46,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/probe \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-probe \u2014 Repro browser evidence and annotated video pipeline"
 }

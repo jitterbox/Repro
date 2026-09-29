@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://repro.dev/schemas/config.schema.json",
   "title": "ReproConfig",
-  "description": "Aligned with @repro/core ReproConfigSchema (profile, not executionProfile).",
+  "description": "Aligned with @jitterbox/repro-core ReproConfigSchema (profile, not executionProfile).",
   "type": "object",
   "required": ["mode", "profile", "surfaceCapture", "viewport"],
   "properties": {

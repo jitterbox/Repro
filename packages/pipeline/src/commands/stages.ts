@@ -7,7 +7,7 @@ import {
   cacheKey,
   resumeFromLastVerified,
   writeStageAtomic,
-} from '@repro/core';
+} from '@jitterbox/repro-core';
 
 import type {
   HashInput,
@@ -15,7 +15,7 @@ import type {
   ResumeResult,
   StageManifest,
   StageName,
-} from '@repro/core';
+} from '@jitterbox/repro-core';
 
 export interface StageKeyInput {
   readonly config: ReproConfig;
@@ -89,21 +89,21 @@ function withCoreVersion(
 ): Record<string, string> {
   return {
     ...versions,
-    '@repro/core': REPRO_CORE_VERSION,
+    '@jitterbox/repro-core': REPRO_CORE_VERSION,
     coreImplementation: implementationDigest(
-      createRequire(import.meta.url).resolve('@repro/core'),
+      createRequire(import.meta.url).resolve('@jitterbox/repro-core'),
     ),
     pipelineImplementation: implementationDigest(
       new URL('../index.js', import.meta.url).href,
     ),
     renderImplementation: implementationDigest(
-      createRequire(import.meta.url).resolve('@repro/render'),
+      createRequire(import.meta.url).resolve('@jitterbox/repro-render'),
     ),
     planImplementation: implementationDigest(
-      createRequire(import.meta.url).resolve('@repro/plan'),
+      createRequire(import.meta.url).resolve('@jitterbox/repro-plan'),
     ),
     themeImplementation: implementationDigest(
-      createRequire(import.meta.url).resolve('@repro/contracts'),
+      createRequire(import.meta.url).resolve('@jitterbox/repro-contracts'),
     ),
   };
 }

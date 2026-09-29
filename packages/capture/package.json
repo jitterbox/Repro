@@ -1,5 +1,5 @@
 {
-  "name": "@repro/capture",
+  "name": "@jitterbox/repro-capture",
   "version": "0.2.1",
   "type": "module",
   "exports": {
@@ -19,8 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@repro/core": "workspace:*",
-    "@repro/probe": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*",
+    "@jitterbox/repro-probe": "workspace:*",
     "playwright": "1.62.0"
   },
   "engines": {
@@ -39,5 +39,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@repro/capture \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "@jitterbox/repro-capture \u2014 Repro browser evidence and annotated video pipeline"
 }
