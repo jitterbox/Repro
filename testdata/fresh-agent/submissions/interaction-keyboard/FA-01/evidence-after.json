@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "FA-01",
+  "title": "FA-01: Approve shipment with pointer",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "A normal pointer click approves the shipment.",
+  "expected": "A normal pointer click approves the shipment.",
+  "targets": [
+    {
+      "id": "target",
+      "description": "Approve shipment"
+    },
+    {
+      "id": "reference",
+      "description": "Shipment status"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "1. Open shipment approval"
+    },
+    {
+      "id": "trigger",
+      "title": "2. Click Approve shipment once",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "3. Verify shipment status"
+    }
+  ],
+  "segments": [],
+  "checkpoints": [
+    {
+      "id": "ready",
+      "step": "prepare",
+      "title": "Shipment awaits approval",
+      "targets": [
+        "target",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Approve shipment"
+        },
+        {
+          "target": "reference",
+          "label": "Shipment status"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    },
+    {
+      "id": "hit",
+      "step": "trigger",
+      "title": "Pointer recipient at intended center",
+      "targets": [
+        "target"
+      ],
+      "required": true,
+      "observations": [
+        "screenshot",
+        "bounds",
+        "hit-test"
+      ],
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Intended pointer target"
+        }
+      ],
+      "timing": "stable"
+    },
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Status after intended click",
+      "targets": [
+        "target",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Approve shipment"
+        },
+        {
+          "target": "reference",
+          "label": "Shipment status"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    }
+  ],
+  "outputs": [
+    "png",
+    "mp4",
+    "review"
+  ],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 2500,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [
+      "[data-private]"
+    ],
+    "patterns": []
+  }
+}

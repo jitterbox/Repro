@@ -13,6 +13,7 @@ async function results() {
     'voiceover',
     'coverage',
     'legacy',
+    'fresh-agent',
   ]) {
     try {
       rows.push(

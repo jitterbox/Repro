@@ -1,0 +1,382 @@
+{
+  "agent": "fresh_geometry_native",
+  "guidanceSources": [
+    "/home/cory/repos/Repro/.repro/fresh-agent-public/ai-usage.md",
+    "/home/cory/repos/Repro/.repro/fresh-agent-public/design-brief.md",
+    "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/guide.json",
+    "installed public compare-composition JSON Schema",
+    "CLI init/describe/run/frame/compare/render/export/doctor"
+  ],
+  "cases": [
+    {
+      "id": "FA-05",
+      "status": "provisional-supported-proof-exported",
+      "interpretation": "Natural Apply label moves total 12 CSS pixels to the right of its fixed reference in Before, rather than the reported unmeasured 20px; After keeps alignment. No claim of root CSS cause or layout-shift timing.",
+      "selectedCapabilities": [
+        {
+          "id": "geometry",
+          "reason": "Measure stable total and reference left edges in controlled 1280x720@1 captures."
+        },
+        {
+          "id": "compare",
+          "reason": "Same executable scenario and checkpoints across natural Before/After actions."
+        },
+        {
+          "id": "frame",
+          "reason": "Inspect measured context pixels and crops."
+        },
+        {
+          "id": "render-compare",
+          "reason": "Shared crop derives from union of measured bounds, never independently recentered."
+        },
+        {
+          "id": "redaction/export",
+          "reason": "Mask synthetic data-private contact and require actual media OCR."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "layoutShiftViz/vitalsHud",
+          "reason": "Stable alignment is the claim; controlled capture does not establish faithful CLS timing."
+        },
+        {
+          "id": "hit-test/stackingContexts",
+          "reason": "Apply label succeeds naturally; no interception claim."
+        },
+        {
+          "id": "blink",
+          "reason": "Unnecessary; static shared crop explains geometry."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js discovery-guide --json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/guide.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js capabilities --json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/capabilities.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js init --directory /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario",
+          "exitCode": 0
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js discover /home/cory/repos/Repro/testdata/fresh-agent/tickets/FA-05.json --assessment /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/FA-05-assessment.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/FA-05-discovery.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config -c /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/config-validation.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/evidence-validation-revised.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-run.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/scenario/evidence-first-attempt.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-run-2.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/scenario/evidence-after-first-attempt.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-run.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-run-3.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-run-2.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-run-4.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-run-3.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-ready-frame.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-result-frame.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-ready-frame.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-result-frame.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491 /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/compare.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-render.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-render.log"
+        },
+        {
+          "command": "node /home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/roi.cjs",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/roi-render.log"
+        },
+        {
+          "command": "PATH=/tmp/repro-ocr-runtime/root/usr/bin:$PATH LD_LIBRARY_PATH=/tmp/repro-ocr-runtime/root/usr/lib/x86_64-linux-gnu TESSDATA_PREFIX=/tmp/repro-ocr-runtime/root/usr/share/tesseract-ocr/5/tessdata node /home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/export.cjs",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/export.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-run-5.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts --url http://127.0.0.1:3219/FA-05/after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-05",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-run-4.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-dAWm1l/FA-05-1c18a6f0-46d2-48d5-9b18-b9b379997bb3 /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-JUocOl/FA-05-505ee4d5-148c-473e-be7f-1500185c9bc6",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-JUocOl/FA-05-505ee4d5-148c-473e-be7f-1500185c9bc6/comparison.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-01oNPC/FA-05-27c4fef9-de39-4e46-b95e-4af04ce25064 /home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-hXfPSV/FA-05-83e1b763-d5cc-4ceb-9fc4-17d493ca5225",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-hXfPSV/FA-05-83e1b763-d5cc-4ceb-9fc4-17d493ca5225/comparison.json"
+        }
+      ],
+      "runs": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247"
+      },
+      "comparisonPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247/comparison.json",
+      "exportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/export/evidence-manifest.json",
+      "inspectedArtifacts": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/before-playback-inspection.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/after-playback-inspection.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/shared-roi-playback-inspection.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491/presentations/cf2f219a110988ae9799276654af9ce0b9f6b15e3dbac6b7afb582227014a49a/ready.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491/presentations/cf2f219a110988ae9799276654af9ce0b9f6b15e3dbac6b7afb582227014a49a/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491/inspection/result-total-crop.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247/presentations/240d117aff09de7a67987f85fb2d6271f66a84bf94bd6276caf11ae8558aa9f4/ready.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247/presentations/240d117aff09de7a67987f85fb2d6271f66a84bf94bd6276caf11ae8558aa9f4/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247/inspection/result-total-crop.png"
+      ],
+      "inputs": {
+        "spec": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts",
+        "config": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json",
+        "beforeEvidence": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json",
+        "afterEvidence": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json",
+        "playwrightConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts",
+        "tsconfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/tsconfig.json"
+      },
+      "limitations": [
+        "Raw captures remain private. Shared ROI is local inspection media, separate from strict-exported paired presentations.",
+        "Capture timing is not application performance evidence.",
+        "Before rendered result caption still truncates the final px. suffix; numeric tolerance 0.5 CSS is visible, full expected statement is retained in evidence/report and shared comparison.",
+        "Installed CLI export is provisional pending parent current-CLI rerender and terminal-tail verification after an independently identified product tail-hold defect."
+      ],
+      "repairs": [
+        "Exploration import from repo root failed; run exploration in submission directory linked to installed packages.",
+        "Browser sandbox rejected subprocess; authorized escalated browser execution succeeded.",
+        "Initial inferred region role was absent; observed aria-label provided durable locator.",
+        "init scenario inherited ancestor tsconfig references and failed before capture; added isolated scenario tsconfig.",
+        "Assessment triggerStep is 1-based; corrected trigger to steps.3 / steps.2 before final discovery.",
+        "Initial proof passed but evaluator found truncated expected text and total callout covering account label; shortened expected and kept only reference highlight, then recaptured both variants. This is evaluator-assisted editorial repair.",
+        "Second pair outcomes passed but comparison failed with no unmatched checkpoints and 73/102ms screenshot uncertainty; strict export rejected it. Retained runs, retried capture quality without widening tolerance.",
+        "Third pair also failed comparison at 89/90ms uncertainty; paused until other media jobs finished. Final fourth pair accepted at 33.9/35.5ms uncertainty."
+      ],
+      "attemptPaths": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/paths-first-attempt.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/paths-second-attempt.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/paths-third-attempt.json"
+      ],
+      "sharedCropProvenance": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/shared-roi-provenance.json",
+      "comparisonPassed": true,
+      "measurements": {
+        "beforeReadyLeftGapCssPx": 0,
+        "beforeResultLeftGapCssPx": 12,
+        "afterReadyLeftGapCssPx": 0,
+        "afterResultLeftGapCssPx": 0,
+        "afterMinusBeforeTotalXCssPx": -12,
+        "toleranceCssPx": 0.5
+      },
+      "attempts": [
+        {
+          "index": 1,
+          "runs": {
+            "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-ZCe28G/FA-05-78606a71-a597-456b-99ca-1ca5539804b7",
+            "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-lP8z8g/FA-05-cb230857-38ad-4640-b332-db2943af088a"
+          },
+          "disposition": "passed comparison/export; evaluator-assisted editorial repair required"
+        },
+        {
+          "index": 2,
+          "runs": {
+            "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-dAWm1l/FA-05-1c18a6f0-46d2-48d5-9b18-b9b379997bb3",
+            "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-JUocOl/FA-05-505ee4d5-148c-473e-be7f-1500185c9bc6"
+          },
+          "disposition": "same correct outcomes; comparison uncertainty rejected"
+        },
+        {
+          "index": 3,
+          "runs": {
+            "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-01oNPC/FA-05-27c4fef9-de39-4e46-b95e-4af04ce25064",
+            "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-hXfPSV/FA-05-83e1b763-d5cc-4ceb-9fc4-17d493ca5225"
+          },
+          "disposition": "same correct outcomes; comparison uncertainty rejected"
+        },
+        {
+          "index": 4,
+          "runs": {
+            "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-RQH216/FA-05-032c4bed-a725-4401-aff1-dbb66550c491",
+            "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-05/invocation-84dibS/FA-05-6ef22275-973f-40d2-99d0-4fc40baae247"
+          },
+          "disposition": "accepted comparison; provisional installed strict export"
+        }
+      ]
+    },
+    {
+      "id": "FA-06",
+      "status": "unsupported-surface",
+      "interpretation": "Defect concerns native OS picker sidebar; webpage looks normal and cannot provide proof about that surface.",
+      "selectedCapabilities": [
+        {
+          "id": "discover",
+          "reason": "Source-referenced native assessment yields unsupported-surface without evidence draft."
+        },
+        {
+          "id": "doctor",
+          "reason": "Reports OS backend unsupported."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "os-capture",
+          "reason": "No implemented OS backend; validate-config explicitly rejects surfaceCapture os."
+        },
+        {
+          "id": "page-capture",
+          "reason": "Cannot substitute page pixels for the claimed native sidebar."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js discover /home/cory/repos/Repro/testdata/fresh-agent/tickets/FA-06.json --assessment /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/FA-06-assessment.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/FA-06-discovery.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config -c /home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/FA-06-os.config.json",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/FA-06-rejection.log"
+        },
+        {
+          "command": "node /home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/native-inspection.mjs",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript/FA-06-ui-inspection.json"
+        }
+      ],
+      "runs": {},
+      "comparisonPath": null,
+      "exportManifestPath": null,
+      "inspectedArtifacts": [],
+      "limitations": [
+        "Natural Choose receipt fired a Playwright filechooser event; this confirms trigger only, not native sidebar appearance. No native claim was verified or exported."
+      ],
+      "repairs": []
+    }
+  ],
+  "submissionOrganization": {
+    "transcriptDirectory": "/home/cory/repos/Repro/.repro/fresh-agent/geometry-native-transcript",
+    "sourceInputSha256": {
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts": "0de3519c69e5949fb3e0f27b2bc1ba8d0ec46dd4ce5bbdda464a9db71bd608e8",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts": "ba7eac2533ab77f1af1dd260b29ce88a4cba6635766acb151a56be2512cb4e69",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json": "32fe11bb2587175ab07b42114d5e6b0f7d4f66816d779e829f178ac461fb324a",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json": "b877b4c88a8cb148f4bd613b71d066afddfb2a6bd46f54b66d3e676753ee1b16",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/tsconfig.json": "2a4e0f9abf47b2f54ab80c3964aa3cfdde83ac77f8647e0694654b6a66e787a0",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json": "af13c00b18d455ef64da487529e9fcb9ae43f66c500db401e8c3b92a4a2af948"
+    },
+    "historicalWorkingDirectory": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/geometry-native",
+    "note": "Generated logs, snapshots, inspection images, helper scripts, and prior evidence revisions moved without deletion. Commands describe historical invocations; relocated helper scripts are transcript artifacts and assume their original working directory."
+  },
+  "initialTaskConstraints": {
+    "role": "Fresh held-out evaluation agent, not implementation reviewer",
+    "tickets": [
+      "FA-05",
+      "FA-06"
+    ],
+    "publicGuidanceOnly": [
+      "/home/cory/repos/Repro/.repro/fresh-agent-public/ai-usage.md",
+      "/home/cory/repos/Repro/.repro/fresh-agent-public/design-brief.md",
+      "Installed public package exports/types and Repro CLI capabilities/describe/recipes/discovery-guide/init"
+    ],
+    "forbiddenReading": [
+      "fixture server implementation",
+      "existing specs/tests",
+      "other submissions",
+      "Repro source"
+    ],
+    "browserUrls": [
+      "http://127.0.0.1:3219/FA-05/before",
+      "http://127.0.0.1:3219/FA-05/after",
+      "http://127.0.0.1:3219/FA-06/before",
+      "http://127.0.0.1:3219/FA-06/after"
+    ],
+    "installedCli": "/tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js",
+    "evidenceRules": [
+      "Use actual app UI and Repro CLI; no alternative evidence capture pipeline.",
+      "Independently interpret ticket annotations and causes as guesses.",
+      "Use source-referenced discovery assessments.",
+      "Same executable scenario and claim across variants, controlled geometry, measured bounds, shared crops.",
+      "Deliberate labels, steps, checkpoints, outcomes; inspect PNGs/frames; strict export supported proof only.",
+      "Unsupported native surface requires accurate demonstrated limitation, no fabricated page proof.",
+      "Mask and audit synthetic data-private contact.",
+      "Retain attempts; do not edit implementation or guidance; do not git commit."
+    ],
+    "ocrEnvironment": {
+      "PATH": "/tmp/repro-ocr-runtime/root/usr/bin:$PATH",
+      "LD_LIBRARY_PATH": "/tmp/repro-ocr-runtime/root/usr/lib/x86_64-linux-gnu",
+      "TESSDATA_PREFIX": "/tmp/repro-ocr-runtime/root/usr/share/tesseract-ocr/5/tessdata"
+    },
+    "parentAssistance": [
+      "Parent requested concise expected statement and removal of callout covering label after first visual review.",
+      "Parent requested pause after uncertain retries until other media jobs ended.",
+      "Parent accepted remaining px suffix truncation and will independently reverify renderer tail."
+    ]
+  }
+}

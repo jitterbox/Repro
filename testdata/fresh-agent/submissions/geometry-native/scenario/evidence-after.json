@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "FA-05",
+  "title": "Invoice total alignment after account label change",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "Applying a long account label preserves total left-edge alignment with the invoice reference",
+  "expected": "Left edges align within 0.5 CSS px.",
+  "targets": [
+    {
+      "id": "total",
+      "description": "Invoice total"
+    },
+    {
+      "id": "reference",
+      "description": "Invoice reference edge"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open billing and confirm initial alignment",
+      "trigger": false
+    },
+    {
+      "id": "trigger",
+      "title": "Apply the long account label",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Measure total against reference edge",
+      "trigger": false
+    }
+  ],
+  "segments": [],
+  "checkpoints": [
+    {
+      "id": "ready",
+      "step": "prepare",
+      "title": "Initial aligned invoice",
+      "targets": [
+        "total",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "reference",
+          "label": "Reference edge"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    },
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Left edges after applying label",
+      "targets": [
+        "total",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "reference",
+          "label": "Reference edge"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    }
+  ],
+  "outputs": [
+    "png",
+    "mp4",
+    "review"
+  ],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 3500,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [
+      "[data-private]"
+    ],
+    "patterns": []
+  }
+}

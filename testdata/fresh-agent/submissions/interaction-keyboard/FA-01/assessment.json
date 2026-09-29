@@ -1,0 +1,24 @@
+{
+  "claim": "A normal pointer click approves the shipment.",
+  "expected": "A normal pointer click approves the shipment.",
+  "concerns": [
+    {
+      "kind": "interaction",
+      "rationale": "Enabled control is underneath a pointer-receiving Sync layer in observed DOM.",
+      "sourceRefs": [
+        "actual",
+        "expected",
+        "steps.2"
+      ]
+    }
+  ],
+  "triggerStep": 2,
+  "targets": [
+    {
+      "id": "target",
+      "description": "Approve shipment button",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": []
+}

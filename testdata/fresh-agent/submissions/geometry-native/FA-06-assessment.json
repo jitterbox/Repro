@@ -1,0 +1,26 @@
+{
+  "claim": "The operating-system file picker sidebar is fully visible",
+  "expected": "Native sidebar is not clipped",
+  "concerns": [
+    {
+      "kind": "native",
+      "rationale": "The reported surface is outside webpage capture",
+      "sourceRefs": [
+        "description",
+        "actual",
+        "steps.2"
+      ]
+    }
+  ],
+  "triggerStep": 2,
+  "targets": [
+    {
+      "id": "total",
+      "description": "Native picker sidebar",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": [
+    "Native capture backend may be unavailable"
+  ]
+}

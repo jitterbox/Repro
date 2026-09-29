@@ -1,0 +1,34 @@
+{
+  "claim": "Preparing a successful report never paints Download failed",
+  "expected": "No Download failed notice during preparation; final Report ready",
+  "concerns": [
+    {
+      "kind": "transient",
+      "rationale": "Actual #notice paints a failure notice immediately, remains visible at 170ms, then succeeds. Sparse screencast event-linked selection is committed near the initial paint.",
+      "sourceRefs": [
+        "description",
+        "actual",
+        "expected"
+      ]
+    }
+  ],
+  "triggerStep": 1,
+  "targets": [
+    {
+      "id": "notice",
+      "description": "Report notice",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": [
+    "Observed on local held-out browser UI; no source-level cause inferred"
+  ],
+  "transientFrame": {
+    "kind": "probe.pointer:path",
+    "match": {
+      "phase": "pointerdown"
+    },
+    "offsetMs": 30,
+    "maxOffsetMs": 60
+  }
+}

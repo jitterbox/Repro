@@ -1,0 +1,22 @@
+{
+  "mode": "compare",
+  "profile": "controlled",
+  "surfaceCapture": "page",
+  "timingSensitive": true,
+  "preserveRealTiming": true,
+  "showActions": false,
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "features": {
+    "steps": true,
+    "specCard": true,
+    "redaction": true
+  },
+  "redaction": {
+    "strict": true,
+    "masks": []
+  }
+}

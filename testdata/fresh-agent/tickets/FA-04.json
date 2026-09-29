@@ -1,0 +1,13 @@
+{
+  "id": "FA-04",
+  "title": "Successful report briefly announces failure",
+  "description": "Preparing a report briefly paints a red failure notice, then ends with Report ready. The final screenshot alone looks correct.",
+  "expected": "Preparing the report never displays Download failed.",
+  "actual": "Download failed is visible briefly after Prepare report, although the final download state succeeds.",
+  "steps": [
+    "Open report download.",
+    "Click Prepare report.",
+    "Observe the notice during preparation and then the final state."
+  ],
+  "tags": []
+}

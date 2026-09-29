@@ -312,6 +312,7 @@ export function discoverBug(input: unknown, assessmentInput?: unknown) {
       'Add context and diagnostic checkpoints where needed; optional scans and hit tests must not perturb the proof interval.',
       'Draft result highlights identify affected/reference controls, not an inferred cause. Move or remove them after inspecting actual pixels; keep no more than three per checkpoint.',
       'Inspect titles, numbered steps, natural trigger, expected/observed result, crop transforms and original timing; retain failed/inconclusive attempts.',
+      'Write step titles without numeric prefixes; the renderer supplies numbering. Keep the decisive expected condition and tolerance concise enough to remain visible. A first-target crop may omit related results: retain full context or request shared bounds that include every necessary control.',
     ],
   };
 }

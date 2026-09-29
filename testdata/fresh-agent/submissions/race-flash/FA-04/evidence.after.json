@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "FA-04",
+  "title": "Report preparation never announces failure",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "Preparing a successful report never paints Download failed",
+  "expected": "No Download failed notice during preparation; final Report ready",
+  "targets": [
+    {
+      "id": "notice",
+      "description": "Report notice"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open report download",
+      "trigger": false
+    },
+    {
+      "id": "trigger",
+      "title": "Prepare report through completion",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Verify intended result",
+      "trigger": false
+    }
+  ],
+  "segments": [
+    {
+      "id": "operation",
+      "title": "Trigger through completion",
+      "step": "trigger",
+      "required": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "during",
+      "step": "trigger",
+      "title": "Notice just after preparation starts",
+      "required": true,
+      "targets": [],
+      "highlights": [],
+      "observations": [
+        "screenshot"
+      ],
+      "timing": "transient",
+      "frame": {
+        "segment": "operation",
+        "event": {
+          "kind": "probe.pointer:path",
+          "match": {
+            "phase": "pointerdown"
+          },
+          "occurrence": 0
+        },
+        "offsetMs": 30,
+        "maxOffsetMs": 60
+      }
+    },
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Completed report and interval assertion",
+      "targets": [
+        "notice"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "notice",
+          "label": "Report notice"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    }
+  ],
+  "outputs": [
+    "png",
+    "mp4",
+    "review"
+  ],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 1800,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [
+      "[data-private]"
+    ],
+    "patterns": []
+  }
+}

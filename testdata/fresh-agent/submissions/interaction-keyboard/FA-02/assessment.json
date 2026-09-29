@@ -1,0 +1,24 @@
+{
+  "claim": "Escape closes the dialog and returns focus to Edit display name.",
+  "expected": "Escape closes the dialog and returns focus to Edit display name.",
+  "concerns": [
+    {
+      "kind": "keyboard",
+      "rationale": "Focus moves to Help after the Escape close event settles.",
+      "sourceRefs": [
+        "actual",
+        "expected",
+        "steps.3"
+      ]
+    }
+  ],
+  "triggerStep": 3,
+  "targets": [
+    {
+      "id": "target",
+      "description": "Edit display name opener",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": []
+}

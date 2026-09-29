@@ -85,6 +85,8 @@ jobs:
           node scripts/e2e/verify-review-matrix.mjs
       - name: Record annotation-only timing with captured-pixel verification
         run: node scripts/e2e/annotation-benchmark.mjs
+      - name: Replay accepted fresh-agent scenarios without an LLM
+        run: node scripts/e2e/fresh-agent/replay.mjs
       - name: Verified export reuse and missing OCR rejection
         run: node scripts/e2e/export-cache.mjs
       - name: Audited Jira and ADO delivery against loopback protocol fixtures
@@ -134,6 +136,7 @@ jobs:
           path: |
             .repro/ci
             .repro/annotation-benchmark
+            .repro/fresh-agent-replay
             .repro/review-matrix
             .repro/discovery
             .repro/delivery

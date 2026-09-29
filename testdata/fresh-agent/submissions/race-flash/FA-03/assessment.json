@@ -1,0 +1,31 @@
+{
+  "claim": "After oak and pine requests complete, result matches the latest pine query",
+  "expected": "Pine desk remains with pine in the field",
+  "concerns": [
+    {
+      "kind": "network",
+      "rationale": "Live UI has two HTTP 200 responses, later requested pine completes first; older oak overwrites it",
+      "sourceRefs": [
+        "description",
+        "actual",
+        "expected"
+      ]
+    }
+  ],
+  "triggerStep": 2,
+  "targets": [
+    {
+      "id": "query",
+      "description": "Latest query",
+      "role": "affected"
+    },
+    {
+      "id": "result",
+      "description": "Search result",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": [
+    "Observed on local held-out browser UI; no source-level cause inferred"
+  ]
+}

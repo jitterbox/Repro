@@ -64,7 +64,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
         'optional --evidence edited.json with checkpoint highlights: [{target, label}]',
       ],
       ['annotated video', 'annotated stills', 'captions'],
-      'Inspect titles, steps and outlines in actual output pixels.',
+      'Inspect titles, steps and outlines in actual output pixels. Step titles omit numeric prefixes because numbering is automatic. Preserve native focus rings and measured edges; suppress highlights that hide the actual defect. Keep the decisive expected condition visible and inspect full context when a target crop omits a related result.',
     ],
     [
       'export',

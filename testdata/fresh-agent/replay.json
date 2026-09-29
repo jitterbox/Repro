@@ -1,0 +1,53 @@
+{
+  "cases": [
+    {
+      "id": "FA-01",
+      "spec": "testdata/fresh-agent/submissions/interaction-keyboard/FA-01/scenario.spec.ts",
+      "config": "testdata/fresh-agent/submissions/interaction-keyboard/FA-01/repro.config.json",
+      "playwrightConfig": "testdata/fresh-agent/submissions/interaction-keyboard/FA-01/playwright.config.ts",
+      "tsconfig": "testdata/fresh-agent/submissions/interaction-keyboard/tsconfig.json",
+      "evidenceBefore": "testdata/fresh-agent/submissions/interaction-keyboard/FA-01/presentation-before.json",
+      "evidenceAfter": "testdata/fresh-agent/submissions/interaction-keyboard/FA-01/presentation-after.json"
+    },
+    {
+      "id": "FA-02",
+      "spec": "testdata/fresh-agent/submissions/interaction-keyboard/FA-02/scenario.spec.ts",
+      "config": "testdata/fresh-agent/submissions/interaction-keyboard/FA-02/repro.config.json",
+      "playwrightConfig": "testdata/fresh-agent/submissions/interaction-keyboard/FA-02/playwright.config.ts",
+      "tsconfig": "testdata/fresh-agent/submissions/interaction-keyboard/tsconfig.json",
+      "evidenceBefore": "testdata/fresh-agent/submissions/interaction-keyboard/FA-02/presentation-before.json",
+      "evidenceAfter": "testdata/fresh-agent/submissions/interaction-keyboard/FA-02/presentation-after.json"
+    },
+    {
+      "id": "FA-03",
+      "spec": "testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts",
+      "config": "testdata/fresh-agent/submissions/race-flash/FA-03/repro.config.json",
+      "playwrightConfig": "testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts",
+      "tsconfig": "testdata/fresh-agent/submissions/race-flash/FA-03/tsconfig.json",
+      "evidenceBefore": "testdata/fresh-agent/submissions/race-flash/FA-03/evidence.before.json",
+      "evidenceAfter": "testdata/fresh-agent/submissions/race-flash/FA-03/evidence.after.json"
+    },
+    {
+      "id": "FA-04",
+      "spec": "testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts",
+      "config": "testdata/fresh-agent/submissions/race-flash/FA-04/repro.config.json",
+      "playwrightConfig": "testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts",
+      "tsconfig": "testdata/fresh-agent/submissions/race-flash/FA-04/tsconfig.json",
+      "evidenceBefore": "testdata/fresh-agent/submissions/race-flash/FA-04/evidence.before.json",
+      "evidenceAfter": "testdata/fresh-agent/submissions/race-flash/FA-04/evidence.after.json"
+    },
+    {
+      "id": "FA-05",
+      "spec": "testdata/fresh-agent/submissions/geometry-native/scenario/scenario.spec.ts",
+      "config": "testdata/fresh-agent/submissions/geometry-native/scenario/repro.config.json",
+      "playwrightConfig": "testdata/fresh-agent/submissions/geometry-native/scenario/playwright.config.ts",
+      "tsconfig": "testdata/fresh-agent/submissions/geometry-native/scenario/tsconfig.json",
+      "evidenceBefore": "testdata/fresh-agent/submissions/geometry-native/scenario/evidence.json",
+      "evidenceAfter": "testdata/fresh-agent/submissions/geometry-native/scenario/evidence-after.json"
+    }
+  ],
+  "native": {
+    "ticket": "testdata/fresh-agent/tickets/FA-06.json",
+    "assessment": "testdata/fresh-agent/submissions/geometry-native/FA-06-assessment.json"
+  }
+}

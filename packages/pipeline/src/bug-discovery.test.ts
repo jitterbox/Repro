@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import {
@@ -61,7 +62,7 @@ describe('bug discovery', () => {
     }
   });
   it('covers the 19 fixture ticket reports without importing their fabricated geometry or instructions', () => {
-    const directory = resolve('testdata/bugs');
+    const directory = fileURLToPath(new URL('../../../testdata/bugs/', import.meta.url));
     const files = readdirSync(directory).filter((f) =>
       /^BUG-\d+\.json$/.test(f),
     );

@@ -35,18 +35,8 @@ jobs:
         continue-on-error: true
         run: pnpm --filter @repro/agent-e2e test
 
-      - name: Agent E2E live (optional)
-        continue-on-error: true
-        env:
-          REPRO_AGENT_E2E: ${{ secrets.REPRO_AGENT_E2E }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        run: |
-          if [ "${REPRO_AGENT_E2E:-}" = "1" ] && [ -n "${ANTHROPIC_API_KEY:-}${CURSOR_API_KEY:-}" ]; then
-            pnpm --filter @repro/agent-e2e test
-          else
-            echo "Skipping live agent E2E (set REPRO_AGENT_E2E=1 and an API key secret)."
-          fi
+      - name: Live evaluation availability
+        run: echo "Provider adapters are unavailable. Mock tests above are not fresh-agent evaluation. See docs/fresh-agent-evaluation.md for the external-agent protocol."
 
       - name: Judge eval (optional)
         continue-on-error: true

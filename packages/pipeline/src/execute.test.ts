@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it, vi } from 'vitest';
 import type * as Core from '@repro/core';
 import type { RunManifest } from '@repro/contracts';
@@ -57,7 +58,7 @@ it('isolates concurrent invocations and retains only their own incomplete attemp
   );
   try {
     const common = {
-      evidence: resolve('packages/playwright/examples/after.json'),
+      evidence: fileURLToPath(new URL('../../../packages/playwright/examples/after.json', import.meta.url)),
       outDir: directory,
     };
     const [complete, broken] = await Promise.all([

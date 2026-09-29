@@ -119,6 +119,19 @@ export async function runScenario(options: RunOptions) {
 export async function initScenario(directory = process.cwd()) {
   await mkdir(directory, { recursive: true });
   const files: Record<string, string> = {
+    'tsconfig.json':
+      JSON.stringify(
+        {
+          compilerOptions: {
+            target: 'ES2022',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            strict: true,
+          },
+        },
+        null,
+        2,
+      ) + '\n',
     'evidence.json': JSON.stringify(recipes[0], null, 2) + '\n',
     'repro.config.json':
       JSON.stringify(

@@ -1,0 +1,947 @@
+{
+  "agent": "interaction-keyboard",
+  "guidanceSources": [
+    "/home/cory/repos/Repro/.repro/fresh-agent-public/ai-usage.md",
+    "/home/cory/repos/Repro/.repro/fresh-agent-public/design-brief.md",
+    "Installed @repro/playwright dist/index.d.ts",
+    "Public CLI init, discovery-guide, discover, describe run/init/frame, capabilities, recipes, doctor"
+  ],
+  "cases": [
+    {
+      "id": "FA-01",
+      "status": "blocked-product-defect-video-tail; not acceptable final evidence",
+      "interpretation": "Enabled approval button receives no pointer event before; sampled center (316.546875,279.5) dispatches to div.shield. After dispatches to #approve and status becomes Shipment approved. Disabled-attribute suspicion rejected by enabled assertion.",
+      "selectedCapabilities": [
+        {
+          "id": "discover",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "render",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "export",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "doctor",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "capabilities",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "describe",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "recipes",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "validate-evidence",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "init",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "run",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "frame",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "review",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "validate-config",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "check",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "target",
+          "reason": "Which natural action fails, which control should receive it, and what state should follow?"
+        },
+        {
+          "id": "step",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "checkpoint",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "outcome",
+          "reason": "Which natural action fails, which control should receive it, and what state should follow?"
+        },
+        {
+          "id": "hit-test",
+          "reason": "Which natural action fails, which control should receive it, and what state should follow?"
+        },
+        {
+          "id": "compare",
+          "reason": "Verify same scenario and measured matching checkpoints across controlled before/after builds."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "migrate-run",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "record",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "capture",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "annotate",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "render-compare",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "quality",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "package",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "file",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "segment",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "visibility",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "network",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "accessibility",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "ready",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "experiment-native",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "status",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-01/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-before.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-after.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-01/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-before.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-after.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-01/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-before.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-after.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-01/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-before.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-01/evidence-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-01/scenario.spec.ts --evidence FA-01/evidence-after.json --config FA-01/repro.config.json --playwright-config FA-01/playwright.config.ts --url http://127.0.0.1:3219/FA-01/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-2dFwDv/FA-01-5e1493a7-fe44-4be8-9671-1965e49f0cdf",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-2dFwDv/FA-01-5e1493a7-fe44-4be8-9671-1965e49f0cdf --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-2dFwDv/FA-01-5e1493a7-fe44-4be8-9671-1965e49f0cdf --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-2dFwDv/FA-01-5e1493a7-fe44-4be8-9671-1965e49f0cdf --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-OQBDYL/FA-01-f16ec996-a4d3-4d64-b192-1fae51103849",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-OQBDYL/FA-01-f16ec996-a4d3-4d64-b192-1fae51103849 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-OQBDYL/FA-01-f16ec996-a4d3-4d64-b192-1fae51103849 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-OQBDYL/FA-01-f16ec996-a4d3-4d64-b192-1fae51103849 --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-2dFwDv/FA-01-5e1493a7-fe44-4be8-9671-1965e49f0cdf /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-OQBDYL/FA-01-f16ec996-a4d3-4d64-b192-1fae51103849",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/compare.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/compare.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --evidence FA-01/presentation-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-revised-before.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --evidence FA-01/presentation-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-revised-after.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --time-ms 2347.128750984375",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --time-ms 878.495903046875",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --baseline /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/export",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/export.json"
+        },
+        {
+          "command": "node inspect-rendered.cjs > inspected-proof-final.jsonl",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspected-proof-final.jsonl"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --time-ms 2347.128750984375",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --time-ms 878.495903046875",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98 --baseline /home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3 --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-01/export-revised",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/export-revised.json"
+        }
+      ],
+      "runs": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98"
+      },
+      "replay": {
+        "spec": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/scenario.spec.ts",
+        "config": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/repro.config.json",
+        "playwrightConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/playwright.config.ts",
+        "tsconfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/tsconfig.json",
+        "evidenceBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/evidence-before.json",
+        "evidenceAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/evidence-after.json",
+        "presentationBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/presentation-before.json",
+        "presentationAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/presentation-after.json"
+      },
+      "comparisonPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/comparison.json",
+      "exportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/export/evidence-manifest.json",
+      "inspectedArtifacts": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/anchors/after-result-f5764264-6820-46e3-82d6-cdfa632bafc1.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/inspection/result-target-crop.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/inspection/frame-24.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/inspection/frame-68.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/presentations/230554737075be1de39661b7f11dace7e6429477d4095b798c3e9ccc9a895cfc/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/before/invocation-P8eXwT/FA-01-6a09639f-a9cd-43bd-8bbd-57716dfb3bb3/presentations/05a0c2e6f200036e18f00b41559535d322e7a088de890ed3bede2d6b1376fc0a/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/anchors/after-result-becd021e-879b-4f7f-a2e8-8fec25095423.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/inspection/result-target-crop.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/inspection/frame-25.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/inspection/frame-24.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/presentations/d008cb249c7372d93a46cc84d71a6afa6c39313fc74b6ba37267e62b1a392c35/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/after/invocation-CBYdxK/FA-01-ae5658f6-8c62-4fbf-a01b-bf6c57701c98/presentations/e680ab24d8c5cd4583ba28122119f258b50827d7359ceb03d33714721393e731/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-proof-before.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-proof-after.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-tail-after.png"
+      ],
+      "primaryEvidence": "Full context result.png; target-only crop is secondary and cannot prove status/focus recipient by itself.",
+      "expected": "A normal pointer click approves the shipment.",
+      "limitations": [
+        "Raw local recording frames are unredacted inspection artifacts; share only strict audited export.",
+        "Checkpoint acquisition uncertainty and frame selection offsets retained in CLI frame JSON.",
+        "Expected-text footer can truncate; complete expected claim is in evidence.json and this report.",
+        "No fixture implementation, existing tests or other submissions read; no git commit performed.",
+        "Actual revised MP4s inspected in Chromium at precise result-hold midpoints; inspection screenshots saved separately, not substituted for CLI proof.",
+        "Initial and revised strict export audits passed privacy gates, but this does not waive video-tail defect. Neither FA-01 export accepted for final delivery."
+      ],
+      "repairs": [
+        {
+          "issue": "Sandbox blocked Chromium launch and nested init process",
+          "repair": "Used authorized escalated execution; public CLI init partially created files despite EPERM, so retained generated files instead of overwriting.",
+          "assistance": "environment permission"
+        },
+        {
+          "issue": "Playwright inherited repository tsconfig and could not resolve packages/core",
+          "repair": "Added isolated local tsconfig without repository references."
+        },
+        {
+          "issue": "Hit-test required for reference status target",
+          "repair": "Created dedicated hit checkpoint with only intended button; recaptured both variants."
+        },
+        {
+          "issue": "Assumed success text Approved did not match observed Shipment approved",
+          "repair": "Corrected to actual observed success text and recaptured both variants. Both final outcomes match claim.",
+          "assistance": "Evaluator flagged After failed while my PNG inspection independently exposed wording; counted as assisted repair."
+        },
+        {
+          "issue": "Manual step numbering duplicated renderer numbering",
+          "repair": "Presentation-only revisions remove manual prefixes.",
+          "assistance": "Evaluator requested editorial repair after my inspection report"
+        },
+        {
+          "issue": "Renderer restores stale raw frame after result hold with verified caption",
+          "repair": "Parent taking product repair; agent stopped further export attempts upon request. Already-running revised export had finished when stop was requested.",
+          "assistance": "Evaluator-owned follow-up; not resolved by fresh agent."
+        }
+      ],
+      "blockingDefect": {
+        "summary": "After proof video reverts to pre-action Awaiting approval following result hold while continuing Fix verified caption.",
+        "correctResultHoldMs": [
+          5877.502476046875,
+          8377.502476046875
+        ],
+        "observedContradictionMs": 8500,
+        "productRepairOwner": "parent evaluator",
+        "acceptance": "blocked pending renderer/timeline repair",
+        "revisedExportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-01/export-revised/evidence-manifest.json"
+      }
+    },
+    {
+      "id": "FA-02",
+      "status": "provisional-evidence-captured; independent evaluation pending",
+      "interpretation": "Escape dismisses the dialog; after close settles Before focuses Help, After restores opener. Immediate focus read during exploration misleadingly showed opener in both; delayed observation and dialog-closed assertion resolved this.",
+      "selectedCapabilities": [
+        {
+          "id": "discover",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "render",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "export",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "doctor",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "capabilities",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "describe",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "recipes",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "validate-evidence",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "init",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "run",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "frame",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "review",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "validate-config",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "check",
+          "reason": "What is the expected focus order and which key sequence exposes the failure?"
+        },
+        {
+          "id": "target",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "step",
+          "reason": "What is the expected focus order and which key sequence exposes the failure?"
+        },
+        {
+          "id": "checkpoint",
+          "reason": "Shared claim \u2192 capture \u2192 inspect \u2192 verify \u2192 export workflow."
+        },
+        {
+          "id": "outcome",
+          "reason": "What is the expected focus order and which key sequence exposes the failure?"
+        },
+        {
+          "id": "compare",
+          "reason": "Verify same scenario and measured matching checkpoints across controlled before/after builds."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "migrate-run",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "record",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "capture",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "annotate",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "render-compare",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "quality",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "package",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "file",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "segment",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "hit-test",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "visibility",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "network",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "accessibility",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "ready",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "experiment-native",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "status",
+          "reason": "No selected concern requires this capability. It remains available for an explicit follow-up question."
+        },
+        {
+          "id": "accessibility (Axe)",
+          "reason": "Focus restoration is a behavioral assertion; static Axe diagnostics are not proof of the Escape recipient."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-02/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-02/evidence-before.json",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-02/scenario.spec.ts --evidence FA-02/evidence-before.json --config FA-02/repro.config.json --playwright-config FA-02/playwright.config.ts --url http://127.0.0.1:3219/FA-02/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-02/evidence-after.json",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-02/scenario.spec.ts --evidence FA-02/evidence-after.json --config FA-02/repro.config.json --playwright-config FA-02/playwright.config.ts --url http://127.0.0.1:3219/FA-02/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after",
+          "exitCode": 1,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-config --config FA-02/repro.config.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-config.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-02/evidence-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-02/scenario.spec.ts --evidence FA-02/evidence-before.json --config FA-02/repro.config.json --playwright-config FA-02/playwright.config.ts --url http://127.0.0.1:3219/FA-02/before --build-id before --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js validate-evidence FA-02/evidence-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run FA-02/scenario.spec.ts --evidence FA-02/evidence-after.json --config FA-02/repro.config.json --playwright-config FA-02/playwright.config.ts --url http://127.0.0.1:3219/FA-02/after --build-id after --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-before.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-after.txt"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --checkpoint ready",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-ready.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --checkpoint result",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-result.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --time-ms 900",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-video.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/compare.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --evidence FA-02/presentation-before.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-revised-before.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js render /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --evidence FA-02/presentation-after.json",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-revised-after.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --time-ms 2385.35977253125",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js frame /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --time-ms 817.337603671875",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-critical.json"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8 --baseline /home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933 --out-dir /home/cory/repos/Repro/.repro/fresh-agent/FA-02/export",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/export.json"
+        },
+        {
+          "command": "node inspect-rendered.cjs > inspected-proof-final.jsonl",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspected-proof-final.jsonl"
+        }
+      ],
+      "runs": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8"
+      },
+      "replay": {
+        "spec": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/scenario.spec.ts",
+        "config": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/repro.config.json",
+        "playwrightConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/playwright.config.ts",
+        "tsconfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/tsconfig.json",
+        "evidenceBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/evidence-before.json",
+        "evidenceAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/evidence-after.json",
+        "presentationBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/presentation-before.json",
+        "presentationAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/presentation-after.json"
+      },
+      "comparisonPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/comparison.json",
+      "exportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/evidence-manifest.json",
+      "inspectedArtifacts": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/anchors/after-result-2df8f596-5d76-40b9-b8ed-a16555ac17e5.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/inspection/result-target-crop.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/inspection/frame-24.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/inspection/frame-69.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/presentations/403f4c1db0d6f65b99892e2e08a817a595174d0c6c97b8bbe9834b163a90a757/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/before/invocation-4SmwLS/FA-02-3ecaa645-4ad1-4061-8ccf-e3451cbc6933/presentations/381941fc6a33ad34051f8a5a9c4081083a8eecda22900cb356570cfefe291215/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/anchors/after-result-edff89be-a10d-4486-9f90-cfd0a9a08d4f.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/inspection/result-target-crop.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/inspection/frame-24.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/inspection/frame-21.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/presentations/74000fa11ea138d99639c605f57ed0ff886ef92535b81fb3ae4051dc0deefc7e/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/after/invocation-BB5nAm/FA-02-f57eb3f6-39a1-4cdb-b980-5c97687fccc8/presentations/563245683dbc75ce9033d0038a18fc810e47d47c8dadfaad4adde22859ccb82c/result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/inspected-proof-before.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/inspected-proof-after.png"
+      ],
+      "primaryEvidence": "Full context result.png; target-only crop is secondary and cannot prove status/focus recipient by itself.",
+      "expected": "Escape closes the dialog and returns focus to Edit display name.",
+      "limitations": [
+        "Raw local recording frames are unredacted inspection artifacts; share only strict audited export.",
+        "Checkpoint acquisition uncertainty and frame selection offsets retained in CLI frame JSON.",
+        "Expected-text footer can truncate; complete expected claim is in evidence.json and this report.",
+        "No fixture implementation, existing tests or other submissions read; no git commit performed.",
+        "Actual revised MP4s inspected in Chromium at precise result-hold midpoints; inspection screenshots saved separately, not substituted for CLI proof.",
+        "Nearest raw frame to rapid After result timestamp still shows dialog; authoritative PNG and rendered checkpoint hold show opener focus."
+      ],
+      "repairs": [
+        {
+          "issue": "Sandbox blocked Chromium launch and nested init process",
+          "repair": "Used authorized escalated execution; public CLI init partially created files despite EPERM, so retained generated files instead of overwriting.",
+          "assistance": "environment permission"
+        },
+        {
+          "issue": "Playwright inherited repository tsconfig and could not resolve packages/core",
+          "repair": "Added isolated local tsconfig without repository references."
+        },
+        {
+          "issue": "Immediate focus observation missed asynchronous close handler",
+          "repair": "Explored after close settled, then ordinary dialog-hidden assertion before outcome."
+        },
+        {
+          "issue": "Manual step numbering duplicated renderer numbering",
+          "repair": "Presentation-only revisions remove manual prefixes.",
+          "assistance": "Evaluator requested editorial repair after my inspection report"
+        },
+        {
+          "issue": "Result highlights partly obscured native focus rings",
+          "repair": "Result highlights=[] presentation revision; purposeful opener/Help highlights retained in context checkpoint.",
+          "assistance": "Evaluator requested editorial repair"
+        }
+      ],
+      "auditPaths": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/1aa07bfbae96a904-dialog.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/ceb4bb0b13a7704c-dialog.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/3eeebe165329989f-result.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/311bdcd48cdcc5f3-result.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/11a21eea36b7e767-ready.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/22e889718dca08cb-ready.png.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/85539b7d43d06a84-proof.mp4.audit.json",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-02/export/assets/5749894de03e6c5f-proof.mp4.audit.json"
+      ]
+    }
+  ],
+  "transcriptRoot": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript",
+  "historicalCommandWorkingDirectory": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard",
+  "transcriptRelocation": {
+    "note": "Historical command strings preserve original commands; resultPath and inspectedArtifact references relocated. Executable/config bytes unchanged.",
+    "mapping": {
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/exploration-delayed.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/exploration-delayed.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/execute-repair.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/execute-repair.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/exploration.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/exploration.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/execute.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/execute.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/finish-command-log-first.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/finish-command-log-first.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspect-rendered.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspect-rendered.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/recipes.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/recipes.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/command-log-first.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/command-log-first.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/scenario-third.spec.saved": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/scenario-third.spec.saved",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-after-video.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-video.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-after-third.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after-third.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-after-critical.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-critical.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/render-revised-before.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-revised-before.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/validate-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-before-critical.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-critical.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/compare.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/compare.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/export-initial.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/export-initial.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/render-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-after-ready.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-ready.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/render-revised-after.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-revised-after.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-before-result.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-result.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/validate-config.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-config.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/evidence.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/evidence.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/inspected-proof-before.png": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-proof-before.png",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-before-first.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before-first.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-after-result.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-after-result.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-before-ready.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-ready.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/inspected-tail-after.png": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-tail-after.png",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/export.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/export.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/compare-first.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/compare-first.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/export-revised.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/export-revised.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/frame-before-video.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/frame-before-video.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/inspected-proof-after.png": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/inspected-proof-after.png",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-after-first.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after-first.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-before-second.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before-second.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/discovery.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/discovery.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-before-third.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-before-third.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/run-after-second.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/run-after-second.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/validate-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/validate-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-01/render-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-01/render-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/finish.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/finish.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspect-rendered-first.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspect-rendered-first.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/export-revised-command-log.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/export-revised-command-log.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/describe-frame.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/describe-frame.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/doctor.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/doctor.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/command-log-second.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/command-log-second.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/revise.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/revise.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/command-log.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/command-log.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/export-final.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/export-final.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/revision-command-log.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/revision-command-log.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/render-final.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/render-final.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/command-log-third.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/command-log-third.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/explore.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/explore.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/export-revised.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/export-revised.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/explore-delayed.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/explore-delayed.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/report.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/report.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspect-tail.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspect-tail.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/finish-command-log.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/finish-command-log.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/capabilities.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/capabilities.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/discovery-guide.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/discovery-guide.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspected-proof.jsonl": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspected-proof.jsonl",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-after-video.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-video.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-after-critical.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-critical.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/render-revised-before.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-revised-before.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/validate-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-before-critical.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-critical.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/compare.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/compare.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/render-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-after-ready.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-ready.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/render-revised-after.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-revised-after.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-before-result.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-result.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/validate-config.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-config.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/evidence.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/evidence.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/inspected-proof-before.png": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/inspected-proof-before.png",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/run-before-first.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-before-first.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-after-result.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-after-result.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-before-ready.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-ready.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/export.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/export.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/run-after.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-after.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/run-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/frame-before-video.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/frame-before-video.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/inspected-proof-after.png": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/inspected-proof-after.png",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/run-after-first.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/run-after-first.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/discovery.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/discovery.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/validate-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/validate-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/FA-02/render-before.txt": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/FA-02/render-before.txt",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/export-command-log.json": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/export-command-log.json",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/prepare.cjs": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/prepare.cjs",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspected-proof-final.jsonl": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspected-proof-final.jsonl",
+      "/home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard/inspected-tail.jsonl": "/home/cory/repos/Repro/.repro/fresh-agent/interaction-keyboard-transcript/inspected-tail.jsonl"
+    }
+  },
+  "initialEvaluationPrompt": "You are a fresh evaluation agent, not an implementation reviewer. Complete held-out tickets FA-01 and FA-02 using only public Repro guidance and running web UI. Your writable submission directory is /home/cory/repos/Repro/testdata/fresh-agent/submissions/interaction-keyboard. Tickets are /home/cory/repos/Repro/testdata/fresh-agent/tickets/FA-01.json and FA-02.json. App URLs http://127.0.0.1:3219/FA-01/before and /after (same pattern FA-02). DO NOT read fixture server implementation, existing specs/tests, other agents' submissions, or Repro source. Allowed: /home/cory/repos/Repro/.repro/fresh-agent-public/ai-usage.md and design-brief.md; installed package public exports/types; CLI capabilities/describe/recipes/discovery-guide/init. Installed CLI: /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js (invoke node). Your node_modules already points to installed toolchain. Explore the actual app DOM with Playwright or browser; no alternate evidence capture pipeline. Independently interpret tickets (suspected causes may be wrong), run discover with source-referenced assessments, write committed executable specs/config/evidence, and capture BEFORE and AFTER using same scenario/source/claim and public CLI. Include purposeful measured highlights, numbered meaningful steps, decisive outcome assertions, actual diagnostic observations. Inspect PNGs and critical video frames; compare and strict-export actual proof. Keep failed attempts. Privacy: fixture includes synthetic data-private contact; mask it and audit exports. OCR runtime: PATH=/tmp/repro-ocr-runtime/root/usr/bin:$PATH LD_LIBRARY_PATH=/tmp/repro-ocr-runtime/root/usr/lib/x86_64-linux-gnu TESSDATA_PREFIX=/tmp/repro-ocr-runtime/root/usr/share/tesseract-ocr/5/tessdata. Use unique .repro/fresh-agent/<id> output dirs. Save report.json in your submission with per-ticket interpretation, selected AND rejected capabilities/reasons, docs consulted, command history/results, difficulties/repairs without hiding first attempts, run paths, comparison/export paths, inspected artifacts, and limits. Do not modify product guidance or implementation; send observed gaps to parent. Do not inspect other case source or solutions. Real fresh-agent evaluation, not mock. Do not git commit. Work independently; do not claim overall pass yourself, parent judges evidence.",
+  "protocolLimitations": [
+    "Agent received fresh task without implementation review context; only public staged docs, published installed type declarations, CLI help/generated outputs, assigned tickets, and running app DOM inspected.",
+    "Synthetic contact existed in raw local capture and inspection frames; only strict audited assets designated export.",
+    "Parent gave explicit feedback on failing After assertion and later editorial improvements; these are assisted repairs, not first-pass success.",
+    "Parent supplied all fixture URLs, installed CLI path, output scope, and OCR runtime location.",
+    "Direct Playwright script was used for DOM exploration only. Repro CLI owns all application evidence captures, rendering, comparisons and exports. A separate browser inspected already-rendered MP4 files and retained inspection screenshots.",
+    "Initial documentation command output was truncated; relevant committed-scenario/API sections were subsequently read explicitly.",
+    "Parent is independently repairing discovered video-tail product defect; fresh-agent report does not claim overall acceptance."
+  ]
+}

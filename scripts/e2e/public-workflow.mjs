@@ -5,6 +5,7 @@ import { enforceOcrAudit } from '../../packages/render/dist/index.js';
 import { verifyIdentityProof } from './identity-proof.mjs';
 import { verifyDiagnosticReview } from './diagnostic-review.mjs';
 import { verifyPortableViewer } from './portable-viewer.mjs';
+import { verifyTerminalCheckpoint } from './terminal-checkpoint.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -340,6 +341,11 @@ assert.equal(editedRepeat.cacheHit, true);
 
 const presentationDurations = [];
 for (const captured of [before, after]) {
+  await verifyTerminalCheckpoint(
+    captured.directory,
+    join(root, `terminal-${captured === before ? 'before' : 'after'}`),
+  );
+
   const manifest = JSON.parse(
     await readFile(join(captured.directory, 'run.json'), 'utf8'),
   );

@@ -1,0 +1,14 @@
+{
+  "id": "FA-05",
+  "title": "Long account label nudges the total",
+  "description": "Applying a long account label moves the total panel away from the invoice reference edge. A screenshot annotation in the report guesses 20 pixels; this has not been measured.",
+  "expected": "The total panel remains horizontally aligned with the reference edge after changing the label.",
+  "actual": "The total panel shifts right after applying a long label.",
+  "steps": [
+    "Open billing summary.",
+    "Replace Account label with Acme international research and development division.",
+    "Click Apply label.",
+    "Compare the left edges of Invoice reference edge and Invoice total."
+  ],
+  "tags": []
+}

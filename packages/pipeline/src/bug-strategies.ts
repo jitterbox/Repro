@@ -42,7 +42,7 @@ export const bugStrategies: readonly Strategy[] = [
     capture:
       'Capture affected and reference bounds at matching semantic checkpoints; use the same viewport and controlled comparison pass.',
     focus:
-      'Affected element plus reference edge. Preserve context and shared crop bounds/scale, with 24 CSS-pixel padding.',
+      'Affected element plus reference edge. Preserve context and shared crop bounds/scale, with 24 CSS-pixel padding. Keep the actual edges visible; remove diagnostic rings when their stroke hides the displacement being measured.',
     verify:
       'Compute deltas from browser observations. Use ROI/difference/edge views for small changes; retain unmatched or uncertain alignment.',
     avoid:
@@ -77,7 +77,7 @@ export const bugStrategies: readonly Strategy[] = [
     focus:
       'The changing content and trigger; select onset, peak failure and recovery when each changes the explanation.',
     verify:
-      'Inspect original-timing playback and event-linked pixels. Report failed, successful and inconclusive attempts with their denominator.',
+      'Inspect original-timing playback and event-linked pixels. Screencast frames are change-driven: a requested offset may have no nearby frame even during a visible stationary state. Inspect actual timestamps before revising the committed selection; retain rejected attempts and never widen tolerance merely to pass. Report failed, successful and inconclusive attempts with their denominator.',
     avoid:
       'No stability wait, fixed clock, reduced motion, network stubbing or screenshot before the trigger when it would disturb the race. Slow motion and reading holds belong to presentation.',
   },
@@ -137,8 +137,9 @@ export const bugStrategies: readonly Strategy[] = [
     question:
       'What is the expected focus order and which key sequence exposes the failure?',
     capture:
-      'Use real keyboard actions, assert focused elements at meaningful transitions, and capture the decisive focus state.',
-    focus: 'Current focus, skipped control and meaningful numbered keys/steps.',
+      'Use real keyboard actions, observe completion of focus-changing events such as dialog close, assert focused elements at meaningful transitions, and capture the decisive focus state. An immediate activeElement sample can precede a queued focus change.',
+    focus:
+      'Current focus, skipped control and meaningful numbered keys/steps. Preserve native focus rings: use highlights: [] on a focus checkpoint when diagnostic outlines would hide or mimic the focus indicator.',
     verify:
       'Recheck the intended focus order and resulting action after the fix; combine with a scan only when useful.',
     avoid:

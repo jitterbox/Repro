@@ -1,0 +1,13 @@
+{
+  "id": "FA-02",
+  "title": "Escape loses the settings opener",
+  "description": "After dismissing the display-name dialog with Escape, keyboard navigation resumes at the wrong place.",
+  "expected": "Escape closes the dialog and focus returns to Edit display name.",
+  "actual": "Focus lands on Help instead.",
+  "steps": [
+    "Open workspace settings.",
+    "Activate Edit display name.",
+    "Press Escape and inspect focus."
+  ],
+  "tags": []
+}

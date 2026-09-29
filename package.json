@@ -35,6 +35,7 @@
     "test:delivery": "node scripts/e2e/delivery.mjs",
     "release:pack": "node scripts/release.mjs",
     "test:discovery": "node scripts/e2e/discovery.mjs",
+    "test:fresh-agent-replay": "node scripts/e2e/fresh-agent/replay.mjs",
     "test:strategy-matrix": "node scripts/e2e/strategy-matrix.mjs",
     "review:matrix": "node scripts/e2e/review-matrix-server.mjs",
     "test:overlay-matrix": "node scripts/e2e/overlay-matrix.mjs",

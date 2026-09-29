@@ -1,0 +1,19 @@
+{
+  "mode": "compare",
+  "surfaceCapture": "os",
+  "profile": "controlled",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "features": {
+    "steps": true,
+    "redaction": true,
+    "specCard": true
+  },
+  "redaction": {
+    "masks": [],
+    "strict": true
+  }
+}

@@ -224,7 +224,14 @@ async function renderEvidenceLocked(
         width: config.viewport.width,
         height: config.viewport.height,
         startMs: hold.outStartMs,
-        endMs: hold.outStartMs + hold.outDurationMs,
+        // A terminal outcome is presented from its measured checkpoint, not an
+        // older last screencast frame. Include the closing gap and outcome bed.
+        endMs:
+          hasOutcome &&
+          definition?.step === run.steps.at(-1)?.id &&
+          definition?.timing !== 'transient'
+            ? outputDuration
+            : hold.outStartMs + hold.outDurationMs,
         checkpoint: cp.checkpoint,
         observation: cp.id,
       });

@@ -1,0 +1,13 @@
+{
+  "id": "FA-01",
+  "title": "Approval looks enabled but does nothing",
+  "description": "The shipment approval button seems disabled even though it is styled as enabled. A colleague suspects a disabled attribute.",
+  "expected": "A normal pointer click approves the shipment.",
+  "actual": "Clicking leaves Awaiting approval visible.",
+  "steps": [
+    "Open the shipment approval page.",
+    "Click Approve shipment once.",
+    "Check the shipment status."
+  ],
+  "tags": []
+}

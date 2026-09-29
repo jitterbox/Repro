@@ -80,6 +80,12 @@ seven comparison layouts; every legacy row links its decoded review frames.
 Role OCR normalizes the specific T/I/L glyph ambiguity in AFTER and requires
 Before and After in their respective caption regions; absent roles still fail.
 
+The fresh-agent evaluation adds `FA-01`–`FA-06`: five unfamiliar browser claims
+and one native-surface rejection. These rows link independently verified exports
+and original agent submissions/repair histories. They are separate from the
+22-case feature matrix. See [the evaluation protocol and findings](fresh-agent-evaluation.md)
+for reading boundaries, assisted repairs and the no-LLM regression replay.
+
 ## Output-quality regression checks
 
 Required checkpoint labels are measured with the same installed-font function in

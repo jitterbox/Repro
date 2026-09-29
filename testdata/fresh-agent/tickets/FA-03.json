@@ -1,0 +1,14 @@
+{
+  "id": "FA-03",
+  "title": "Fast second search ends with an older answer",
+  "description": "Searching for oak, then immediately searching for pine, briefly shows pine but eventually shows oak. Both requests appear successful; the reporter suspects a server error.",
+  "expected": "Once both searches finish, the field and result both correspond to pine.",
+  "actual": "Oak desk replaces Pine desk despite pine remaining in the field.",
+  "steps": [
+    "Open inventory search.",
+    "Submit oak.",
+    "Immediately submit pine before the earlier request finishes.",
+    "Wait for both requests to finish and inspect the result."
+  ],
+  "tags": []
+}

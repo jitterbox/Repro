@@ -13,8 +13,17 @@ const release = await packRelease(join(root, 'release'));
 const project = join(root, 'consumer');
 await rename(release.output, project);
 for (const [file, digest] of Object.entries(release.checksums))
-  assert.equal(createHash('sha256').update(await readFile(join(project, file))).digest('hex'), digest);
-assert.ok(Object.values(release.manifest.pnpm.overrides).every(value => value.startsWith('file:./tarballs/')));
+  assert.equal(
+    createHash('sha256')
+      .update(await readFile(join(project, file)))
+      .digest('hex'),
+    digest,
+  );
+assert.ok(
+  Object.values(release.manifest.pnpm.overrides).every((value) =>
+    value.startsWith('file:./tarballs/'),
+  ),
+);
 console.log(`Installing packed packages in ${project}`);
 await exec(
   'pnpm',
@@ -22,6 +31,11 @@ await exec(
   { cwd: project, maxBuffer: 8 * 1024 * 1024 },
 );
 const cli = join(project, 'node_modules/@repro/cli/dist/bin.js');
+// A nested evidence project must not inherit its host app's compiler setup.
+await writeFile(
+  join(root, 'tsconfig.json'),
+  JSON.stringify({ extends: './unavailable-parent-config.json' }),
+);
 const { stdout } = await exec(
   process.execPath,
   [cli, 'capabilities', '--json'],

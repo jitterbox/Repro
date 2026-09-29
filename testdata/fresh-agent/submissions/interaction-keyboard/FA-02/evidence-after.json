@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "FA-02",
+  "title": "FA-02: Return focus after Escape",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "Escape closes the dialog and returns focus to Edit display name.",
+  "expected": "Escape closes the dialog and returns focus to Edit display name.",
+  "targets": [
+    {
+      "id": "target",
+      "description": "Edit display name"
+    },
+    {
+      "id": "reference",
+      "description": "Help link"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "1. Open workspace settings"
+    },
+    {
+      "id": "open",
+      "title": "2. Open display-name dialog"
+    },
+    {
+      "id": "trigger",
+      "title": "3. Press Escape",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "4. Inspect restored focus"
+    }
+  ],
+  "segments": [],
+  "checkpoints": [
+    {
+      "id": "ready",
+      "step": "prepare",
+      "title": "Settings opener and Help",
+      "targets": [
+        "target",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Settings opener"
+        },
+        {
+          "target": "reference",
+          "label": "Help link"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    },
+    {
+      "id": "dialog",
+      "step": "open",
+      "title": "Display-name dialog open",
+      "targets": [
+        "target",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Settings opener"
+        },
+        {
+          "target": "reference",
+          "label": "Help link"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    },
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Focus after Escape",
+      "targets": [
+        "target",
+        "reference"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "target",
+          "label": "Settings opener"
+        },
+        {
+          "target": "reference",
+          "label": "Help link"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion"
+      ],
+      "timing": "stable"
+    }
+  ],
+  "outputs": [
+    "png",
+    "mp4",
+    "review"
+  ],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 2500,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [
+      "[data-private]"
+    ],
+    "patterns": []
+  }
+}

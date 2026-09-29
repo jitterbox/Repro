@@ -1,0 +1,25 @@
+{
+  "claim": "The total remains left-aligned with the invoice reference after applying a long account label",
+  "expected": "Total left edge equals reference left edge",
+  "concerns": [
+    {
+      "kind": "geometry",
+      "rationale": "Compare measured left edges after natural label submission",
+      "sourceRefs": [
+        "actual",
+        "steps.3"
+      ]
+    }
+  ],
+  "triggerStep": 3,
+  "targets": [
+    {
+      "id": "total",
+      "description": "Invoice total",
+      "role": "affected"
+    }
+  ],
+  "uncertainties": [
+    "Ticket 20px annotation is unmeasured"
+  ]
+}

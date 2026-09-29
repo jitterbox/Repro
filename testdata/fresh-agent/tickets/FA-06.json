@@ -1,0 +1,13 @@
+{
+  "id": "FA-06",
+  "title": "File picker sidebar is clipped",
+  "description": "The native operating-system file picker has a clipped sidebar after Choose receipt. This is outside the webpage.",
+  "expected": "The operating-system picker sidebar is fully visible.",
+  "actual": "The native sidebar is clipped; webpage content is normal.",
+  "steps": [
+    "Open Attach receipt.",
+    "Activate Choose receipt.",
+    "Inspect the native operating-system picker sidebar."
+  ],
+  "tags": []
+}

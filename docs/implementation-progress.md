@@ -284,3 +284,21 @@ and verifies role-caption pixels for all seven layouts. Its narrow T/I/L OCR
 normalization is explicit in the row checks; synthetic geometry is still labeled.
 Remote completion is recorded by the final branch CI run, not inferred from these
 local results. The review table remains available through `pnpm review:matrix`.
+
+## Broader fresh-agent evaluation
+
+Three agents with no conversation history completed six new ticket assignments:
+pointer interception, keyboard restoration, out-of-order requests, transient
+failure, measured alignment, and native rejection. Five committed browser
+scenarios replayed Before/After without an LLM; the sixth correctly rejects page
+substitution. This is demonstrated eventual success with documented repairs,
+including evaluator-assisted editorial feedback, not a general autonomous success
+rate. [Protocol, findings and limitations](fresh-agent-evaluation.md) distinguish
+the discovery exercise from its now-public regression corpus.
+
+The evaluation found and repaired a contradictory video tail: verified checkpoint
+pixels now remain through the terminal presentation hold instead of reverting to
+stale screencast pixels. A retained bad video fails the new decoded-pixel check.
+The same gate is added to public workflow acceptance. Starter compiler isolation
+and honest live-agent availability were also fixed; guidance now covers observed
+numbering, focus-ring, crop-context and frame-selection mistakes.

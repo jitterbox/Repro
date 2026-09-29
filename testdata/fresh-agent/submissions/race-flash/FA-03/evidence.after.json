@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "FA-03",
+  "title": "Latest inventory search survives older completion",
+  "variant": {
+    "id": "after",
+    "role": "after",
+    "label": "After"
+  },
+  "claim": "After oak and pine requests complete, result matches the latest pine query",
+  "expected": "Pine desk remains with pine in the field",
+  "targets": [
+    {
+      "id": "query",
+      "description": "Latest query"
+    },
+    {
+      "id": "result",
+      "description": "Search result"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Open inventory search",
+      "trigger": false
+    },
+    {
+      "id": "trigger",
+      "title": "Submit oak then immediately pine",
+      "trigger": true
+    },
+    {
+      "id": "verify",
+      "title": "Verify intended result",
+      "trigger": false
+    }
+  ],
+  "segments": [
+    {
+      "id": "operation",
+      "title": "Trigger through completion",
+      "step": "trigger",
+      "required": true
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "during",
+      "step": "trigger",
+      "title": "Pine response before old request completes",
+      "required": true,
+      "targets": [],
+      "highlights": [],
+      "observations": [
+        "screenshot"
+      ],
+      "timing": "transient",
+      "frame": {
+        "segment": "operation",
+        "event": {
+          "kind": "probe.pointer:path",
+          "match": {
+            "phase": "pointerdown"
+          },
+          "occurrence": 1
+        },
+        "offsetMs": 110,
+        "maxOffsetMs": 60
+      }
+    },
+    {
+      "id": "result",
+      "step": "verify",
+      "title": "Result after both successful responses",
+      "targets": [
+        "query",
+        "result"
+      ],
+      "required": true,
+      "highlights": [
+        {
+          "target": "query",
+          "label": "Latest query"
+        },
+        {
+          "target": "result",
+          "label": "Search result"
+        }
+      ],
+      "observations": [
+        "screenshot",
+        "bounds",
+        "assertion",
+        "network"
+      ],
+      "timing": "stable"
+    }
+  ],
+  "outputs": [
+    "png",
+    "mp4",
+    "review"
+  ],
+  "presentation": {
+    "padding": 24,
+    "readingHoldMs": 1800,
+    "context": true
+  },
+  "privacy": {
+    "strict": true,
+    "selectors": [
+      "[data-private]"
+    ],
+    "patterns": []
+  }
+}

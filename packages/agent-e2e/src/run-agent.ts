@@ -35,22 +35,12 @@ export function liveAgentEnv(
 }
 
 export async function runAgent(input: RunAgentInput): Promise<RunAgentResult> {
-  const live = liveAgentEnv();
-
-  if (live.enabled && live.apiKey !== undefined) {
-    return runLiveAgent(input, live);
+  if (process.env.REPRO_AGENT_E2E === '1') {
+    throw new Error(
+      'Live agent provider adapters are unavailable. No mock was run. Use an external fresh agent with the published evaluation protocol, or unset REPRO_AGENT_E2E for explicitly mock coverage.',
+    );
   }
 
-  return runMockAgent(input);
-}
-
-async function runLiveAgent(
-  input: RunAgentInput,
-  live: LiveAgentEnv,
-): Promise<RunAgentResult> {
-  // Live LLM agents must still use the restricted repro CLI tool surface.
-  // Until a provider adapter lands, fall back to the deterministic mock path.
-  void live;
   return runMockAgent(input);
 }
 

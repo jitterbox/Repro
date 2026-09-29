@@ -1,0 +1,350 @@
+{
+  "agent": "fresh_race_flash",
+  "guidanceSources": [
+    ".repro/fresh-agent-public/ai-usage.md",
+    ".repro/fresh-agent-public/design-brief.md",
+    "installed @repro/playwright public index.d.ts",
+    "repro capabilities, discovery-guide, recipes, describe run/export, init"
+  ],
+  "cases": [
+    {
+      "id": "FA-03",
+      "status": "provisional-completed-pending-independent-judgment",
+      "interpretation": "Successful responses arrive out of request order: pine appears first, older oak later replaces result while field remains pine. Server error suspicion rejected by actual two HTTP 200 responses.",
+      "selectedCapabilities": [
+        {
+          "id": "faithful",
+          "reason": "Preserve original race and transient timing in primary evidence."
+        },
+        {
+          "id": "timingSensitive",
+          "reason": "Forbid action instrumentation delays; no screenshots between quick search submissions."
+        },
+        {
+          "id": "segment/event-linked-frame",
+          "reason": "Capture decisive interval before trigger and select existing pixels with calibrated pointer event."
+        },
+        {
+          "id": "steps/specCard",
+          "reason": "Explain context, trigger, and designated verification."
+        },
+        {
+          "id": "strict-redaction",
+          "reason": "Mask data-private contact and audit exported PNG/MP4 bytes."
+        },
+        {
+          "id": "controlled-comparison",
+          "reason": "Required public comparison contract; companion captures separated from faithful proof."
+        },
+        {
+          "id": "network",
+          "reason": "Actual response observations reject suspected HTTP failure."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "showActions",
+          "reason": "Would perturb timing."
+        },
+        {
+          "id": "hit-test/stackingContexts",
+          "reason": "No evidence of pointer interception."
+        },
+        {
+          "id": "vitalsHud/freezeDetect",
+          "reason": "Neither actual ticket requires proving main-thread stall or performance budget."
+        },
+        {
+          "id": "transient-highlight/crop",
+          "reason": "No historical geometry measurement; retain whole event frame."
+        },
+        {
+          "id": "OS capture",
+          "reason": "All reported evidence is in page content."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.before.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts --url http://127.0.0.1:3219/FA-03/before --out-dir .repro/fresh-agent/FA-03",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/before-faithful-final.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.before.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/compare.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts --url http://127.0.0.1:3219/FA-03/before --out-dir .repro/fresh-agent/FA-03",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/before-controlled-final.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts --url http://127.0.0.1:3219/FA-03/after --out-dir .repro/fresh-agent/FA-03",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/after-faithful-final.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/compare.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts --url http://127.0.0.1:3219/FA-03/after --out-dir .repro/fresh-agent/FA-03",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/after-controlled-final.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-FPQLZ5/FA-03-dec3884e-8a3e-4bf5-8097-6ee53e5ce5cd /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-OeE28c/FA-03-f84a6926-e32c-4e00-8c26-4fb9aaa80234",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/compare-controlled.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-OeE28c/FA-03-f84a6926-e32c-4e00-8c26-4fb9aaa80234 --baseline /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-FPQLZ5/FA-03-dec3884e-8a3e-4bf5-8097-6ee53e5ce5cd --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/export-final",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-XMicB2/FA-03-fbf7ebc2-a248-4d20-aa16-9112134ff7e1 --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/export-faithful-before",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/before-faithful-export.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-oCQATY/FA-03-443fc2c2-6d2c-4824-bc85-618f622c0921 --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/export-faithful-after",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/after-faithful-export.log"
+        },
+        {
+          "command": "repro validate-config --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/repro.config.json",
+          "exitCode": 0
+        },
+        {
+          "command": "repro validate-config --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/compare.config.json",
+          "exitCode": 0
+        }
+      ],
+      "runs": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-XMicB2/FA-03-fbf7ebc2-a248-4d20-aa16-9112134ff7e1",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-oCQATY/FA-03-443fc2c2-6d2c-4824-bc85-618f622c0921"
+      },
+      "comparisonRuns": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-FPQLZ5/FA-03-dec3884e-8a3e-4bf5-8097-6ee53e5ce5cd",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-OeE28c/FA-03-f84a6926-e32c-4e00-8c26-4fb9aaa80234"
+      },
+      "comparisonPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-OeE28c/FA-03-f84a6926-e32c-4e00-8c26-4fb9aaa80234/comparison.json",
+      "exportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/evidence-manifest.json",
+      "exports": {
+        "controlledPair": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/evidence-manifest.json",
+        "faithfulBefore": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-before/evidence-manifest.json",
+        "faithfulAfter": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-after/evidence-manifest.json"
+      },
+      "exportMedia": "controlledPair contains controlled Before/After presentation MP4s and checkpoint PNGs; faithfulBefore and faithfulAfter each contain the corresponding faithful run only.",
+      "inputs": {
+        "spec": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/scenario.spec.ts",
+        "evidenceBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.before.json",
+        "evidenceAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/evidence.after.json",
+        "config": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/repro.config.json",
+        "comparisonConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/compare.config.json",
+        "playwrightConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/playwright.config.ts",
+        "tsconfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/tsconfig.json",
+        "assessment": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-03/assessment.json"
+      },
+      "inspectedArtifacts": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-XMicB2/FA-03-fbf7ebc2-a248-4d20-aa16-9112134ff7e1/event-frames/during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-oCQATY/FA-03-443fc2c2-6d2c-4824-bc85-618f622c0921/event-frames/during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-03/invocation-oCQATY/FA-03-443fc2c2-6d2c-4824-bc85-618f622c0921/anchors/after-result-95a34b53-5ba9-424b-b0e3-68d7aeee73b5.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/assets/82386a38c0f042fb-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/assets/e26de2775fe6b795-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/assets/6ed314f61970dc6f-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-final/assets/a44a6a1a3a79dc99-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-before/assets/82386a38c0f042fb-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-before/assets/e26de2775fe6b795-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-after/assets/6ed314f61970dc6f-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03/export-faithful-after/assets/a44a6a1a3a79dc99-during.png"
+      ],
+      "limitations": [
+        "Event-linked frame timestamps retain measured selection offsets and uncertainties, not exact millisecond proof.",
+        "Raw local captures contain synthetic contact; only strict exported assets are shareable.",
+        "Controlled companion results do not establish faithful timing; primary faithful runs retained separately.",
+        "FA-03 query callout partly overlaps noncritical Inventory search heading; defect field and result remain unobscured.",
+        "FA-04 absence assertion covers observed DOM mutations through successful completion, not arbitrary future behavior."
+      ],
+      "repairs": [
+        "Initial module discovery used wrong resolution base; resolved installed Playwright via installed @repro/playwright.",
+        "Browser launch requires permitted unsandboxed local process execution.",
+        "Initial validate-config invocation omitted --config; corrected and both modes validated.",
+        "Initial capture inherited inaccessible repository tsconfig references; added isolated submission tsconfig.",
+        "180ms event selection passed faithful but failed controlled sparse frames; retained attempts, committed 110ms/60ms near observed pine response paint and recaptured both profiles."
+      ],
+      "logsDirectory": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-03",
+      "inspectionNotes": "Exported checkpoint images were visually reviewed; identical SHA256 image copies across faithful and controlled bundles share the same inspected pixels. Raw event-linked contexts independently reviewed. All contact masks opaque and defect text readable.",
+      "auditEnvironment": {
+        "PATHPrefix": "/tmp/repro-ocr-runtime/root/usr/bin",
+        "LD_LIBRARY_PATH": "/tmp/repro-ocr-runtime/root/usr/lib/x86_64-linux-gnu",
+        "TESSDATA_PREFIX": "/tmp/repro-ocr-runtime/root/usr/share/tesseract-ocr/5/tessdata"
+      },
+      "controlledPairAuditPassed": true,
+      "faithfulBeforeAuditPassed": true,
+      "faithfulAfterAuditPassed": true
+    },
+    {
+      "id": "FA-04",
+      "status": "provisional-completed-pending-independent-judgment",
+      "interpretation": "Failure notice is transient in #notice; final status succeeds. Mutation history plus actual event-linked pixels establish false announcement during preparation.",
+      "selectedCapabilities": [
+        {
+          "id": "faithful",
+          "reason": "Preserve original race and transient timing in primary evidence."
+        },
+        {
+          "id": "timingSensitive",
+          "reason": "Forbid action instrumentation delays; no screenshots between quick search submissions."
+        },
+        {
+          "id": "segment/event-linked-frame",
+          "reason": "Capture decisive interval before trigger and select existing pixels with calibrated pointer event."
+        },
+        {
+          "id": "steps/specCard",
+          "reason": "Explain context, trigger, and designated verification."
+        },
+        {
+          "id": "strict-redaction",
+          "reason": "Mask data-private contact and audit exported PNG/MP4 bytes."
+        },
+        {
+          "id": "controlled-comparison",
+          "reason": "Required public comparison contract; companion captures separated from faithful proof."
+        },
+        {
+          "id": "mutation-history",
+          "reason": "Executed assertion rejects any Download failed notice recorded during preparation."
+        }
+      ],
+      "rejectedCapabilities": [
+        {
+          "id": "showActions",
+          "reason": "Would perturb timing."
+        },
+        {
+          "id": "hit-test/stackingContexts",
+          "reason": "No evidence of pointer interception."
+        },
+        {
+          "id": "vitalsHud/freezeDetect",
+          "reason": "Neither actual ticket requires proving main-thread stall or performance budget."
+        },
+        {
+          "id": "transient-highlight/crop",
+          "reason": "No historical geometry measurement; retain whole event frame."
+        },
+        {
+          "id": "OS capture",
+          "reason": "All reported evidence is in page content."
+        }
+      ],
+      "commands": [
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.before.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts --url http://127.0.0.1:3219/FA-04/before --out-dir .repro/fresh-agent/FA-04",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/before-attempt3.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.before.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/compare.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts --url http://127.0.0.1:3219/FA-04/before --out-dir .repro/fresh-agent/FA-04",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/before-controlled.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/repro.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts --url http://127.0.0.1:3219/FA-04/after --out-dir .repro/fresh-agent/FA-04",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/after-attempt3.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js run /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts --evidence /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.after.json --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/compare.config.json --playwright-config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts --url http://127.0.0.1:3219/FA-04/after --out-dir .repro/fresh-agent/FA-04",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/after-controlled.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js compare /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-Km0NL7/FA-04-48b25f8b-0f55-414d-8f2d-7504387c90e8 /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-iBNHJE/FA-04-9aa2a56c-7910-4485-9296-a41751ef4c0b",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/compare-controlled.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-iBNHJE/FA-04-9aa2a56c-7910-4485-9296-a41751ef4c0b --baseline /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-Km0NL7/FA-04-48b25f8b-0f55-414d-8f2d-7504387c90e8 --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/export",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-j4LlSa/FA-04-2498b6c2-762d-4d00-8cbf-b306726bb5fe --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/export-faithful-before",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/before-faithful-export.log"
+        },
+        {
+          "command": "node /tmp/repro-install-moPz0m/consumer/node_modules/@repro/cli/dist/bin.js export /home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-xRIN1J/FA-04-57caebc4-fb4c-4a66-982c-e589845a609e --out-dir /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/export-faithful-after",
+          "exitCode": 0,
+          "resultPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/after-faithful-export.log"
+        },
+        {
+          "command": "repro validate-config --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/repro.config.json",
+          "exitCode": 0
+        },
+        {
+          "command": "repro validate-config --config /home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/compare.config.json",
+          "exitCode": 0
+        }
+      ],
+      "runs": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-j4LlSa/FA-04-2498b6c2-762d-4d00-8cbf-b306726bb5fe",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-xRIN1J/FA-04-57caebc4-fb4c-4a66-982c-e589845a609e"
+      },
+      "comparisonRuns": {
+        "before": "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-Km0NL7/FA-04-48b25f8b-0f55-414d-8f2d-7504387c90e8",
+        "after": "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-iBNHJE/FA-04-9aa2a56c-7910-4485-9296-a41751ef4c0b"
+      },
+      "comparisonPath": "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-iBNHJE/FA-04-9aa2a56c-7910-4485-9296-a41751ef4c0b/comparison.json",
+      "exportManifestPath": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/evidence-manifest.json",
+      "exports": {
+        "controlledPair": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/evidence-manifest.json",
+        "faithfulBefore": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-before/evidence-manifest.json",
+        "faithfulAfter": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-after/evidence-manifest.json"
+      },
+      "exportMedia": "controlledPair contains controlled Before/After presentation MP4s and checkpoint PNGs; faithfulBefore and faithfulAfter each contain the corresponding faithful run only.",
+      "inputs": {
+        "spec": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/scenario.spec.ts",
+        "evidenceBefore": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.before.json",
+        "evidenceAfter": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/evidence.after.json",
+        "config": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/repro.config.json",
+        "comparisonConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/compare.config.json",
+        "playwrightConfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/playwright.config.ts",
+        "tsconfig": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/tsconfig.json",
+        "assessment": "/home/cory/repos/Repro/testdata/fresh-agent/submissions/race-flash/FA-04/assessment.json"
+      },
+      "inspectedArtifacts": [
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-j4LlSa/FA-04-2498b6c2-762d-4d00-8cbf-b306726bb5fe/event-frames/during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/FA-04/invocation-xRIN1J/FA-04-57caebc4-fb4c-4a66-982c-e589845a609e/event-frames/during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/assets/56dfcead7b28694f-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/assets/5a6b65ae5808fe71-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/assets/af9d1b6fefd82a22-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export/assets/4e9f9e6137007fbf-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-before/assets/56dfcead7b28694f-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-before/assets/5a6b65ae5808fe71-during.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-after/assets/af9d1b6fefd82a22-result.png",
+        "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04/export-faithful-after/assets/4e9f9e6137007fbf-during.png"
+      ],
+      "limitations": [
+        "Event-linked frame timestamps retain measured selection offsets and uncertainties, not exact millisecond proof.",
+        "Raw local captures contain synthetic contact; only strict exported assets are shareable.",
+        "Controlled companion results do not establish faithful timing; primary faithful runs retained separately.",
+        "FA-03 query callout partly overlaps noncritical Inventory search heading; defect field and result remain unobscured.",
+        "FA-04 absence assertion covers observed DOM mutations through successful completion, not arbitrary future behavior."
+      ],
+      "repairs": [
+        "Initial module discovery used wrong resolution base; resolved installed Playwright via installed @repro/playwright.",
+        "Browser launch requires permitted unsandboxed local process execution.",
+        "Initial validate-config invocation omitted --config; corrected and both modes validated.",
+        "Initial capture inherited inaccessible repository tsconfig references; added isolated submission tsconfig.",
+        "170ms event-linked selection exceeded tolerance even though normalized video showed red failure notice; retained failed attempts, inspected frame at 900ms, committed 30ms/60ms near initial paint."
+      ],
+      "logsDirectory": "/home/cory/repos/Repro/.repro/fresh-agent/race-flash-artifacts/FA-04",
+      "inspectionNotes": "Exported checkpoint images were visually reviewed; identical SHA256 image copies across faithful and controlled bundles share the same inspected pixels. Raw event-linked contexts independently reviewed. All contact masks opaque and defect text readable.",
+      "auditEnvironment": {
+        "PATHPrefix": "/tmp/repro-ocr-runtime/root/usr/bin",
+        "LD_LIBRARY_PATH": "/tmp/repro-ocr-runtime/root/usr/lib/x86_64-linux-gnu",
+        "TESSDATA_PREFIX": "/tmp/repro-ocr-runtime/root/usr/share/tesseract-ocr/5/tessdata"
+      },
+      "controlledPairAuditPassed": true,
+      "faithfulBeforeAuditPassed": true,
+      "faithfulAfterAuditPassed": true
+    }
+  ]
+}

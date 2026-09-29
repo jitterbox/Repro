@@ -1,12 +1,12 @@
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { loadBug } from '@repro/e2e-fixture';
 
 import { expectedFiledFeatures } from '../src/bug-drivers.js';
-import { liveAgentEnv, runMockAgent } from '../src/run-agent.js';
+import { runAgent, runMockAgent } from '../src/run-agent.js';
 
 describe('agent-e2e mock agent', () => {
   it('runs BUG-1001 compare workflow with filed features', async () => {
@@ -20,14 +20,14 @@ describe('agent-e2e mock agent', () => {
     expect(transcript.config.features.steps).toBe(expected.steps);
     expect(transcript.config.features.zoom).toBe(true);
     expect(transcript.config.mode).toBe('compare');
-    expect(transcript.steps.some((step) => step.tool === 'validate-config')).toBe(
-      true,
-    );
+    expect(
+      transcript.steps.some((step) => step.tool === 'validate-config'),
+    ).toBe(true);
     expect(transcript.steps.some((step) => step.tool === 'capture')).toBe(true);
     expect(transcript.steps.some((step) => step.tool === 'compare')).toBe(true);
-    expect(transcript.steps.some((step) => step.tool === 'render-compare')).toBe(
-      true,
-    );
+    expect(
+      transcript.steps.some((step) => step.tool === 'render-compare'),
+    ).toBe(true);
 
     await access(join(runDir, 'repro.config.json'));
     await access(transcript.artifacts.transcriptPath);
@@ -51,12 +51,14 @@ describe('agent-e2e mock agent', () => {
     await access(transcript.artifacts.transcriptPath);
   }, 300_000);
 
-  it.skipIf(!liveAgentEnv().enabled)(
-    'runs live agent path when REPRO_AGENT_E2E=1 and API key present',
-    async () => {
-      const { transcript } = await runMockAgent({ bugId: 'BUG-1008' });
-      expect(transcript.steps.length).toBeGreaterThan(0);
-    },
-    300_000,
-  );
+  it('never substitutes a mock for a requested live evaluation', async () => {
+    vi.stubEnv('REPRO_AGENT_E2E', '1');
+    try {
+      await expect(runAgent({ bugId: 'not-a-fixture' })).rejects.toThrow(
+        'No mock was run',
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 });

@@ -114,6 +114,9 @@ application using `repro recipes --json` and `repro describe render --json`.
    After. Create meaningful numbered steps: establish context, perform the
    trigger, inspect the decisive state, and verify the intended result. Avoid
    turning every browser API call into a visible step.
+   Write titles without numeric prefixes: Repro adds the step numbers. Keep the
+   decisive expected condition and any numeric tolerance concise enough to read
+   in the resulting outcome caption.
 4. Choose the evidence moment. For a stable result, assert the specific state
    and capture a checkpoint. For a flash, race or animation bug, start a segment
    before the trigger and select an event-linked frame afterward. Do not wait
@@ -139,6 +142,10 @@ application using `repro recipes --json` and `repro describe render --json`.
    moving or ambiguous geometry cannot produce an invented outline. Rendering
    rejects requested callouts when aligned evidence or unobstructed space is
    unavailable; shorten the label, reduce highlights or capture a better frame.
+   For focus and small-displacement bugs, keep the application's actual focus
+   ring or edge visible. Use `highlights: []` when an outline would hide or mimic
+   that evidence. A default first-target crop can omit a related result; use full
+   context or explicit shared bounds including all necessary controls.
 7. Run `repro validate-evidence evidence.json`, then the committed scenario.
    Inspect the actual context image, focused crop and critical video interval
    using `frame` / `review`. Check that labels are readable, do not cover the
