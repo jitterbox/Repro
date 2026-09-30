@@ -20,11 +20,11 @@ designs.
 | [`../apps/shoplite/`](../apps/shoplite/) | Fixture app (demo content, not product chrome) |
 | [`../packages/viewer/`](../packages/viewer/) | Packaged evidence viewer (product UI) |
 
-**Design status note (important):** Config and docs describe a rich overlay
-system. Many burned-in video overlays are still **partial or stubbed**. Prefer
-designs that match the **target language** below; do not treat today’s thin
-centered title boxes as the intentional brand. When proposing visuals, label
-frames as **Target** vs **Current stub**.
+**Design status:** Repro 0.3.0 uses one polished scene compositor with bundled
+typography, coordinated layout, source-timed motion, and adaptive evidence panels.
+See [scene presentation](scene-renderer.md) and the [configuration reference](configuration.md)
+for shipped behavior and defaults. This brief also contains design proposals;
+label future proposals explicitly rather than presenting them as available options.
 
 ---
 
@@ -499,7 +499,7 @@ A design package is ready when:
 8. Motion specs list duration/easing for primary components.
 9. Each designed feature maps to a **named flag or layout** in §5–§7 (no orphan
    chrome).
-10. Explicit **Target** labeling where current product still stubs the feature.
+10. Explicit **Proposal** labeling for features outside the shipped scene and viewer interfaces.
 
 ---
 
