@@ -5,128 +5,117 @@
   "overlayKit": [
     {
       "component": "target-ring",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "BUG-1008"]
     },
     {
       "component": "leader",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "BUG-1002"],
       "countVia": "leaderLine"
     },
     {
       "component": "plate",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "BUG-1002"]
     },
     {
       "component": "step-badge",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1004", "BUG-1001"]
     },
     {
       "component": "progress-rail",
-      "renderer": "filter",
+      "renderer": "event-plan",
       "owners": ["BUG-1004", "BUG-1001"]
     },
     {
       "component": "console-toast",
-      "renderer": "compositor",
+      "renderer": "event-plan",
       "owners": ["BUG-1008"]
     },
     {
       "component": "pause-badge",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1003", "BUG-1010"]
     },
     {
       "component": "speed-chip",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1003", "BUG-1009"]
     },
     {
       "component": "click-ripple",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1006", "BUG-1008"]
     },
     {
       "component": "cursor-path",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1005", "BUG-1007"]
     },
     {
       "component": "keystroke-pill",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1013", "BUG-1012"]
     },
     {
       "component": "layout-shift-pair",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1009", "BUG-1015"]
     },
     {
       "component": "hit-target-guide",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1011"]
     },
     {
       "component": "hidden-ghost",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1005", "BUG-1015"]
     },
     {
       "component": "stacking-labels",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1004", "BUG-1015"]
     },
     {
       "component": "roi-magnifier",
-      "renderer": "compositor",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "BUG-1011"]
     },
     {
       "component": "freeze-banner",
-      "renderer": "ass",
+      "renderer": "event-plan",
       "owners": ["BUG-1010", "BUG-1016"]
     },
     {
       "component": "vitals-hud",
-      "renderer": "compositor",
+      "renderer": "event-plan",
       "owners": ["BUG-1009", "BUG-1010"]
     },
     {
       "component": "redaction",
-      "renderer": "filter",
+      "renderer": "event-plan",
       "owners": ["BUG-1012"],
       "countVia": "redactionRects"
     },
     {
       "component": "outcome-pair",
-      "renderer": "compositor",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "BUG-1008"]
     },
     {
       "component": "slate",
-      "renderer": "compositor",
+      "renderer": "event-plan",
       "owners": ["BUG-1001", "demo-walkthrough"],
       "countVia": "slateBeat"
     }
   ],
-  "compareLayouts": [
-    "side-by-side",
-    "onion",
-    "wipe",
-    "cropped-roi",
-    "difference",
-    "edge",
-    "blink"
-  ],
+  "compareLayouts": ["side-by-side"],
   "rules": [
-    "safe-inset-24",
-    "bottom-band-singleton",
-    "label-max-42",
-    "no-centre-plate",
-    "step-text-N-M",
-    "compare-1280x720"
+    "planned-overlay-counts-only",
+    "scene-comparison-receipt",
+    "pixel-validation-in-review-matrix"
   ]
 }
