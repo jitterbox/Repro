@@ -13,7 +13,7 @@ for (const row of report.rows) {
   row.artifacts = [];
   try {
     for (const directory of row.runs) {
-      await exec(
+      const rendering = await exec(
         process.execPath,
         [resolve('packages/cli/dist/bin.js'), 'render', directory],
         { maxBuffer: 16 * 1024 * 1024 },
@@ -28,15 +28,32 @@ for (const row of report.rows) {
         video = manifest.artifacts.find((a) => a.kind === 'presentation-video');
       const png = join(directory, image.path),
         role = manifest.variant.role;
+      const result = JSON.parse(rendering.stdout);
+      const scene = JSON.parse(
+        await readFile(join(result.directory, 'scene.json'), 'utf8'),
+      );
+      const outcome = scene.cues.find((c) => c.kind === 'outcome');
+      const at = (outcome.startMs + outcome.endMs) / 2;
+      const schedule = JSON.parse(
+        await readFile(join(result.directory, 'layout.json'), 'utf8'),
+      );
+      const box = schedule.beats
+        .find((b) => at >= b.startMs && at < b.endMs)
+        .panels.find((p) => p.id === outcome.id);
+      const pixels = join(
+        result.directory,
+        'frames',
+        `frame_${String(Math.floor((at * 30) / 1000)).padStart(6, '0')}.png`,
+      );
       const crop = join(root, row.id, role, 'outcome-ocr.png');
       await exec('ffmpeg', [
         '-v',
         'error',
         '-y',
         '-i',
-        png,
+        pixels,
         '-vf',
-        'crop=1232:60:24:548',
+        `crop=${Math.floor(box.width)}:${Math.floor(box.height)}:${Math.floor(box.x)}:${Math.floor(box.y)},scale=iw*2:ih*2`,
         crop,
       ]);
       const { stdout } = await exec('tesseract', [

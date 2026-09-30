@@ -44,13 +44,18 @@ async function capture(evidence, name) {
   assert.equal(captured.result.runs.length, 1);
   return captured.result.runs[0].directory;
 }
-const directory = await capture(
-  'packages/playwright/examples/privacy.json',
-  'protected',
-);
+const directory =
+  process.env.REPRO_PRIVACY_REUSE_RUN ??
+  (await capture('packages/playwright/examples/privacy.json', 'protected'));
 const rendered = await invoke('render', directory);
 assert.equal(rendered.code, 0, JSON.stringify(rendered));
 const run = JSON.parse(await readFile(join(directory, 'run.json'), 'utf8'));
+const mapping = JSON.parse(
+  await readFile(join(rendered.result.directory, 'frame-map.json'), 'utf8'),
+);
+const scene = JSON.parse(
+  await readFile(join(rendered.result.directory, 'scene.json'), 'utf8'),
+);
 const events = (await readFile(join(directory, 'events.jsonl'), 'utf8'))
   .trim()
   .split('\n')
@@ -85,8 +90,10 @@ for (const checkpoint of ['untouched', 'moved', 'scrolled', 'popup']) {
   );
   assert.ok(asset, `Missing rendered ${checkpoint}`);
   const raw = PNG.sync.read(await readFile(join(directory, source.artifact)));
+  const hold = scene.segments.find((s) => s.checkpoint === source.id);
+  const sourceFrame = mapping.find((f) => f.segmentId === hold.id);
   const protectedImage = PNG.sync.read(
-    await readFile(join(directory, asset.path)),
+    await readFile(join(rendered.result.directory, sourceFrame.asset)),
   );
   assert.equal(raw.width, protectedImage.width);
   assert.equal(raw.height, protectedImage.height);
@@ -151,20 +158,16 @@ assert.ok(
   plan.redactionRects.length <= 2,
   'Selector motion should have bounded region count',
 );
-const { mapTime } = await import('../../packages/plan/dist/index.js');
-const firstFrame = Math.ceil(
-  (mapTime(plan.timeline, motion[0].t_mono - run.environment.recordingStartMs) *
-    30) /
-    1000,
+const motionFrames = mapping.filter(
+  (frame) =>
+    frame.sourceMs >= motion[0].t_mono &&
+    frame.sourceMs <= motion.at(-1).t_mono &&
+    scene.segments.find((s) => s.id === frame.segmentId)?.kind === 'play',
 );
-const lastFrame = Math.floor(
-  (mapTime(
-    plan.timeline,
-    motion.at(-1).t_mono - run.environment.recordingStartMs,
-  ) *
-    30) /
-    1000,
-);
+assert.ok(motionFrames.length >= 8, 'Recorded motion must remain in playback');
+const firstFrame = motionFrames[0].frame;
+const lastFrame = motionFrames.at(-1).frame;
+assert.equal(motionFrames.length, lastFrame - firstFrame + 1);
 assert.ok(lastFrame - firstFrame >= 8);
 const video = run.artifacts.find((a) => a.kind === 'presentation-video');
 assert.ok(video);
@@ -176,7 +179,7 @@ const movingPixels = await execute(
     '-i',
     join(directory, video.path),
     '-vf',
-    `select='between(n,${firstFrame},${lastFrame})',crop=980:162:100:216,format=rgb24`,
+    `select='between(n,${firstFrame},${lastFrame})',crop=980:162:${100 + scene.sourceOrigin.x}:${216 + scene.sourceOrigin.y},format=rgb24`,
     '-fps_mode',
     'passthrough',
     '-f',
@@ -201,6 +204,7 @@ const continuousMotion = {
 };
 const exported = await invoke(
   'export',
+  '--draft',
   directory,
   '--out-dir',
   join(output, 'bundle'),
@@ -234,6 +238,7 @@ const negativeRender = await invoke('render', unmaskedDirectory);
 assert.equal(negativeRender.code, 0, JSON.stringify(negativeRender));
 const rejected = await invoke(
   'export',
+  '--draft',
   unmaskedDirectory,
   '--out-dir',
   join(output, 'rejected-bundle'),

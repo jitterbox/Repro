@@ -1,5 +1,5 @@
-/** Decode legacy outputs and verify compare role pixels; never claim synthetic geometry as measured proof. */
-import { readFile, readdir, writeFile, stat } from 'node:fs/promises';
+/** Decode scene fixture outputs and verify compare role pixels; never claim synthetic geometry as measured proof. */
+import { readFile, readdir, writeFile, stat, mkdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
@@ -13,23 +13,28 @@ if (process.argv[2]) {
 }
 const root = resolve('.repro/fixture-videos'),
   rows = [];
-async function find(dir, origin = dir) {
-  const out = [];
-  for (const e of await readdir(dir, { withFileTypes: true })) {
-    if (
-      e.name.startsWith('capture') ||
-      e.name === 'stages' ||
-      e.name.startsWith('.')
-    )
-      continue;
-    const p = join(dir, e.name);
-    if (e.isDirectory()) out.push(...(await find(p, origin)));
-    else if (e.name.endsWith('.mp4') || e.name === 'plan.json')
-      out.push({ label: relative(origin, p), path: p });
+async function find(dir) {
+  const artifacts = [];
+  for (const path of [
+    join(dir, 'scene-result.json'),
+    join(dir, 'compare', 'scene-comparison.json'),
+  ]) {
+    let document;
+    try {
+      document = JSON.parse(await readFile(path, 'utf8'));
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    artifacts.push({
+      label: relative(dir, document.outputPath),
+      path: document.outputPath,
+      comparison: path.endsWith('scene-comparison.json'),
+    });
   }
-  return out;
+  return artifacts;
 }
-const checkedLayouts = new Set();
+let checkedComparisons = 0;
 const names = (await readdir(root))
   .filter((n) => !n.startsWith('agent-'))
   .sort();
@@ -37,6 +42,7 @@ for (const [index, name] of names.entries()) {
   const dir = join(root, name);
   if (!(await stat(dir)).isDirectory()) continue;
   const artifacts = await find(dir);
+  if (!artifacts.length) continue;
   const checks = [];
   for (const asset of [...artifacts]) {
     if (!asset.path.endsWith('.mp4')) continue;
@@ -74,18 +80,14 @@ for (const [index, name] of names.entries()) {
       image,
     ]);
     artifacts.push({ label: asset.label + ' decoded frame', path: image });
-    if (asset.path.endsWith('_compare.mp4')) {
-      checkedLayouts.add(
-        asset.path.split('/').at(-1).replace('_compare.mp4', ''),
-      );
-      assert.equal(video.width, 1280);
-      assert.equal(video.height, 720);
-      const regions = asset.path.endsWith('side-by-side_compare.mp4')
-        ? [
-            { x: 20, width: 180, roles: ['BEFORE'] },
-            { x: 656, width: 180, roles: ['AFTER'] },
-          ]
-        : [{ x: 20, width: 450, roles: ['BEFORE', 'AFTER'] }];
+    if (asset.comparison) {
+      checkedComparisons++;
+      assert.ok(video.width > 1280 && video.height >= 720);
+      const paneWidth = (video.width - 24) / 2;
+      const regions = [
+        { x: 24, width: 450, roles: ['BROKEN'] },
+        { x: paneWidth + 48, width: 450, roles: ['FIXED'] },
+      ];
       for (const region of regions) {
         const recognized = [];
         for (const binary of [false, true]) {
@@ -97,7 +99,7 @@ for (const [index, name] of names.entries()) {
             '-i',
             image,
             '-vf',
-            `crop=${region.width}:30:${region.x}:80,${binary ? "format=gray,lut=y='if(gt(val,200),0,255)'," : ''}scale=iw*3:ih*3`,
+            `crop=${region.width}:30:${region.x}:14,${binary ? "format=gray,lut=y='if(gt(val,200),0,255)'," : ''}scale=iw*3:ih*3`,
             roi,
           ]);
           for (const psm of ['6', '7', '11'])
@@ -129,11 +131,11 @@ for (const [index, name] of names.entries()) {
     );
   }
   rows.push({
-    id: `LEG-${String(index + 1).padStart(2, '0')}`,
+    id: `FIX-${String(index + 1).padStart(2, '0')}`,
     title: name,
     status: 'passed',
     level:
-      'Decoded legacy media; compare-role OCR; synthetic diagnostics are not measured bug proof',
+      'Decoded scene media; compare-role OCR; synthetic diagnostics are not measured bug proof',
     checks: [
       'All listed videos decoded; review frames linked. Individual overlay semantics still use the dedicated matrix.',
       ...checks,
@@ -141,22 +143,12 @@ for (const [index, name] of names.entries()) {
     artifacts,
   });
 }
-assert.deepEqual(
-  [...checkedLayouts].sort(),
-  [
-    'side-by-side',
-    'onion',
-    'wipe',
-    'cropped-roi',
-    'difference',
-    'edge',
-    'blink',
-  ].sort(),
+assert.ok(checkedComparisons > 0, 'No paired scene output was inspected');
+const reviewRoot = resolve(
+  process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix',
 );
+await mkdir(reviewRoot, { recursive: true });
 await writeFile(
-  resolve(
-    process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix',
-    'legacy.json',
-  ),
+  join(reviewRoot, 'fixtures.json'),
   JSON.stringify({ rows }, null, 2),
 );

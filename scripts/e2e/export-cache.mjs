@@ -28,8 +28,7 @@ const args = [
   resolve('packages/cli/dist/bin.js'),
   'export',
   source.after,
-  '--baseline',
-  source.before,
+  '--draft',
   '--out-dir',
   bundle,
 ];

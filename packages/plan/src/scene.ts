@@ -298,7 +298,12 @@ export function compileScene(input: {
       title: t.title,
       evidenceRefs: selected.map((e) => e.id),
       format: t.format,
-      unit: t.unit,
+      unit:
+        t.unit ||
+        (t.eventKind === 'browser.transfer' &&
+        ['cumulativeBytes', 'encodedDataLength'].includes(t.valuePath ?? '')
+          ? 'B'
+          : ''),
       detail: t.detail,
       severity: t.severity,
       samples: selected.map((e, index) => {
@@ -404,7 +409,7 @@ export function compileScene(input: {
       endMs: markerEnd,
       layer: 50,
       title: step.title,
-      detail: intent?.text ?? '',
+      detail: intent?.text === step.title ? '' : (intent?.text ?? ''),
       step:
         run.steps
           .filter((s) =>
@@ -564,6 +569,7 @@ export function compileScene(input: {
         ) * 2,
       fps: 30,
     },
+    layout: treatment.layout,
     style: treatment.style,
     timing: treatment.timing,
     encoding: treatment.encoding,

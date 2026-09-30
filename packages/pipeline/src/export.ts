@@ -1,7 +1,10 @@
 import { artifactSlug, artifactBaseName } from '@jitterbox/repro-core';
 import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
 import { buildDevToolsReport } from './devtools-export.js';
-import { probeMediaDurationMs, PRIVACY_RENDER_METHOD } from '@jitterbox/repro-render';
+import {
+  probeMediaDurationMs,
+  PRIVACY_RENDER_METHOD,
+} from '@jitterbox/repro-render';
 import { readFile } from 'node:fs/promises';
 import {
   validateEvidence,
@@ -14,6 +17,7 @@ import { verifyRun } from './evidence-run.js';
 import { compareEvidence } from './comparison.js';
 import { recordingDurationMs } from './recording-duration.js';
 import { packageCommand, type EvidenceAssetInput } from './commands/package.js';
+import { withRunLocks } from './run-locks.js';
 
 async function presentation(directory: string, draft = false) {
   const run = await verifyRun(directory);
@@ -128,7 +132,7 @@ export function assertCurrentPrivacyPresentation(
 }
 
 /** Share audited pixels and default-on sanitized diagnostics; raw artifacts remain local. */
-export async function exportEvidence(
+async function exportEvidenceLocked(
   directory: string,
   outDir: string,
   baseline?: string,
@@ -313,4 +317,13 @@ export async function exportEvidence(
     workItem: namingText,
     devtools,
   });
+}
+
+export async function exportEvidence(
+  ...args: Parameters<typeof exportEvidenceLocked>
+) {
+  const [directory, , baseline] = args;
+  return withRunLocks(baseline ? [directory, baseline] : [directory], () =>
+    exportEvidenceLocked(...args),
+  );
 }

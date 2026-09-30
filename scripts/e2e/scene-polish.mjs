@@ -244,14 +244,7 @@ for (const kind of process.env.REPRO_SCENE_KIND
     );
     assert.equal(result.ok, true, JSON.stringify(result));
     const run = result.runs[0].directory;
-    const rendered = await cli(
-      'render',
-      run,
-      '--renderer',
-      'hyperframes',
-      '--treatment',
-      treatment,
-    );
+    const rendered = await cli('render', run, '--treatment', treatment);
     const manifest = JSON.parse(await readFile(join(run, 'run.json'), 'utf8'));
     assert.equal(
       manifest.scenarioOutcome,

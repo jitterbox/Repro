@@ -11,6 +11,71 @@
       "type": "string",
       "const": "hyperframes"
     },
+    "layout": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "overlayPanels": {
+          "default": "as-needed",
+          "type": "string",
+          "enum": [
+            "never",
+            "as-needed"
+          ]
+        },
+        "retireSteps": {
+          "default": true,
+          "type": "boolean"
+        },
+        "minStepVisibleMs": {
+          "default": 5000,
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 30000
+        },
+        "useHeaderSpace": {
+          "default": true,
+          "type": "boolean"
+        },
+        "protectedPadding": {
+          "default": 12,
+          "type": "number",
+          "minimum": 8,
+          "maximum": 48
+        },
+        "protectedRegions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "height": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "style": {
       "default": {},
       "type": "object",
@@ -262,6 +327,36 @@
     "cursorGlow": {
       "default": true,
       "type": "boolean"
+    },
+    "privacyMasks": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "height": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "additionalProperties": false
+      }
     },
     "cursorSamples": {
       "default": [],

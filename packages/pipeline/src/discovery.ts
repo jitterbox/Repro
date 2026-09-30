@@ -132,22 +132,12 @@ export async function doctor() {
     check('ffprobe', () => runProcess('ffprobe', ['-version'])),
     check('filters', async () => {
       const filters = await runProcess('ffmpeg', ['-hide_banner', '-filters']);
-      for (const name of [
-        'overlay',
-        'subtitles',
-        'fps',
-        'crop',
-        'scale',
-        'interleave',
-        'drawbox',
-      ])
+      for (const name of ['overlay', 'fps', 'crop', 'scale', 'drawbox'])
         if (!new RegExp(`\\b${name}\\b`).test(filters))
           throw new Error(`Missing ${name} filter`);
-      return 'overlay, subtitles, fps, crop, scale, interleave, drawbox';
+      return 'overlay, fps, crop, scale, drawbox';
     }),
     check('fonts', async () => {
-      if (process.platform !== 'win32')
-        return runProcess('fc-match', ['sans-serif']);
       const resolver = createRequire(
         createRequire(import.meta.url).resolve('@jitterbox/repro-compositor'),
       );
@@ -156,7 +146,12 @@ export async function doctor() {
           '@fontsource/source-sans-3/files/source-sans-3-latin-400-normal.woff2',
         ),
       );
-      return 'Bundled Source Sans 3; Windows system fonts for legacy ASS';
+      await access(
+        resolver.resolve(
+          '@fontsource/source-code-pro/files/source-code-pro-latin-400-normal.woff2',
+        ),
+      );
+      return 'Bundled Source Sans 3 and Source Code Pro';
     }),
     check('ocr', async () => {
       const version = await runProcess('tesseract', ['--version']);

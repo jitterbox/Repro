@@ -212,6 +212,9 @@ importers:
       '@jitterbox/repro-plan':
         specifier: workspace:*
         version: link:../plan
+      '@jitterbox/repro-playwright':
+        specifier: workspace:*
+        version: link:../playwright
       '@jitterbox/repro-render':
         specifier: workspace:*
         version: link:../render
@@ -250,24 +253,21 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: 1.30.0
-        version: 1.30.0(zod@4.4.3)
       '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
       '@jitterbox/repro-pipeline':
         specifier: workspace:*
         version: link:../pipeline
+      '@modelcontextprotocol/sdk':
+        specifier: 1.30.0
+        version: 1.30.0(zod@4.4.3)
       zod:
         specifier: 4.4.3
         version: 4.4.3
 
   packages/pipeline:
     dependencies:
-      '@playwright/test':
-        specifier: 1.62.0
-        version: 1.62.0
       '@jitterbox/repro-alm':
         specifier: workspace:*
         version: link:../alm
@@ -301,6 +301,9 @@ importers:
       '@jitterbox/repro-viewer':
         specifier: workspace:*
         version: link:../viewer
+      '@playwright/test':
+        specifier: 1.62.0
+        version: 1.62.0
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
@@ -332,9 +335,6 @@ importers:
       '@axe-core/playwright':
         specifier: 4.13.0
         version: 4.13.0(playwright-core@1.62.0)
-      '@playwright/test':
-        specifier: 1.62.0
-        version: 1.62.0
       '@jitterbox/repro-capture':
         specifier: workspace:*
         version: link:../capture
@@ -350,6 +350,9 @@ importers:
       '@jitterbox/repro-probe':
         specifier: workspace:*
         version: link:../probe
+      '@playwright/test':
+        specifier: 1.62.0
+        version: 1.62.0
 
   packages/probe:
     dependencies:
@@ -366,18 +369,12 @@ importers:
 
   packages/render:
     dependencies:
-      '@jitterbox/repro-compare':
-        specifier: workspace:*
-        version: link:../compare
       '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
       '@jitterbox/repro-core':
         specifier: workspace:*
         version: link:../core
-      '@jitterbox/repro-plan':
-        specifier: workspace:*
-        version: link:../plan
 
   packages/vault:
     dependencies:

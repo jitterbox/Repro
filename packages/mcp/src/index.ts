@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { readFile } from 'node:fs/promises';
 import {
   setup,
+  workflowReport,
   importJiraIssue,
   discoverBug,
   discoveryGuide,
@@ -47,7 +48,15 @@ const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });
 export function createReproMcpServer() {
-  const server = new McpServer({ name: 'repro', version: '0.2.1' });
+  const server = new McpServer({ name: 'repro', version: '0.3.0' });
+  server.registerTool(
+    'workflow-report',
+    {
+      description: describeCapability('workflow-report').description,
+      inputSchema: { file: z.string() },
+    },
+    async ({ file }) => json(await workflowReport(file)),
+  );
   server.registerTool(
     'defaults',
     {
@@ -233,23 +242,13 @@ export function createReproMcpServer() {
         appVersion: z.string().trim().min(1).max(160).optional(),
         buildId: z.string().trim().min(1).max(160).optional(),
         versionOverlay: z.boolean().optional(),
-        renderer: z.enum(['legacy', 'hyperframes']).optional(),
         treatment: z.string().optional(),
       },
     },
-    async ({
-      run,
-      evidence,
-      renderer,
-      treatment,
-      appVersion,
-      buildId,
-      versionOverlay,
-    }) =>
+    async ({ run, evidence, treatment, appVersion, buildId, versionOverlay }) =>
       json(
         await renderEvidence(run, {
           ...(evidence ? { evidence } : {}),
-          ...(renderer ? { renderer } : {}),
           ...(treatment ? { treatment } : {}),
           ...(appVersion ? { appVersion } : {}),
           ...(buildId ? { buildId } : {}),

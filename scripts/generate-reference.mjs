@@ -39,7 +39,7 @@ await save(
     commands.join('\n'),
 );
 const server = createReproMcpServer();
-const client = new Client({ name: 'repro-docs', version: '0.2.1' });
+const client = new Client({ name: 'repro-docs', version: '0.3.0' });
 const [a, b] = InMemoryTransport.createLinkedPair();
 try {
   await server.connect(a);
@@ -48,7 +48,7 @@ try {
   const { resources } = await client.listResources();
   await save(
     'mcp.md',
-    '# MCP reference\n\nGenerated from the live stdio server implementation. Register `repro-mcp` with your harness; [installation](../installation.md#mcp) includes an example. JSON schemas below are authoritative for every input. CLI and MCP share the same pipeline, but not every legacy CLI verb is an MCP tool.\n\n' +
+    '# MCP reference\n\nGenerated from the live stdio server implementation. Register `repro-mcp` with your harness; [installation](../installation.md#mcp) includes an example. JSON schemas below are authoritative for every input. CLI and MCP share the same pipeline, but not every low-level CLI verb is an MCP tool.\n\n' +
       tools
         .map(
           (t) =>

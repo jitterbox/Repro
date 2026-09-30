@@ -82,6 +82,7 @@ for (const fail of [false, true]) {
     );
     const blocked = await invoke(
       'export',
+      '--draft',
       directory,
       '--out-dir',
       join(output, 'rejected'),
@@ -98,6 +99,12 @@ for (const fail of [false, true]) {
     assert.equal(rendered.code, 0, JSON.stringify(rendered));
     const updated = JSON.parse(
       await readFile(join(directory, 'run.json'), 'utf8'),
+    );
+    const sceneRef = updated.artifacts.find(
+      (a) => a.kind === 'presentation-scene',
+    );
+    const scene = JSON.parse(
+      await readFile(join(directory, sceneRef.path), 'utf8'),
     );
     for (const checkpoint of ['ready', 'result']) {
       const image = updated.artifacts.find(
@@ -119,11 +126,56 @@ for (const fail of [false, true]) {
       const pixelsText = text.join(' ').replace(/\s+/g, ' ');
       assert.equal(
         /Fix verified/i.test(pixelsText),
-        checkpoint === 'result',
+        false,
         `Incorrect proof label on ${checkpoint}`,
       );
-      assert.match(pixelsText, /Checkout opens after Cart is ready/);
+      // Full-page OCR can reorder a header beside a separate gutter panel.
+      const titleImage = join(output, `${checkpoint}-title.png`);
+      await execute('ffmpeg', [
+        '-v',
+        'error',
+        '-y',
+        '-i',
+        join(directory, image.path),
+        '-vf',
+        `crop=${scene.viewport.width}:${scene.sourceOrigin.y - scene.style.outerInset - 8}:${scene.style.outerInset}:${scene.style.outerInset},scale=iw*2:ih*2`,
+        '-frames:v',
+        '1',
+        titleImage,
+      ]);
+      const titleText = await execute('tesseract', [
+        titleImage,
+        'stdout',
+        '--psm',
+        '6',
+      ]);
+      assert.match(titleText.stdout, /Checkout opens after Cart is ready/);
     }
+    const outcome = scene.cues.find((cue) => cue.kind === 'outcome');
+    assert.ok(outcome, 'The verified result needs an outcome beat');
+    const video = updated.artifacts.find(
+      (a) => a.kind === 'presentation-video',
+    );
+    const outcomeImage = join(output, 'verified-outcome.png');
+    await execute('ffmpeg', [
+      '-v',
+      'error',
+      '-y',
+      '-ss',
+      String((outcome.startMs + 500) / 1000),
+      '-i',
+      join(directory, video.path),
+      '-frames:v',
+      '1',
+      outcomeImage,
+    ]);
+    const outcomeText = await execute('tesseract', [
+      outcomeImage,
+      'stdout',
+      '--psm',
+      '11',
+    ]);
+    assert.match(outcomeText.stdout, /Fix verified/i);
   }
   results.push({
     directory,

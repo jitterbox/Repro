@@ -1,9 +1,9 @@
+import { fixtureCli, fixtureRunForVideo } from '@jitterbox/repro-e2e-fixture';
+import { join } from 'node:path';
 import {
-  annotateCommand,
   captureCommand,
   compareCommand,
   qualityCommand,
-  renderCompareCommand,
   validateConfigCommand,
 } from '@jitterbox/repro-cli';
 
@@ -11,21 +11,25 @@ import type { ReproCliVerb, TranscriptStep } from './types.js';
 
 export interface ReproCliTools {
   readonly allowedVerbs: readonly ReproCliVerb[];
-  validateConfig(
-    configPath: string,
-  ): ReturnType<typeof validateConfigCommand>;
+  validateConfig(configPath: string): ReturnType<typeof validateConfigCommand>;
   capture(
     options: Parameters<typeof captureCommand>[0],
   ): ReturnType<typeof captureCommand>;
-  annotate(
-    options: Parameters<typeof annotateCommand>[0],
-  ): ReturnType<typeof annotateCommand>;
+  annotate(options: {
+    config: string;
+    events: string;
+    outDir: string;
+    video: string;
+  }): Promise<{ planPath: string; render: { outputPath: string } }>;
   compare(
     options: Parameters<typeof compareCommand>[0],
   ): ReturnType<typeof compareCommand>;
-  renderCompare(
-    options: Parameters<typeof renderCompareCommand>[0],
-  ): ReturnType<typeof renderCompareCommand>;
+  renderCompare(options: {
+    composition: string;
+    outDir: string;
+    videoA: string;
+    videoB: string;
+  }): Promise<{ outputPath: string }>;
   quality(
     options: Parameters<typeof qualityCommand>[0],
   ): ReturnType<typeof qualityCommand>;
@@ -33,21 +37,33 @@ export interface ReproCliTools {
 
 export const REPRO_CLI_VERBS = [
   'validate-config',
-  'capture',
-  'annotate',
+  'run',
+  'render',
   'compare',
-  'render-compare',
   'quality',
 ] as const satisfies readonly ReproCliVerb[];
 
 export function createReproCliTools(): ReproCliTools {
   return {
     allowedVerbs: REPRO_CLI_VERBS,
-    annotate: annotateCommand,
+    annotate: async (options) => {
+      const result = (await fixtureCli(
+        'render',
+        await fixtureRunForVideo(options.video),
+      )) as { directory: string; outputPath: string };
+      return { planPath: join(result.directory, 'plan.json'), render: result };
+    },
     capture: captureCommand,
     compare: compareCommand,
     quality: qualityCommand,
-    renderCompare: renderCompareCommand,
+    renderCompare: async (options) =>
+      (await fixtureCli(
+        'render',
+        await fixtureRunForVideo(options.videoB),
+        '--baseline',
+        await fixtureRunForVideo(options.videoA),
+        '--observational',
+      )) as { outputPath: string },
     validateConfig: (configPath) =>
       validateConfigCommand({ config: configPath }),
   };

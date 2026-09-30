@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+- Use the polished scene compositor exclusively; remove renderer selection, raw-event `annotate`, and `render-compare`. Render comparisons with `render AFTER --baseline BEFORE`.
+- Adapt panel placement across the gutter, header, and protected viewport corners; retire older steps only after their minimum reading interval. Show explicit transfer-size units.
+- Add private workflow timing logs, documentation, and the Repro package logo.
+- Serialize render/comparison/export access, protect fractional comparison boundaries, prevent stale frames in shorter rerenders, and retain opaque privacy layers.
+- Reuse identical sanitized sources and copy unmasked PNGs without per-frame encoding processes.
+- Update portable installation, skills, schemas, public references, package contents, and regression coverage.
+
+Final-quality scene export and paired export retain their documented acceptance gates.
+
 ## 0.2.1
 
 - Publish packages under `@jitterbox/repro-*`; the CLI command remains `repro`.

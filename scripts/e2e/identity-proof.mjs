@@ -1,6 +1,6 @@
 /** Synthetic identity metadata controls over an actual captured before/after pair. */
 import assert from 'node:assert/strict';
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -8,6 +8,7 @@ import { resolve, join } from 'node:path';
 const execute = promisify(execFile);
 export async function verifyIdentityProof(before, after, output) {
   await mkdir(output, { recursive: true });
+  output = await mkdtemp(join(output, 'controls-'));
   const controls = [];
   for (const kind of [
     'changed-source',

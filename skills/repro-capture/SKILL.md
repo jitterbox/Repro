@@ -10,6 +10,7 @@ committed config and target URL.
 
 ## Required Inputs
 
+- Committed Playwright scenario and evidence specification.
 - Repro config JSON path.
 - Target URL when the config does not drive navigation itself.
 - Output directory for the capture database, frames, and evidence.
@@ -17,15 +18,15 @@ committed config and target URL.
 ## Command
 
 ```bash
-repro capture --config repro.config.json --url "https://qa.example.com" --out-dir .repro/run
+repro run scenario.spec.ts --evidence evidence.json --config repro.config.json --url "https://qa.example.com" --out-dir .repro/run
 ```
 
 ## Conflict Rules Summary
 
 - Compare mode requires the controlled capture profile.
 - `showActions` conflicts with timing-sensitive captures and pixel diffs.
-- Onion/difference compare modes require matching viewport DSF.
-- Voiceover conflicts with preserved real timing.
+- Scene comparison requires matching viewport and source scale.
+- Narration synthesis is not available; optional action audio is off by default.
 - Strict redaction requires the redaction feature gate.
 
 ## Bug class → capture profile
@@ -87,7 +88,7 @@ committed example lives in `packages/playwright/examples/discovery-assessment.js
 
 ## Scene presentation acceptance
 
-For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/master/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. This opt-in slice keeps the legacy renderer as default and does not yet provide the full diagnostics or automatic repair system.
+For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/master/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. All presentations use the scene compositor; check the guide for remaining acceptance and diagnostics limits.
 
 ## Installation and visual preferences
 
@@ -100,3 +101,7 @@ Store each issue's ID/description in `evidence.workItem` or supply `--work-item`
 Diagnostics export remains on by default; honor `export.devtools: false` or `--no-devtools`. This does not disable local capture. Inspect coverage; raw traces, HAR, DOM serialization and credentials stay local.
 
 Known target-app version/build metadata appears in a persistent textbox by default. Supply per-run `--app-version` / `--build-id` or use the site's declared metadata; configure `versionOverlay` selectors/paths when necessary. Do not infer the app version from Repro's package, Node, or the evidence repository. Honor `--no-version-overlay`; render overrides need no recapture. For selectors, precedence, privacy and limitations, read [configuration](https://github.com/jitterbox/Repro/blob/master/docs/configuration.md).
+
+## Efficient iteration
+
+Reuse valid source footage for text, layout, unit, timing-hold and encoding changes. Before recapturing, record the execution/privacy failure or missing required observation and the changed input. Inspect decisive source evidence before rendering; allow at most three automatic presentation repairs. When asked to audit speed or tool usage, use the [workflow audit guide](https://github.com/jitterbox/Repro/blob/master/docs/workflow-audit.md) for native transcripts, CLI timings and coverage limits.

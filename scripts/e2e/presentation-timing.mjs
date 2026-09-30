@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
-import { renderPlan } from '../../packages/render/dist/index.js';
+import { join, resolve, dirname } from 'node:path';
+import { renderScene } from '../../packages/compositor/dist/index.js';
+import { parseScenePlan } from '../../packages/contracts/dist/index.js';
 const execute = promisify(execFile);
 
 export async function verifyPresentationTiming(
@@ -13,6 +14,14 @@ export async function verifyPresentationTiming(
   output,
 ) {
   await mkdir(output, { recursive: true });
+  const directory = dirname(sourceVideo);
+  const run = JSON.parse(await readFile(join(directory, 'run.json'), 'utf8'));
+  const frameIndex = run.artifacts.find((a) => a.kind === 'source-frame-index');
+  assert.ok(frameIndex, 'Timing checks require verified original frames');
+  const sourceIndex = JSON.parse(
+    await readFile(join(directory, frameIndex.path), 'utf8'),
+  );
+  const sourceOffset = Number(run.environment.recordingStartMs ?? 0);
   const fps = 30;
   const colors = ['red', 'blue', 'green'];
   const sources = colors.map((color) => {
@@ -33,8 +42,8 @@ export async function verifyPresentationTiming(
         ? [137.5, 181.25, 243.75][index % 3]
         : [33.4, 23.3, 10][index % 3];
     endMs += durationMs;
-    const first = Math.round((startMs * fps) / 1000);
-    const last = Math.round((endMs * fps) / 1000);
+    const first = Math.ceil((startMs * fps) / 1000);
+    const last = Math.ceil((endMs * fps) / 1000);
     const color = colors[index % 3];
     const captureAtMs = sources[index % 3] + 3.5;
     const kind = index % 2 === 0 ? 'hold' : 'play';
@@ -53,25 +62,26 @@ export async function verifyPresentationTiming(
     for (let frame = first; frame < last; frame++) expected.push(color);
     segments.push({ id: index, kind, color, first, last });
   }
-  const result = await renderPlan({
-    video: sourceVideo,
+  const scene = parseScenePlan({
+    schemaVersion: '1.0.0',
+    renderer: 'hyperframes',
+    viewport: { width: 1280, height: 720 },
+    output: { width: 1280, height: 720, fps },
+    sourceOrigin: { x: 0, y: 0 },
+    cues: [],
+    segments: beats.map((beat) => ({
+      id: beat.id,
+      kind: beat.kind,
+      outStartMs: beat.outStartMs,
+      outDurationMs: beat.outDurationMs,
+      sourceStartMs: beat.captureAtMs + sourceOffset,
+      rate: beat.kind === 'hold' ? 0 : beat.rate,
+    })),
+  });
+  const result = await renderScene({
+    scene,
     outDir: output,
-    plan: {
-      schemaVersion: 1,
-      viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
-      annotations: [],
-      chapters: [],
-      segments: [],
-      redactionRects: [],
-      metadata: { durationMs: endMs, generatedAtEpoch: 1 },
-      timeline: {
-        schemaVersion: '1.0.0',
-        fps,
-        beats,
-        timeMap: { kind: 'piecewise-linear', knots: [] },
-        warnings: [],
-      },
-    },
+    sources: sourceIndex.map((f) => ({ ...f, path: join(directory, f.path) })),
   });
   const { stdout: pixels } = await execute(
     'ffmpeg',

@@ -10,7 +10,7 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
    configs, and hard constraints.
 2. **[`docs/design-brief.md`](docs/design-brief.md)** — Claude Design brief for
    overlay language, theming, viewer UI, compare layouts, and skill visuals.
-3. **Product pipeline** — `capture → annotate → package/file` via `repro` CLI;
+3. **Product pipeline** — `run → render → export/file` via `repro` CLI;
    deterministic artifacts in CI (`.github/workflows/ci.yml`). Nightly agent +
    judge eval is optional/non-blocking (`.github/workflows/ai-eval.yml`).
 4. Skills (thin CLI wrappers): `skills/repro-{capture,annotate,compare,file}/`
@@ -35,8 +35,8 @@ pipeline (Playwright capture → annotated MP4 → ADO/Jira evidence).
 | --- | --- |
 | Classify bug → features | `docs/ai-usage.md` §5 |
 | Design overlays / viewer / themes | `docs/design-brief.md` |
-| Capture / annotate / file | matching `skills/repro-*` |
-| Before/after | mode `compare` + `repro compare` |
+| Capture / render / file | matching `skills/repro-*` |
+| Before/after | `repro compare` proof report + `repro render AFTER --baseline BEFORE` |
 | Validate setup | `pnpm build && node scripts/e2e/smoke.mjs` |
 | CI (no LLM) | `.github/workflows/ci.yml` |
 | Agent / judge eval | `.github/workflows/ai-eval.yml` (nightly, non-blocking) |

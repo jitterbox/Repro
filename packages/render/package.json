@@ -1,6 +1,6 @@
 {
   "name": "@jitterbox/repro-render",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "exports": {
     ".": {
@@ -13,16 +13,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node -e \"for (const p of ['dist', 'tsconfig.build.tsbuildinfo']) require('node:fs').rmSync(p, { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@jitterbox/repro-compare": "workspace:*",
     "@jitterbox/repro-contracts": "workspace:*",
-    "@jitterbox/repro-core": "workspace:*",
-    "@jitterbox/repro-plan": "workspace:*"
+    "@jitterbox/repro-core": "workspace:*"
   },
   "engines": {
     "node": ">=22"
@@ -40,5 +38,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "@jitterbox/repro-render \u2014 Repro browser evidence and annotated video pipeline"
+  "description": "Shared source sanitization, media inspection and strict privacy auditing for Repro"
 }

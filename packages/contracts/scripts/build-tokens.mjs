@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /**
  * Compile overlay-theme.tokens.json into:
- *  1. regenerated ASS colours (never hand-write)
- *  2. packages/viewer/tokens/tokens.json + CSS custom properties
- *  3. a typed TS module for render/compositor
+ *  1. packages/viewer/tokens/tokens.json + CSS custom properties
+ *  2. a typed TS module for diagnostic planning
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -12,41 +11,6 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const tokensPath = join(root, 'tokens/overlay-theme.tokens.json');
 const theme = JSON.parse(readFileSync(tokensPath, 'utf8'));
-
-/** @param {string} hex */
-export function hexToAss(hex) {
-  const h = hex.replace('#', '');
-  if (h.length !== 6 && h.length !== 8) {
-    throw new Error(`Invalid hex colour: ${hex}`);
-  }
-  const r = h.slice(0, 2).toUpperCase();
-  const g = h.slice(2, 4).toUpperCase();
-  const b = h.slice(4, 6).toUpperCase();
-  const a = h.length === 8 ? h.slice(6, 8) : 'FF';
-  const invertedA = (255 - Number.parseInt(a, 16))
-    .toString(16)
-    .padStart(2, '0')
-    .toUpperCase();
-  return `&H${invertedA}${b}${g}${r}`;
-}
-
-let assDrift = 0;
-for (const [name, entry] of Object.entries(theme.colors)) {
-  const generated = hexToAss(entry.hex);
-  if (entry.ass !== generated) {
-    console.warn(
-      `ASS drift for ${name}: token=${entry.ass} generated=${generated}`,
-    );
-    entry.ass = generated;
-    assDrift += 1;
-  }
-}
-
-if (assDrift > 0) {
-  throw new Error(
-    'Token ASS values drifted; update the authoritative token document before building',
-  );
-}
 
 const outDir = join(root, 'dist/generated');
 mkdirSync(outDir, { recursive: true });
@@ -57,34 +21,11 @@ export const overlayTheme = ${JSON.stringify(theme, null, 2)} as const;
 export type OverlayTheme = typeof overlayTheme;
 export type OverlayColorName = keyof typeof overlayTheme.colors;
 
-export function hexToAss(hex: string): string {
-  const h = hex.replace('#', '');
-  if (h.length !== 6 && h.length !== 8) {
-    throw new Error(\`Invalid hex colour: \${hex}\`);
-  }
-  const r = h.slice(0, 2).toUpperCase();
-  const g = h.slice(2, 4).toUpperCase();
-  const b = h.slice(4, 6).toUpperCase();
-  const a = h.length === 8 ? h.slice(6, 8) : 'FF';
-  const invertedA = (255 - Number.parseInt(a, 16))
-    .toString(16)
-    .padStart(2, '0')
-    .toUpperCase();
-  return \`&H\${invertedA}\${b}\${g}\${r}\`;
-}
-
 export function severityColor(
   severity: keyof typeof overlayTheme.severityMap,
 ): string {
   const token = overlayTheme.severityMap[severity];
   return overlayTheme.colors[token].hex;
-}
-
-export function severityAss(
-  severity: keyof typeof overlayTheme.severityMap,
-): string {
-  const token = overlayTheme.severityMap[severity];
-  return overlayTheme.colors[token].ass;
 }
 `;
 

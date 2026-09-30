@@ -69,9 +69,29 @@ for (const role of ['before', 'after']) {
   const rendered = JSON.parse(
     await readFile(join(directory, 'run.json'), 'utf8'),
   );
-  const still = rendered.artifacts.find((a) => a.kind === 'presentation-image');
+  const sceneRef = rendered.artifacts.find(
+    (a) => a.kind === 'presentation-scene',
+  );
+  const scenePath = join(directory, sceneRef.path);
+  const scene = JSON.parse(await readFile(scenePath, 'utf8'));
+  const outcome = scene.cues.find((cue) => cue.kind === 'outcome');
+  assert.ok(outcome, 'The verified result needs an outcome cue');
+  const still = join(output, `outcome-${role}.png`);
+  const video = rendered.artifacts.find((a) => a.kind === 'presentation-video');
+  await execute('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-ss',
+    String((outcome.startMs + 500) / 1000),
+    '-i',
+    join(directory, video.path),
+    '-frames:v',
+    '1',
+    still,
+  ]);
   const { stdout: pixelsText } = await execute('tesseract', [
-    join(directory, still.path),
+    still,
     'stdout',
     '--psm',
     '11',

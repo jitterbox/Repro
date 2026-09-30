@@ -1,12 +1,7 @@
 import type { ReproConfig } from '@jitterbox/repro-core';
 
 export type ReproCliVerb =
-  | 'validate-config'
-  | 'capture'
-  | 'annotate'
-  | 'compare'
-  | 'render-compare'
-  | 'quality';
+  'validate-config' | 'run' | 'render' | 'compare' | 'quality';
 
 export interface AgentRunArtifacts {
   readonly configPath: string;

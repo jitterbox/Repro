@@ -68,7 +68,7 @@ const jobs = [
   ],
   ['compositor', null, {}, ['--filter', '@jitterbox/repro-compositor', 'test']],
   ['shoplite', null, {}, ['test:e2e-fixture']],
-  ['legacy-pixels', 'legacy-review-index', {}],
+  ['scene-fixture-pixels', 'scene-fixture-review', {}],
   ['matrix-verification', 'verify-review-matrix', {}],
   ['clean-install', null, {}, ['test:clean-install']],
   ['agent-mock', null, {}, ['--filter', '@jitterbox/repro-agent-e2e', 'test']],

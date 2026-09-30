@@ -36,9 +36,7 @@ export {
 } from './zod.js';
 
 export {
-  hexToAss,
   overlayTheme,
-  severityAss,
   severityColor,
   type OverlayColorName,
   type OverlayTheme,

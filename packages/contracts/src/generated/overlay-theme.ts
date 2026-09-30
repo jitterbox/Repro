@@ -23,92 +23,74 @@ export const overlayTheme = {
   "colors": {
     "repro-add": {
       "hex": "#1B7F4A",
-      "ass": "&H004A7F1B",
       "role": "Element or state added"
     },
     "repro-remove": {
       "hex": "#C42020",
-      "ass": "&H002020C4",
       "role": "Element or state removed"
     },
     "repro-change": {
       "hex": "#C47A00",
-      "ass": "&H00007AC4",
       "role": "Element changed or moved"
     },
     "repro-info": {
       "hex": "#2457D6",
-      "ass": "&H00D65724",
       "role": "Neutral callout / step"
     },
     "repro-critical": {
       "hex": "#C42020",
-      "ass": "&H002020C4",
       "role": "Console error, critical a11y"
     },
     "repro-warn": {
       "hex": "#996200",
-      "ass": "&H00006299",
       "role": "Warning / freeze / CLS"
     },
     "repro-click-left": {
       "hex": "#0B8FAD",
-      "ass": "&H00AD8F0B",
       "role": "Primary click ripple"
     },
     "repro-click-right": {
       "hex": "#B13D8C",
-      "ass": "&H008C3DB1",
       "role": "Context-click ripple"
     },
     "repro-label-fg": {
       "hex": "#FFFFFF",
-      "ass": "&H00FFFFFF",
       "role": "Text on dark label fill"
     },
     "repro-label-bg": {
       "hex": "#202020E6",
-      "ass": "&H19202020",
       "role": "Label plate, ~90% opaque"
     },
     "repro-slate-bg": {
       "hex": "#101319",
-      "ass": "&H00191310",
       "role": "Opening slate ground"
     },
     "repro-before": {
       "hex": "#5B6B8C",
-      "ass": "&H008C6B5B",
       "role": "Compare Before / Broken"
     },
     "repro-after": {
       "hex": "#1B7F4A",
-      "ass": "&H004A7F1B",
       "role": "Compare After / Fixed"
     },
     "repro-ring-halo": {
       "hex": "#FFFFFFE6",
-      "ass": "&H19FFFFFF",
       "role": "ADDED: 1px outer ring under every stroke"
     },
     "repro-plate-hairline": {
       "hex": "#FFFFFF2E",
-      "ass": "&HD1FFFFFF",
       "role": "ADDED: plate edge, separates stacked plates"
     },
     "repro-meta": {
       "hex": "#B8BFCC",
-      "ass": "&H00CCBFB8",
       "role": "ADDED: slate + HUD secondary text"
     },
     "repro-scrim": {
       "hex": "#10131980",
-      "ass": "&H7F191310",
       "role": "ADDED: full-frame dim behind slate and outcome cards only"
     },
     "repro-progress": {
       "hex": "#FFFFFFBF",
-      "ass": "&H40FFFFFF",
       "role": "ADDED: 4px bottom progress rail"
     }
   },
@@ -239,32 +221,9 @@ export const overlayTheme = {
 export type OverlayTheme = typeof overlayTheme;
 export type OverlayColorName = keyof typeof overlayTheme.colors;
 
-export function hexToAss(hex: string): string {
-  const h = hex.replace('#', '');
-  if (h.length !== 6 && h.length !== 8) {
-    throw new Error(`Invalid hex colour: ${hex}`);
-  }
-  const r = h.slice(0, 2).toUpperCase();
-  const g = h.slice(2, 4).toUpperCase();
-  const b = h.slice(4, 6).toUpperCase();
-  const a = h.length === 8 ? h.slice(6, 8) : 'FF';
-  const invertedA = (255 - Number.parseInt(a, 16))
-    .toString(16)
-    .padStart(2, '0')
-    .toUpperCase();
-  return `&H${invertedA}${b}${g}${r}`;
-}
-
 export function severityColor(
   severity: keyof typeof overlayTheme.severityMap,
 ): string {
   const token = overlayTheme.severityMap[severity];
   return overlayTheme.colors[token].hex;
-}
-
-export function severityAss(
-  severity: keyof typeof overlayTheme.severityMap,
-): string {
-  const token = overlayTheme.severityMap[severity];
-  return overlayTheme.colors[token].ass;
 }

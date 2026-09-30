@@ -1,6 +1,25 @@
 # MCP reference
 
-Generated from the live stdio server implementation. Register `repro-mcp` with your harness; [installation](../installation.md#mcp) includes an example. JSON schemas below are authoritative for every input. CLI and MCP share the same pipeline, but not every legacy CLI verb is an MCP tool.
+Generated from the live stdio server implementation. Register `repro-mcp` with your harness; [installation](../installation.md#mcp) includes an example. JSON schemas below are authoritative for every input. CLI and MCP share the same pipeline, but not every low-level CLI verb is an MCP tool.
+
+## workflow-report
+
+Summarize private CLI command timing logs enabled by --workflow-log or REPRO_WORKFLOW_LOG. Reports capture invocation counts, failures and incomplete entries; full agent auditing requires the native harness transcript.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "file"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
+```
 
 ## defaults
 
@@ -67,7 +86,7 @@ Import a saved Jira issue, structured description and local media with source li
 
 ## treatments
 
-List the opt-in Hyperframes slice treatments, their measured evidence requirements and editorial guidance.
+List scene treatments, their measured evidence requirements and editorial guidance.
 
 ```json
 {
@@ -344,7 +363,7 @@ Render two scene presentations at equal scale with independent clocks. Observati
 
 ## render
 
-Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.
+Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Use --treatment treatment.json for editorial overrides. The renderer requires verified original frames and provides source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.
 
 ```json
 {
@@ -368,13 +387,6 @@ Render titles, steps, measured highlights and reading holds from a committed evi
     },
     "versionOverlay": {
       "type": "boolean"
-    },
-    "renderer": {
-      "type": "string",
-      "enum": [
-        "legacy",
-        "hyperframes"
-      ]
     },
     "treatment": {
       "type": "string"

@@ -94,6 +94,7 @@ for (const role of ['before', 'after', 'missing-event']) {
     );
     const denied = await invoke(
       'export',
+      '--draft',
       directory,
       '--out-dir',
       join(output, 'rejected'),

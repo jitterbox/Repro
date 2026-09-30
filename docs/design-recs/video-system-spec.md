@@ -1,5 +1,8 @@
 # Repro — Evidence Video System spec (Rev A)
 
+> Historical design proposal. Its hybrid ASS/static-card architecture was retired. Current rendering, typography, layout, and limitations are documented in [Scene renderer](../scene-renderer.md) and [Configuration](../configuration.md).
+
+
 Companion to [`design-brief.md`](design-brief.md). The brief says what the product
 should feel like; this document says what to build, in what order, and against
 which contracts. Where the two disagree, this document is newer.

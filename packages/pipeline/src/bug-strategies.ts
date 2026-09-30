@@ -34,7 +34,7 @@ export const bugStrategies: readonly Strategy[] = [
   {
     id: 'geometry',
     signals: ['geometry', 'compare', 'visual', 'cls'],
-    capabilities: ['compare', 'frame', 'render-compare'],
+    capabilities: ['compare', 'frame', 'render'],
     features: ['zoom', 'layoutShiftViz'],
     recipe: 'geometry',
     question:

@@ -1,4 +1,4 @@
-import { testId, type BugWorkItem } from '../bugs.js';
+import { loadBug, testId, type BugWorkItem } from '../bugs.js';
 import { waitReady } from '../harness.js';
 
 import type { CaptureSession } from '@jitterbox/repro-capture';
@@ -279,15 +279,22 @@ export async function driveMultiShape(
   const page = session.page;
   await waitReady(page);
   await session.showChapter('Multi annotation targets');
-  for (const hint of bug['Custom.AnnotationHints']) {
-    const sel = `[data-testid="${hint.target}"]`;
-    await page
-      .locator(sel)
-      .scrollIntoViewIfNeeded()
-      .catch(() => undefined);
-  }
   await page.click(testId(bug, 'terms'));
   await page.click(testId(bug, 'actions'));
   await page.click(testId(bug, 'export'));
+  for (const hint of bug['Custom.AnnotationHints']) {
+    await page
+      .locator(`[data-testid="${hint.target}"]`)
+      .scrollIntoViewIfNeeded();
+  }
   await page.waitForTimeout(500);
+}
+
+export async function driveMultiShapeFixture(
+  session: CaptureSession,
+): Promise<void> {
+  await driveMultiShape(session, await loadBug('BUG-1004'));
+}
+export async function driveQuiet(session: CaptureSession): Promise<void> {
+  await session.page.waitForTimeout(400);
 }

@@ -11,5 +11,5 @@ export * from './multipage.js';
 export * from './profiles.js';
 export * from './screencast.js';
 
-export const REPRO_CAPTURE_VERSION = '0.2.1' as const;
+export const REPRO_CAPTURE_VERSION = '0.3.0' as const;
 export * from './normalize.js';

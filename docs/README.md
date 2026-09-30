@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/branding/repro-logo.png" alt="Repro — replay bug logo" width="480">
+</p>
+
 # Repro documentation
 
 ## Get started
@@ -16,12 +20,16 @@
 
 ## Design and evidence
 
+- [Branding](branding.md): canonical replay-bug logo and package/documentation usage.
+
 - [Design brief](design-brief.md) and [spike decisions](spikes.md): design intent and architectural history; current runtime references above take precedence over proposed features.
 - [Fresh-agent evaluation](fresh-agent-evaluation.md): actual agent evidence and its limits.
 - [Review matrix](e2e-review-matrix.md): fixture review instructions.
 - [Implementation progress](implementation-progress.md): historical milestone tracking.
 
 ## Maintain and ship
+
+- [Workflow audit](workflow-audit.md): efficient capture, command timing logs, native agent transcripts and recapture accountability.
 
 - [Release guide](releasing.md): versioning, reproducible package contents, npm scope/authentication, CI and publication.
 - [Changelog](https://github.com/jitterbox/Repro/blob/master/CHANGELOG.md).

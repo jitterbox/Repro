@@ -25,6 +25,39 @@ it('rejects missing or reordered semantic comparison beats', () => {
     alignSceneBeats(a, [{ id: 'other', startMs: 0, durationMs: 100 }]),
   ).toThrow('matching ordered');
 });
+it('keeps fractional comparison boundaries inside their semantic beat, including holds', () => {
+  const a = [
+    { id: 'first', startMs: 0, durationMs: 45 },
+    { id: 'second', startMs: 45, durationMs: 80 },
+  ];
+  const b = [
+    { id: 'first', startMs: 0, durationMs: 80 },
+    { id: 'second', startMs: 80, durationMs: 120 },
+  ];
+  const frames = comparisonFrameMap(a, b);
+  for (const f of frames) {
+    const ai = a.find((beat) => beat.id === f.beat);
+    const bi = b.find((beat) => beat.id === f.beat);
+    if (!ai || !bi) throw new Error('Missing semantic beat');
+    for (const [pane, beat] of [
+      [f.a, ai],
+      [f.b, bi],
+    ] as const) {
+      expect((pane.outputFrame * 1000) / 30).toBeGreaterThanOrEqual(
+        beat.startMs,
+      );
+      expect((pane.outputFrame * 1000) / 30).toBeLessThan(
+        beat.startMs + beat.durationMs,
+      );
+    }
+  }
+  expect(() =>
+    comparisonFrameMap(
+      [{ id: 'tiny', startMs: 1, durationMs: 1 }],
+      [{ id: 'tiny', startMs: 1, durationMs: 1 }],
+    ),
+  ).toThrow('no output frame');
+});
 it('keeps an exact 2x/4x crop within the captured viewport without stretching pixels', () => {
   const viewport = { width: 1280, height: 720 },
     target = { x: 1250, y: 710, width: 30, height: 10 };

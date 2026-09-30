@@ -123,8 +123,6 @@ for (const kind of ['menu', 'geometry', 'transient']) {
   const pair = await cli(
     'render',
     b.run,
-    '--renderer',
-    'hyperframes',
     '--baseline',
     a.run,
     ...(kind === 'transient' ? ['--observational'] : []),

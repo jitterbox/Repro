@@ -1,8 +1,15 @@
+import {
+  startWorkflowCommand,
+  workflowReport,
+} from '@jitterbox/repro-pipeline';
 import { setup } from '@jitterbox/repro-pipeline';
 import { treatmentPlanSchema } from '@jitterbox/repro-contracts';
 import { importJiraIssue } from '@jitterbox/repro-pipeline';
 import { renderScenePair } from '@jitterbox/repro-pipeline';
-import { treatmentCatalog, parseTreatmentPlan } from '@jitterbox/repro-pipeline';
+import {
+  treatmentCatalog,
+  parseTreatmentPlan,
+} from '@jitterbox/repro-pipeline';
 import { readFile, writeFile } from 'node:fs/promises';
 import {
   discoverBug,
@@ -28,25 +35,21 @@ import {
 import { Command } from 'commander';
 import { z } from 'zod';
 
-import { annotateCommand } from './commands/annotate.js';
 import { captureCommand } from './commands/capture.js';
 import { compareCommand } from './commands/compare.js';
 import { fileCommand } from './commands/file.js';
 import { packageCommand } from './commands/package.js';
 import { qualityCommand } from './commands/quality.js';
-import { renderCompareCommand } from './commands/render-compare.js';
 import { validateConfigCommand } from './commands/validate-config.js';
 
-export * from './commands/annotate.js';
 export * from './commands/capture.js';
 export * from './commands/compare.js';
 export * from './commands/file.js';
 export * from './commands/package.js';
 export * from './commands/quality.js';
-export * from './commands/render-compare.js';
 export * from './commands/validate-config.js';
 
-export const REPRO_CLI_VERSION = '0.2.1' as const;
+export const REPRO_CLI_VERSION = '0.3.0' as const;
 
 type Writer = (text: string) => void;
 
@@ -58,7 +61,20 @@ export function createReproProgram(writer: Writer = console.log): Command {
   program
     .name('repro')
     .description('Repro AI capture, annotation, and evidence CLI')
-    .version(REPRO_CLI_VERSION);
+    .version(REPRO_CLI_VERSION)
+    .option(
+      '--workflow-log <file>',
+      'Append private command timing records (or use REPRO_WORKFLOW_LOG)',
+    );
+
+  program
+    .command('workflow-report <file>')
+    .description(
+      'Summarize command timings, capture invocations and incomplete workflow records',
+    )
+    .action(async (file: string) => {
+      writer(JSON.stringify(await workflowReport(file), null, 2));
+    });
 
   program
     .command('setup')
@@ -159,7 +175,6 @@ export function createReproProgram(writer: Writer = console.log): Command {
       '--build-id <id>',
       'Target application build label for presentation',
     )
-    .option('--renderer <backend>', 'legacy or hyperframes', 'legacy')
     .option('--treatment <file>', 'Evidence-referenced scene treatments')
     .option(
       '--baseline <run>',
@@ -178,7 +193,6 @@ export function createReproProgram(writer: Writer = console.log): Command {
         run: string,
         options: {
           evidence?: string;
-          renderer: string;
           treatment?: string;
           baseline?: string;
           observational?: boolean;
@@ -187,13 +201,8 @@ export function createReproProgram(writer: Writer = console.log): Command {
           versionOverlay?: boolean;
         },
       ) => {
-        if (options.renderer !== 'legacy' && options.renderer !== 'hyperframes')
-          throw new Error('Unknown renderer');
-        if (options.treatment && options.renderer !== 'hyperframes')
-          throw new Error('Treatments require --renderer hyperframes');
         if (options.baseline) {
           if (
-            options.renderer !== 'hyperframes' ||
             options.treatment ||
             options.evidence ||
             options.appVersion ||
@@ -201,7 +210,7 @@ export function createReproProgram(writer: Writer = console.log): Command {
             options.versionOverlay !== undefined
           )
             throw new Error(
-              'Render each scene first, then compare with --renderer hyperframes --baseline',
+              'Render each scene first, then compare with --baseline',
             );
           writer(
             JSON.stringify(
@@ -222,7 +231,6 @@ export function createReproProgram(writer: Writer = console.log): Command {
           JSON.stringify(
             await renderEvidence(run, {
               ...options,
-              renderer: options.renderer,
             }),
             null,
             2,
@@ -526,9 +534,7 @@ export function createReproProgram(writer: Writer = console.log): Command {
       },
     );
   addCapture(program, writer);
-  addAnnotate(program, writer);
   addCompare(program, writer);
-  addRenderCompare(program, writer);
   addFile(program, writer);
   addPackage(program, writer);
   addQuality(program, writer);
@@ -541,7 +547,28 @@ export async function runCli(
   argv: readonly string[] = process.argv,
 ): Promise<void> {
   const program = createReproProgram();
-  await program.parseAsync(argv);
+  let finish: Awaited<ReturnType<typeof startWorkflowCommand>> | undefined;
+  program.hook('preAction', async (_root, command) => {
+    const file =
+      program.opts<{ workflowLog?: string }>().workflowLog ??
+      process.env.REPRO_WORKFLOW_LOG;
+    if (file && command.name() !== 'workflow-report') {
+      const names = [command.name()];
+      let parent = command.parent;
+      while (parent && parent !== program) {
+        names.unshift(parent.name());
+        parent = parent.parent;
+      }
+      finish = await startWorkflowCommand(file, names.join(' '));
+    }
+  });
+  try {
+    await program.parseAsync(argv);
+    await finish?.(process.exitCode ? 'failed' : 'passed');
+  } catch (error) {
+    await finish?.('failed');
+    throw error;
+  }
 }
 
 function addCapture(program: Command, writer: Writer): void {
@@ -559,29 +586,20 @@ function addCapture(program: Command, writer: Writer): void {
     });
 }
 
-function addAnnotate(program: Command, writer: Writer): void {
-  program
-    .command('annotate')
-    .description('Build an annotation plan and render video')
-    .requiredOption('-c, --config <path>', 'Repro config JSON')
-    .requiredOption('--events <path>', 'Event JSONL file')
-    .option('--frames <path>', 'Frame manifest JSON file')
-    .requiredOption('--video <path>', 'Input MP4 path')
-    .requiredOption('-o, --out-dir <path>', 'Render output directory')
-    .option('--plan-out <path>', 'Plan JSON output path')
-    .option('--output-name <name>', 'Rendered MP4 file name')
-    .option('--resume <rootDir>', 'Resume from verified stage root')
-    .action(async (options: AnnotateOptions) => {
-      await printResult(writer, annotateCommand(options));
-    });
-}
-
 function addCompare(program: Command, writer: Writer): void {
   program
     .command('compare')
-    .description('Compare before/after run directories, or legacy manifests')
-    .argument('<left>', 'Before run directory, or legacy JSON manifest')
-    .argument('<right>', 'After run directory, or legacy JSON manifest')
+    .description(
+      'Compare before/after run directories, or numeric comparison manifests',
+    )
+    .argument(
+      '<left>',
+      'Before run directory, or numeric comparison JSON manifest',
+    )
+    .argument(
+      '<right>',
+      'After run directory, or numeric comparison JSON manifest',
+    )
     .option('-o, --out <path>', 'Write compare result JSON')
     .option('--override-env-drift', 'Allow material environment drift')
     .action(async (left: string, right: string, options: CompareOptions) => {
@@ -594,31 +612,6 @@ function addCompare(program: Command, writer: Writer): void {
 
       writer(JSON.stringify(result, null, 2));
       process.exitCode = result.ok ? 0 : 1;
-    });
-}
-
-function addRenderCompare(program: Command, writer: Writer): void {
-  program
-    .command('render-compare')
-    .description('Render a compare composition MP4 from two videos')
-    .requiredOption('--composition <path>', 'Compare composition JSON')
-    .requiredOption('--video-a <path>', 'Before / left MP4 path')
-    .requiredOption('--video-b <path>', 'After / right MP4 path')
-    .requiredOption('-o, --out-dir <path>', 'Render output directory')
-    .option('--ffmpeg <path>', 'ffmpeg binary path')
-    .action(async (options: RenderCompareCliOptions) => {
-      await printResult(
-        writer,
-        renderCompareCommand({
-          composition: options.composition,
-          outDir: options.outDir,
-          videoA: options.videoA,
-          videoB: options.videoB,
-          ...(options.ffmpeg === undefined
-            ? {}
-            : { ffmpegPath: options.ffmpeg }),
-        }),
-      );
     });
 }
 
@@ -706,7 +699,6 @@ function assetInputs(
 const AssetKindSchema = z.enum(['chapters', 'json', 'mp4', 'vtt', 'png']);
 type AssetKind = z.infer<typeof AssetKindSchema>;
 type CaptureOptions = Parameters<typeof captureCommand>[0];
-type AnnotateOptions = Parameters<typeof annotateCommand>[0];
 type CompareOptions = Omit<
   Parameters<typeof compareCommand>[0],
   'left' | 'right'
@@ -720,8 +712,4 @@ interface PackageOptions {
   readonly viewerDir?: string;
 }
 type QualityOptions = Parameters<typeof qualityCommand>[0];
-type RenderCompareOptions = Parameters<typeof renderCompareCommand>[0];
-type RenderCompareCliOptions = RenderCompareOptions & {
-  readonly ffmpeg?: string;
-};
 type ValidateOptions = Parameters<typeof validateConfigCommand>[0];

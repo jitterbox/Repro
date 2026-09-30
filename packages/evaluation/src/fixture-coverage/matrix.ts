@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export interface CoverageMatrix {
@@ -37,10 +37,7 @@ export interface CoverageReport {
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_MATRIX = join(
-  HERE,
-  '../../data/coverage-matrix.json',
-);
+const DEFAULT_MATRIX = join(HERE, '../../data/coverage-matrix.json');
 
 export async function loadCoverageMatrix(
   path = DEFAULT_MATRIX,
@@ -54,14 +51,11 @@ export async function evaluateCoverage(input: {
 }): Promise<CoverageReport> {
   const matrix = input.matrix ?? (await loadCoverageMatrix());
   const plans = await collectPlans(input.fixtureRoot);
-  const compareMp4s = await collectCompareMp4s(input.fixtureRoot);
+  const sceneComparisons = await collectSceneComparisons(input.fixtureRoot);
 
   const overlay = matrix.overlayKit.map((row) => {
     const hits = plans.filter((plan) => countInPlan(plan, row) > 0);
-    const found = hits.reduce(
-      (sum, plan) => sum + countInPlan(plan, row),
-      0,
-    );
+    const found = hits.reduce((sum, plan) => sum + countInPlan(plan, row), 0);
     const required = matrix.minInstances;
     return {
       component: row.component,
@@ -73,9 +67,9 @@ export async function evaluateCoverage(input: {
   });
 
   const compare = matrix.compareLayouts.map((layout) => {
-    const paths = compareMp4s.filter((path) =>
-      path.includes(`${layout}_compare.mp4`),
-    );
+    // The shipped scene compositor emits two panes. Numeric comparison plans
+    // and historical encoder filenames do not establish rendered coverage.
+    const paths = layout === 'side-by-side' ? sceneComparisons : [];
     const required = matrix.minCompareLayouts;
     return {
       layout,
@@ -121,9 +115,43 @@ async function collectPlans(root: string): Promise<readonly PlanHit[]> {
   return plans;
 }
 
-async function collectCompareMp4s(root: string): Promise<readonly string[]> {
-  const files = await findFiles(root, '.mp4');
-  return files.filter((path) => path.includes('_compare.mp4'));
+async function collectSceneComparisons(
+  root: string,
+): Promise<readonly string[]> {
+  const paths = new Set<string>();
+  for (const path of await findFiles(root, 'scene-comparison.json')) {
+    try {
+      const document = JSON.parse(await readFile(path, 'utf8')) as {
+        outputPath: string;
+        frameMap: string;
+        receipt: { renderer: string; frameCount: number };
+      };
+      if (document.receipt.renderer !== 'hyperframes') continue;
+      const output = resolve(dirname(path), document.outputPath);
+      const media = await stat(output);
+      const frames: { a?: unknown; b?: unknown }[] = JSON.parse(
+        await readFile(resolve(dirname(path), document.frameMap), 'utf8'),
+      ) as { a?: unknown; b?: unknown }[];
+      if (
+        media.isFile() &&
+        media.size > 0 &&
+        output.endsWith('.mp4') &&
+        frames.length > 0 &&
+        frames.length === document.receipt.frameCount &&
+        frames.every(
+          (frame) =>
+            frame.a !== null &&
+            frame.a !== undefined &&
+            frame.b !== null &&
+            frame.b !== undefined,
+        )
+      )
+        paths.add(output);
+    } catch {
+      // Missing/invalid artifacts are coverage gaps, not passing ledger entries.
+    }
+  }
+  return [...paths];
 }
 
 function countInPlan(plan: PlanHit, row: CoverageRow): number {

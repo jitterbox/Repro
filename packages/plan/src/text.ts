@@ -59,7 +59,7 @@ function fallbackWidth(text: string, fontSize: number): number {
 
 let overlayFontPath: string | undefined;
 let overlayFontResolved = false;
-/** Shared conservative width for planning and libass text fitting. */
+/** Conservative text width for diagnostic planning metadata. */
 export function measureOverlayTextWidth(
   text: string,
   fontSize: number,

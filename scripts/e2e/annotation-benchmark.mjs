@@ -30,7 +30,9 @@ const cli = resolve(
   process.env.REPRO_BENCHMARK_CLI ?? 'packages/cli/dist/bin.js',
 );
 const require = createRequire(await realpath(cli));
-const pipelineRequire = createRequire(require.resolve('@jitterbox/repro-pipeline'));
+const pipelineRequire = createRequire(
+  require.resolve('@jitterbox/repro-pipeline'),
+);
 const root = resolve(
   process.env.REPRO_BENCHMARK_OUT ?? '.repro/annotation-benchmark',
 );
@@ -60,7 +62,7 @@ const report = {
   completed: false,
   kind: 'annotation-only-cli-edit',
   baseline: null,
-  approvedBaselineCommit: '8f3739a3bf6de029246c260b76bcc65908f83fed',
+  approvedBaselineCommit: null,
   attempt,
   cli,
   implementations: Object.fromEntries(
@@ -113,11 +115,7 @@ for (const label of [
   const durationMs = performance.now() - start;
   const result = JSON.parse(stdout);
   await writeFile(join(attempt, `${label}-result.json`), stdout);
-  assert.equal(
-    result.cacheHit,
-    false,
-    'Each measured iteration must apply a different title',
-  );
+  assert.ok(result.receipt.sceneSha256, 'Every edit produces a scene identity');
   const current = JSON.parse(
     await readFile(join(directory, 'run.json'), 'utf8'),
   );
@@ -125,18 +123,17 @@ for (const label of [
   await verifyInputs();
   const image = current.artifacts.find((a) => a.kind === 'presentation-image');
   assert.ok(image);
-  const planArtifact = current.artifacts.find((a) =>
-    a.kind.startsWith('presentation-key:'),
+  const scene = JSON.parse(
+    await readFile(join(result.directory, 'scene.json'), 'utf8'),
   );
-  assert.ok(planArtifact);
-  const plan = JSON.parse(
-    await readFile(join(directory, planArtifact.path), 'utf8'),
+  assert.equal(
+    scene.cues.find((cue) => cue.kind === 'title').title,
+    edit.title,
   );
-  const title = plan.annotations.find(
-    (annotation) => annotation.id === 'title',
-  );
-  assert.ok(title?.bounds);
-  const { x, y, width, height } = title.bounds;
+  const x = scene.style.outerInset,
+    y = scene.style.outerInset,
+    width = scene.viewport.width,
+    height = scene.sourceOrigin.y - y - 8;
   const titlePixels = join(attempt, `${label}-title.png`);
   // Inspect the rendered title region; whole-page segmentation can omit a slate.
   await execute('ffmpeg', [
@@ -183,7 +180,7 @@ const values = report.samples
 report.medianMs = values[Math.floor(values.length / 2)];
 report.completed = true;
 report.performanceGate =
-  'unassessed: requires a comparable timing measurement of approved baseline 8f3739a';
+  'unassessed: compare receipts only within the same pinned scene renderer environment';
 await save();
 console.log(
   JSON.stringify({

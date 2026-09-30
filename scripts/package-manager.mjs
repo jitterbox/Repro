@@ -3,7 +3,6 @@ import { delimiter, join } from 'node:path';
 import { existsSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 export function packageManagerInvocation(name, args) {
-  if (process.platform !== 'win32') return { command: name, args };
   if (
     name === 'pnpm' &&
     /[\\/]pnpm\.(?:c?js)$/.test(process.env.npm_execpath ?? '')
@@ -12,6 +11,7 @@ export function packageManagerInvocation(name, args) {
       command: process.execPath,
       args: [process.env.npm_execpath, ...args],
     };
+  if (process.platform !== 'win32') return { command: name, args };
   if (
     name === 'pnpm' &&
     /[\\/]pnpm\.exe$/i.test(process.env.npm_execpath ?? '') &&

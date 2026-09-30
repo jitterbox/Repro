@@ -114,6 +114,11 @@ and verifies the native rejection. No LLM participates. CI runs this command and
 retains `.repro/fresh-agent-replay` on failure. It is now a regression corpus, not
 unseen material for future fresh-agent scoring.
 
+The maintained FA-02 regression waits for the dialog's close event to finish
+before checking focus, since native focus restoration precedes the application's
+asynchronous handler. Its failing/passing assertions are unchanged. This repair
+does not establish a new fresh-agent success or rewrite the original reports.
+
 `node scripts/e2e/fresh-agent/verify-submissions.mjs` checks the original local
 submission captures with the current renderer, reaudits exports, verifies all
 artifact hashes and diagnostic obligations, and publishes `FA-01`–`FA-06` rows

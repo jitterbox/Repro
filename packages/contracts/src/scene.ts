@@ -105,7 +105,16 @@ export const sceneEncodingSchema = z.strictObject({
     ])
     .default('veryfast'),
 });
+export const sceneLayoutSchema = z.strictObject({
+  overlayPanels: z.enum(['never', 'as-needed']).default('as-needed'),
+  retireSteps: z.boolean().default(true),
+  minStepVisibleMs: z.number().int().min(1000).max(30000).default(5000),
+  useHeaderSpace: z.boolean().default(true),
+  protectedPadding: z.number().min(8).max(48).default(12),
+  protectedRegions: z.array(sceneRectSchema).default([]),
+});
 const scenePreferences = {
+  layout: sceneLayoutSchema.prefault({}),
   style: sceneStyleSchema.prefault({}),
   timing: sceneTimingSchema.prefault({}),
   encoding: sceneEncodingSchema.prefault({}),
@@ -224,6 +233,7 @@ export const scenePlanSchema = z.strictObject({
   outputScale: z.union([z.literal(1), z.literal(2)]).default(1),
   actionAudio: z.boolean().default(false),
   cursorGlow: z.boolean().default(true),
+  privacyMasks: z.array(sceneRectSchema).default([]),
   cursorSamples: z
     .array(
       z.strictObject({
