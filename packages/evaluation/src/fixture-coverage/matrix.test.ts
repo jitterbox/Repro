@@ -53,6 +53,8 @@ describe('design-language coverage matrix', () => {
       expect((await compare())[0]?.found).toBe(0);
       await writeFile(frameMap, JSON.stringify([{ a: {} }]));
       expect((await compare())[0]?.found).toBe(0);
+      await writeFile(frameMap, JSON.stringify([{ a: null, b: {} }]));
+      expect((await compare())[0]?.found).toBe(0);
       await writeFile(frameMap, JSON.stringify([{ a: {}, b: {} }]));
       expect((await compare())[0]?.found).toBe(1);
       const unsupported = await evaluateCoverage({

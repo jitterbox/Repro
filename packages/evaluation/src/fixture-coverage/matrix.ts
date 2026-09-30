@@ -138,7 +138,13 @@ async function collectSceneComparisons(
         output.endsWith('.mp4') &&
         frames.length > 0 &&
         frames.length === document.receipt.frameCount &&
-        frames.every((frame) => frame.a !== undefined && frame.b !== undefined)
+        frames.every(
+          (frame) =>
+            frame.a !== null &&
+            frame.a !== undefined &&
+            frame.b !== null &&
+            frame.b !== undefined,
+        )
       )
         paths.add(output);
     } catch {

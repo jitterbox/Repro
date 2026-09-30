@@ -63,7 +63,7 @@ await exec(
      const cliRequire = createRequire(realpathSync(${JSON.stringify(cli)}));
      const pipelineRequire = createRequire(cliRequire.resolve('@jitterbox/repro-pipeline'));
      const { loadCoverageMatrix } = await import(pathToFileURL(pipelineRequire.resolve('@jitterbox/repro-evaluation')).href);
-     assert.equal((await loadCoverageMatrix()).compareLayouts.length, 7);`,
+     assert.deepEqual((await loadCoverageMatrix()).compareLayouts, ['side-by-side']);`,
   ],
   { cwd: project },
 );
