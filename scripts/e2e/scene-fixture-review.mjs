@@ -1,5 +1,5 @@
 /** Decode scene fixture outputs and verify compare role pixels; never claim synthetic geometry as measured proof. */
-import { readFile, readdir, writeFile, stat } from 'node:fs/promises';
+import { readFile, readdir, writeFile, stat, mkdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
@@ -144,10 +144,11 @@ for (const [index, name] of names.entries()) {
   });
 }
 assert.ok(checkedComparisons > 0, 'No paired scene output was inspected');
+const reviewRoot = resolve(
+  process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix',
+);
+await mkdir(reviewRoot, { recursive: true });
 await writeFile(
-  resolve(
-    process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix',
-    'fixtures.json',
-  ),
+  join(reviewRoot, 'fixtures.json'),
   JSON.stringify({ rows }, null, 2),
 );
