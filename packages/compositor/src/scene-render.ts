@@ -1,6 +1,11 @@
 import { headlessShellPath } from './browser-path.js';
 import { actionWave } from './scene-audio.js';
-import { routeLeader } from './scene-layout.js';
+import {
+  routeLeader,
+  planPanelLayout,
+  type PanelBox,
+  type ProtectedBox,
+} from './scene-layout.js';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -23,7 +28,7 @@ import {
   type ScenePlan,
   type SceneRect,
 } from '@jitterbox/repro-contracts';
-import { runProcess, h264Profile } from '@jitterbox/repro-core';
+import { runProcess, h264Profile, withFileLock } from '@jitterbox/repro-core';
 
 export interface SceneSourceFrame {
   id: string;
@@ -47,17 +52,22 @@ export function selectSceneFrame(
   const position = sceneSourceAt(scene, outputMs);
   if (!position) return null;
   const { segment, sourceMs } = position;
-  const source = segment.checkpoint
-    ? sources.find((s) => s.checkpoint === segment.checkpoint)
-    : sources
-        .filter(
-          (s) =>
-            !s.checkpoint &&
-            (!segment.pageId || s.pageId === segment.pageId) &&
-            s.timeMs <= sourceMs,
-        )
-        .sort((a, b) => a.timeMs - b.timeMs)
-        .at(-1);
+  let source: SceneSourceFrame | undefined;
+  if (segment.checkpoint) {
+    source = sources.find((s) => s.checkpoint === segment.checkpoint);
+  } else {
+    // Preserve the last equal-timestamp frame, without sorting and allocating
+    // a new array for every output frame.
+    for (const candidate of sources) {
+      if (
+        !candidate.checkpoint &&
+        (!segment.pageId || candidate.pageId === segment.pageId) &&
+        candidate.timeMs <= sourceMs &&
+        (!source || candidate.timeMs >= source.timeMs)
+      )
+        source = candidate;
+    }
+  }
   if (!source)
     throw new Error(`No source frame for ${segment.id} at ${sourceMs}`);
   return { source, sourceMs, segmentId: segment.id };
@@ -95,6 +105,29 @@ export function magnifierRegion(
   };
 }
 
+/** Units describe the captured value; raw-byte metrics use compact SI display units. */
+export function formatSceneValue(
+  sample: { text: string; value?: number | undefined },
+  unit: string,
+) {
+  if (
+    ['B', 'bytes'].includes(unit) &&
+    typeof sample.value === 'number' &&
+    Number.isFinite(sample.value)
+  ) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const index = Math.min(
+      units.length - 1,
+      Math.max(
+        0,
+        Math.floor(Math.log10(Math.max(1, Math.abs(sample.value))) / 3),
+      ),
+    );
+    return `${Number((sample.value / 1000 ** index).toFixed(2))} ${units[index]}`;
+  }
+  return sample.text + (unit ? ' ' + unit : '');
+}
+
 // Serialized into a controlled composition. No page-provided code is evaluated.
 function sceneRuntime(
   scene: ScenePlan,
@@ -130,65 +163,74 @@ function sceneRuntime(
       ? null
       : s.sourceStartMs + (time - s.outStartMs) * s.rate;
   };
+  let schedule: ReturnType<typeof planPanelLayout> | undefined;
   const layout = () => {
-    const occupied: { y: number; h: number; start: number; end: number }[] = [];
-    const results: {
-      id: string;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }[] = [];
-    for (const group of [...groups].sort(
-      (a, b) =>
-        (b.dataset.kind === 'app-version'
-          ? 2
-          : Number(b.dataset.kind === 'marker')) -
-        (a.dataset.kind === 'app-version'
-          ? 2
-          : Number(a.dataset.kind === 'marker')),
-    )) {
+    const cards: PanelBox[] = [];
+    const protectedBoxes: ProtectedBox[] = [];
+    const protect = (r: SceneRect, startMs: number, endMs: number) => {
+      if (r.width > 0 && r.height > 0)
+        protectedBoxes.push({ ...r, startMs, endMs });
+    };
+    for (const group of groups) {
       const cue = required(scene.cues.find((c) => c.id === group.dataset.cue));
       const card = group.querySelector<HTMLElement>('.card');
-      if (!card || cue.kind === 'title') continue;
-      const value = card.querySelector<HTMLElement>('.value');
+      if (cue.kind === 'title') {
+        if (card) {
+          const r = card.getBoundingClientRect();
+          if (r.bottom + 12 > origin.y)
+            throw new Error('Title overlaps the source viewport');
+          protect(
+            { x: r.x, y: r.y, width: r.width, height: r.height },
+            cue.startMs,
+            cue.endMs,
+          );
+        }
+        continue;
+      }
+      const value = card?.querySelector<HTMLElement>('.value');
       if (value) {
+        value.style.height = '';
         let height = 0;
-        for (const sample of cue.samples) {
-          value.textContent = sample.text + (cue.unit ? ' ' + cue.unit : '');
+        for (const text of [
+          'No observation yet',
+          'No source time',
+          ...cue.samples.map((s) => formatSceneValue(s, cue.unit)),
+        ]) {
+          value.textContent = text;
           height = Math.max(height, value.getBoundingClientRect().height);
         }
-        value.style.height = `${Math.max(88, height)}px`;
+        value.style.height = `${height}px`;
         value.textContent = 'No observation yet';
       }
-      const h = card.getBoundingClientRect().height;
-      let y = origin.y;
-      for (;;) {
-        const conflict = occupied.find(
-          (o) =>
-            cue.startMs < o.end &&
-            o.start < cue.endMs &&
-            y < o.y + o.h + scene.style.cardGap &&
-            y + h + scene.style.cardGap > o.y,
-        );
-        if (!conflict) break;
-        y = conflict.y + conflict.h + scene.style.cardGap;
-      }
-      if (y + h > scene.output.height - scene.style.outerInset * 2)
-        throw new Error(`No readable space for required group ${cue.id}`);
-      const x = origin.x + scene.viewport.width + scene.style.gutterGap;
-      card.style.left = `${x}px`;
-      card.style.top = `${y}px`;
-      occupied.push({ y, h, start: cue.startMs, end: cue.endMs });
-      results.push({
-        id: cue.id,
-        x,
-        y,
-        width: scene.style.cardWidth,
-        height: h,
-      });
-      const leader = group.querySelector<SVGPathElement>('.leader');
-      if (leader && cue.target) {
+      // Include every guide/outline/marker and its compass pointer, not the full SVG viewport.
+      if (cue.kind !== 'pointer')
+        for (const shape of Array.from(
+          group.querySelectorAll<SVGGraphicsElement>('svg > *:not(.leader)'),
+        )) {
+          if (shape.closest('.sparkline')) continue;
+          const r = shape.getBBox();
+          protect(
+            {
+              x: r.x,
+              y: r.y,
+              width: Math.max(1, r.width),
+              height: Math.max(1, r.height),
+            },
+            cue.startMs,
+            cue.endMs,
+          );
+        }
+      for (const r of [cue.target, cue.reference])
+        if (r)
+          protect(
+            { ...r, x: origin.x + r.x, y: origin.y + r.y },
+            cue.startMs,
+            cue.endMs,
+          );
+      if (!card) continue;
+      const r = card.getBoundingClientRect();
+      let anchor: { x: number; y: number } | undefined;
+      if (group.querySelector('.leader') && cue.target) {
         const region =
           cue.kind === 'magnifier'
             ? magnifierRegion(
@@ -198,86 +240,87 @@ function sceneRuntime(
                 scene.style.cardWidth - scene.style.cardPadding * 2 - 5,
               )
             : cue.target;
-        // Center of the visible outline's right edge, exactly on its stroke.
-        let tx = Math.min(
-          origin.x + scene.viewport.width,
-          origin.x + region.x + region.width + 4,
-        );
-        const top = Math.max(origin.y, origin.y + region.y - 4);
-        const bottom = Math.min(
-          origin.y + scene.viewport.height,
-          origin.y + region.y + region.height + 4,
-        );
-        let ty = (top + bottom) / 2;
-        if (cue.kind === 'alignment' && cue.reference) {
-          if ((cue.axis ?? 'x') === 'x') {
-            tx = origin.x + Math.min(cue.target.x, cue.reference.x);
-            ty =
-              origin.y +
-              (Math.min(cue.target.y, cue.reference.y) +
-                Math.max(
-                  cue.target.y + cue.target.height,
-                  cue.reference.y + cue.reference.height,
-                )) /
-                2;
-          } else {
-            tx =
-              origin.x +
-              (Math.min(cue.target.x, cue.reference.x) +
-                Math.max(
-                  cue.target.x + cue.target.width,
-                  cue.reference.x + cue.reference.width,
-                )) /
-                2;
-            ty = origin.y + Math.min(cue.target.y, cue.reference.y);
-          }
-        }
-        const obstacles = scene.cues
-          .filter(
-            (c) =>
-              c.target &&
-              c.id !== cue.id &&
-              c.startMs < cue.endMs &&
-              cue.startMs < c.endMs,
-          )
-          .map((c) => ({
-            ...required(c.target),
-            x: origin.x + required(c.target).x - 3,
-            y: origin.y + required(c.target).y - 3,
-            width: required(c.target).width + 6,
-            height: required(c.target).height + 6,
-          }));
-        if (cue.kind === 'alignment') {
-          for (const region of [cue.target, cue.reference])
-            if (region)
-              obstacles.push({
-                ...region,
-                x: origin.x + region.x,
-                y: origin.y + region.y,
-              });
-        }
-        leader.setAttribute(
-          'd',
-          routeLeader(
-            { x: tx, y: ty },
-            { x, y: y + h / 2 },
-            obstacles.filter(
-              (r) =>
-                !(
-                  tx > r.x &&
-                  tx < r.x + r.width &&
-                  ty > r.y &&
-                  ty < r.y + r.height
-                ),
-            ),
+        anchor = {
+          x: Math.min(
+            origin.x + scene.viewport.width,
+            origin.x + region.x + region.width + 4,
           ),
+          y:
+            (Math.max(origin.y, origin.y + region.y - 4) +
+              Math.min(
+                origin.y + scene.viewport.height,
+                origin.y + region.y + region.height + 4,
+              )) /
+            2,
+        };
+        if (cue.kind === 'alignment' && cue.reference) {
+          anchor =
+            (cue.axis ?? 'x') === 'x'
+              ? {
+                  x: origin.x + Math.min(cue.target.x, cue.reference.x),
+                  y:
+                    origin.y +
+                    (Math.min(cue.target.y, cue.reference.y) +
+                      Math.max(
+                        cue.target.y + cue.target.height,
+                        cue.reference.y + cue.reference.height,
+                      )) /
+                      2,
+                }
+              : {
+                  x:
+                    origin.x +
+                    (Math.min(cue.target.x, cue.reference.x) +
+                      Math.max(
+                        cue.target.x + cue.target.width,
+                        cue.reference.x + cue.reference.width,
+                      )) /
+                      2,
+                  y: origin.y + Math.min(cue.target.y, cue.reference.y),
+                };
+        }
+      }
+      cards.push({
+        id: cue.id,
+        kind: cue.kind,
+        startMs: cue.startMs,
+        endMs: cue.endMs,
+        x: 0,
+        y: 0,
+        width: r.width,
+        height: r.height,
+        ...(anchor ? { anchor } : {}),
+      });
+    }
+    // Protect the observed cursor and recent trail throughout each beat, including holds/replay.
+    for (const segment of scene.segments) {
+      if (segment.sourceStartMs === undefined) continue;
+      const from = segment.sourceStartMs,
+        until = from + segment.outDurationMs * segment.rate;
+      const samples = scene.cursorSamples.filter(
+        (p) => !segment.pageId || p.pageId === segment.pageId,
+      );
+      const points = [
+        samples.filter((p) => p.timeMs <= from).at(-1),
+        ...samples.filter((p) => p.timeMs > from && p.timeMs <= until),
+      ].filter((p) => p !== undefined);
+      for (let i = 0; i < points.length; i++) {
+        const point = required(points[i]);
+        const previous = points[i - 1] ?? point;
+        protect(
+          {
+            x: origin.x + Math.min(point.x, previous.x) - 8,
+            y: origin.y + Math.min(point.y, previous.y) - 8,
+            width: Math.abs(point.x - previous.x) + 40,
+            height: Math.abs(point.y - previous.y) + 48,
+          },
+          segment.outStartMs,
+          segment.outStartMs + segment.outDurationMs,
         );
       }
     }
-    const title = document.querySelector<HTMLElement>('.card.title');
-    if (title && title.getBoundingClientRect().bottom + 12 > origin.y)
-      throw new Error('Title overlaps the source viewport');
-    return results;
+    schedule = planPanelLayout(scene, cards, protectedBoxes);
+    return schedule;
   };
   root.__reproLayout = layout;
   root.__reproValidate = () => {
@@ -319,6 +362,21 @@ function sceneRuntime(
         )
           throw new Error(`Inconsistent numbered group: ${g.dataset.cue}`);
       }
+      const time = Number(document.documentElement.dataset.outputMs ?? 0);
+      const beat = schedule?.beats.find(
+        (b) => time >= b.startMs && time < b.endMs,
+      );
+      if (
+        card.dataset.zone === 'overlay' &&
+        beat?.protected.some(
+          (p) =>
+            r.left < p.x + p.width &&
+            p.x < r.right &&
+            r.top < p.y + p.height &&
+            p.y < r.bottom,
+        )
+      )
+        throw new Error(`Overlay covers protected evidence: ${g.dataset.cue}`);
       return [{ id: g.dataset.cue, rect: r }];
     });
     for (let i = 0; i < cards.length; i++)
@@ -336,6 +394,27 @@ function sceneRuntime(
   };
   const seek = (seconds: number) => {
     const t = seconds * 1000;
+    // Rebuild vector display lists: Chromium can retain different rounded-edge
+    // antialiasing after sequential fades versus random seeking. No event
+    // handlers live on these controlled SVG nodes; all state is reapplied below.
+    for (const group of groups)
+      for (const child of Array.from(group.children))
+        if (child.tagName.toLowerCase() === 'svg')
+          child.replaceWith(child.cloneNode(true));
+    document.documentElement.dataset.outputMs = String(t);
+    if (!schedule) layout();
+    const beat = schedule?.beats.find((b) => t >= b.startMs && t < b.endMs);
+    for (const placement of beat?.panels ?? []) {
+      const group = required(
+        groups.find((g) => g.dataset.cue === placement.id),
+      );
+      const card = required(group.querySelector<HTMLElement>('.card'));
+      card.style.left = `${placement.x}px`;
+      card.style.top = `${placement.y}px`;
+      card.dataset.zone = placement.zone;
+      if (placement.leader)
+        group.querySelector('.leader')?.setAttribute('d', placement.leader);
+    }
     const frame =
       mapping[
         Math.min(
@@ -410,7 +489,8 @@ function sceneRuntime(
     }
     for (const group of groups) {
       const cue = required(scene.cues.find((c) => c.id === group.dataset.cue));
-      const active = t >= cue.startMs && t < cue.endMs;
+      const cueEnd = schedule?.retired[cue.id] ?? cue.endMs;
+      const active = t >= cue.startMs && t < cueEnd;
       const alpha =
         cue.kind === 'app-version'
           ? 1
@@ -419,7 +499,7 @@ function sceneRuntime(
               Math.min(
                 1,
                 (t - cue.startMs) / Math.max(1, scene.timing.entryMs),
-                (cue.endMs - t) / Math.max(1, scene.timing.exitMs),
+                (cueEnd - t) / Math.max(1, scene.timing.exitMs),
               ),
             );
       group.style.opacity = active ? String(alpha) : '0';
@@ -499,12 +579,17 @@ function sceneRuntime(
         );
       }
       const value = group.querySelector<HTMLElement>('.value');
-      if (value)
+      if (value) {
+        const sample = cue.samples
+          .filter((s) => sourceMs !== null && s.timeMs <= sourceMs)
+          .at(-1);
         value.textContent =
           sourceMs === null
             ? 'No source time'
-            : (cue.samples.filter((s) => s.timeMs <= sourceMs).at(-1)?.text ??
-              'No observation yet');
+            : sample
+              ? formatSceneValue(sample, cue.unit)
+              : 'No observation yet';
+      }
     }
     pending = (async () => {
       if (frame && image.getAttribute('src') !== frame.asset) {
@@ -768,6 +853,10 @@ function sceneMarkup(scene: ScenePlan) {
           'div',
           {
             'data-cue': c.id,
+            'data-comparison-key': JSON.stringify({
+              target: c.target,
+              reference: c.reference,
+            }),
             key: c.id,
             'data-kind': c.kind,
             style: { display: 'contents' },
@@ -869,7 +958,8 @@ function sceneMarkup(scene: ScenePlan) {
           ? {
               left: scene.style.outerInset,
               top: 18,
-              width: scene.output.width - scene.style.outerInset * 2,
+              width: 'max-content',
+              maxWidth: scene.viewport.width,
               background: 'transparent',
               boxShadow: 'none',
               border: 'none',
@@ -889,6 +979,10 @@ function sceneMarkup(scene: ScenePlan) {
         'div',
         {
           'data-cue': c.id,
+          'data-comparison-key': JSON.stringify({
+            target: c.target,
+            reference: c.reference,
+          }),
           key: c.id,
           'data-kind': c.kind,
           style: { display: 'contents' },
@@ -1021,6 +1115,32 @@ function sceneMarkup(scene: ScenePlan) {
           pointerEvents: 'none',
         },
       }),
+      // Privacy owns the final source-surface layer, including cursor/leader pixels.
+      // Source assets are already sanitized; this also prevents decorative ink
+      // from making an opaque privacy region appear partially uncovered.
+      ...scene.privacyMasks.map((mask, index) =>
+        e('div', {
+          key: `privacy-${index}`,
+          style: {
+            position: 'absolute',
+            zIndex: 100,
+            pointerEvents: 'none',
+            background: '#000',
+            left: scene.sourceOrigin.x + Math.max(0, Math.floor(mask.x)),
+            top: scene.sourceOrigin.y + Math.max(0, Math.floor(mask.y)),
+            width: Math.max(
+              0,
+              Math.min(scene.viewport.width, Math.ceil(mask.x + mask.width)) -
+                Math.max(0, Math.floor(mask.x)),
+            ),
+            height: Math.max(
+              0,
+              Math.min(scene.viewport.height, Math.ceil(mask.y + mask.height)) -
+                Math.max(0, Math.floor(mask.y)),
+            ),
+          },
+        }),
+      ),
       e('div', { id: 'speed' }),
       e('div', { id: 'clock' }),
     ),
@@ -1075,8 +1195,8 @@ export async function renderSceneInProcess(input: {
   }
   const fonts = await fontCss();
   const style = scene.style;
-  const css = `${fonts.css}*{box-sizing:border-box}[data-cue]>*{will-change:opacity}[data-cue]>svg{z-index:30}[data-kind=marker]>svg,[data-kind=pointer]>svg{z-index:55}.card{z-index:50}.card.title,.card.app-version{z-index:60}.app-version .detail{white-space:pre-wrap;font-family:'Source Code Pro';font-size:${style.dataFontSize}px}.critical{border-color:${style.criticalAccent}!important;border-left:4px solid ${style.criticalAccent}!important;background:${style.criticalBackground}!important}.critical .eyebrow{color:#ffc994}.expectation,.observation{font-size:${style.bodyFontSize}px;line-height:1.35;margin-top:10px}.expectation b,.observation b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;color:#b6c5d2;margin-bottom:3px}.observation{color:#ffd3a6}.sparkline{display:block;width:100%;height:56px;margin-top:12px}html,body{margin:0;width:${scene.output.width}px;height:${scene.output.height}px;overflow:hidden;background:${style.background};color:${style.foreground};font:${style.bodyFontSize}px 'Source Sans 3'}main{position:relative;width:${scene.output.width}px;height:${scene.output.height}px;background:${style.background}}#source{box-shadow:0 0 0 1px #344050}.card{position:absolute;width:${style.cardWidth}px;padding:${style.cardPadding}px;border:1px solid #3b4654;border-radius:${style.cardRadius}px;background:${style.cardBackground};box-shadow:0 4px 12px #0004;overflow-wrap:anywhere}.eyebrow{font-size:11px;font-weight:600;letter-spacing:1.6px;color:#98b0c4;margin-bottom:6px}.heading{display:flex;align-items:flex-start;gap:10px;font-size:${style.headingFontSize}px;font-weight:600;line-height:1.25}.title .heading{font-size:${style.titleFontSize}px}.number{flex-shrink:0;display:grid;place-items:center;border-radius:50%;width:30px;height:30px;background:#b7d9ef;color:#101721;font-size:17px}.detail{margin-top:10px;color:#c5d4df;line-height:${style.lineHeight}}.value{font:${style.dataFontSize}px/1.5 'Source Code Pro';margin-top:12px;white-space:pre-wrap;min-height:88px}.magnifier-viewport{position:relative;margin-top:12px;box-shadow:0 3px 8px #0007;border-radius:4px;overflow:hidden;width:${style.cardWidth - style.cardPadding * 2 - 5}px;height:176px}.zoom{position:absolute;right:6px;bottom:6px;background:#101721;padding:3px 6px;font-size:12px;border-radius:4px}#speed,#clock{position:absolute;bottom:14px;font:12px 'Source Code Pro';color:#aac0d0}#speed{left:24px;color:#f0c888}#clock{right:24px}`;
-  const html = `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; font-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'"><style>${css}</style>${sceneMarkup(scene)}<script>const routeLeader=${routeLeader.toString()};const magnifierRegion=${magnifierRegion.toString()};(${sceneRuntime.toString()})(${escapeJson(scene)},${escapeJson(frames)});</script>`;
+  const css = `${fonts.css}*{box-sizing:border-box}[data-cue]>*{will-change:opacity}[data-cue]>svg{z-index:30}[data-kind=marker]>svg,[data-kind=pointer]>svg{z-index:55}.card{z-index:50}.card.title,.card.app-version{z-index:60}.app-version .detail{white-space:pre-wrap;font-family:'Source Code Pro';font-size:${style.dataFontSize}px}.critical{border-color:${style.criticalAccent}!important;border-left:4px solid ${style.criticalAccent}!important;background:${style.criticalBackground}!important}.critical .eyebrow{color:#ffc994}.expectation,.observation{font-size:${style.bodyFontSize}px;line-height:1.35;margin-top:10px}.expectation b,.observation b{font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;color:#b6c5d2;margin-bottom:3px}.observation{color:#ffd3a6}.sparkline{display:block;width:100%;height:56px;margin-top:12px}html,body{margin:0;width:${scene.output.width}px;height:${scene.output.height}px;overflow:hidden;background:${style.background};color:${style.foreground};font:${style.bodyFontSize}px 'Source Sans 3'}main{position:relative;width:${scene.output.width}px;height:${scene.output.height}px;background:${style.background}}#source{box-shadow:0 0 0 1px #344050}.card{position:absolute;width:${style.cardWidth}px;padding:${style.cardPadding}px;border:1px solid #3b4654;border-radius:${style.cardRadius}px;background:${style.cardBackground};box-shadow:0 4px 12px #0004;overflow-wrap:anywhere}.eyebrow{font-size:11px;font-weight:600;letter-spacing:1.6px;color:#98b0c4;margin-bottom:6px}.heading{display:flex;align-items:flex-start;gap:10px;font-size:${style.headingFontSize}px;font-weight:600;line-height:1.25}.title .heading{font-size:${style.titleFontSize}px}.number{flex-shrink:0;display:grid;place-items:center;border-radius:50%;width:30px;height:30px;background:#b7d9ef;color:#101721;font-size:17px}.detail{margin-top:10px;color:#c5d4df;line-height:${style.lineHeight}}.value{font:${style.dataFontSize}px/1.5 'Source Code Pro';margin-top:12px;white-space:pre-wrap}.magnifier-viewport{position:relative;margin-top:12px;box-shadow:0 3px 8px #0007;border-radius:4px;overflow:hidden;width:${style.cardWidth - style.cardPadding * 2 - 5}px;height:176px}.zoom{position:absolute;right:6px;bottom:6px;background:#101721;padding:3px 6px;font-size:12px;border-radius:4px}#speed,#clock{position:absolute;bottom:14px;font:12px 'Source Code Pro';color:#aac0d0}#speed{left:24px;color:#f0c888}#clock{right:24px}`;
+  const html = `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; font-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'"><style>${css}</style>${sceneMarkup(scene)}<script>const routeLeader=${routeLeader.toString()};const magnifierRegion=${magnifierRegion.toString()};const planPanelLayout=${planPanelLayout.toString()};const formatSceneValue=${formatSceneValue.toString()};(${sceneRuntime.toString()})(${escapeJson(scene)},${escapeJson(frames)});</script>`;
   await writeFile(join(input.outDir, 'composition.html'), html);
   await writeFile(
     join(input.outDir, 'scene.json'),
@@ -1258,10 +1378,7 @@ export async function captureComposition<
       randomSeekIndices: seeks,
       layoutFramesChecked: count,
     };
-    await writeFile(
-      join(input.outDir, 'render-receipt.json'),
-      JSON.stringify(receipt, null, 2),
-    );
+    const encodingStarted = performance.now();
     const outputPath = join(input.outDir, 'proof.mp4');
     const audioPath = join(input.outDir, 'action-feedback.wav');
     if (input.audio) await writeFile(audioPath, input.audio);
@@ -1285,19 +1402,33 @@ export async function captureComposition<
               ? (input.encoding?.preset ?? 'veryfast')
               : value,
         ),
+        '-frames:v',
+        String(count),
         outputPath,
       ],
       input.signal ? { signal: input.signal } : {},
     );
-    return { outputPath, receipt };
-  } finally {
-    if (session) await closeCaptureSession(session);
-    await new Promise<void>((resolve, reject) =>
-      server.close((error) => {
-        if (error) reject(error);
-        else resolve();
-      }),
+    const completedReceipt = {
+      ...receipt,
+      encodeMs: performance.now() - encodingStarted,
+      totalMs: performance.now() - started,
+    };
+    await writeFile(
+      join(input.outDir, 'render-receipt.json'),
+      JSON.stringify(completedReceipt, null, 2),
     );
+    return { outputPath, receipt: completedReceipt };
+  } finally {
+    try {
+      if (session) await closeCaptureSession(session);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        }),
+      );
+    }
   }
 }
 
@@ -1306,17 +1437,19 @@ export async function renderScene(
   input: Parameters<typeof renderSceneInProcess>[0],
 ): Promise<Awaited<ReturnType<typeof renderSceneInProcess>>> {
   await mkdir(input.outDir, { recursive: true });
-  const request = join(input.outDir, 'render-request.json');
-  await writeFile(
-    request,
-    JSON.stringify({
-      scene: input.scene,
-      sources: input.sources,
-      outDir: input.outDir,
-    }),
-  );
-  await runSceneWorker(request, input.signal);
-  return JSON.parse(
-    await readFile(join(input.outDir, 'render-result.json'), 'utf8'),
-  ) as Awaited<ReturnType<typeof renderSceneInProcess>>;
+  return withFileLock(join(input.outDir, 'scene.lock'), async () => {
+    const request = join(input.outDir, 'render-request.json');
+    await writeFile(
+      request,
+      JSON.stringify({
+        scene: input.scene,
+        sources: input.sources,
+        outDir: input.outDir,
+      }),
+    );
+    await runSceneWorker(request, input.signal);
+    return JSON.parse(
+      await readFile(join(input.outDir, 'render-result.json'), 'utf8'),
+    ) as Awaited<ReturnType<typeof renderSceneInProcess>>;
+  });
 }

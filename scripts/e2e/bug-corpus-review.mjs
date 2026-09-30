@@ -38,8 +38,6 @@ for (const r of process.env.REPRO_COMPARE_ONLY === '1' ? [] : results) {
     r.rendered = await cli(
       'render',
       r.run,
-      '--renderer',
-      'hyperframes',
       '--treatment',
       join(root, `${name}.treatment.json`),
     );
@@ -114,14 +112,7 @@ if (!process.env.REPRO_REVIEW_KIND) {
     const before = results.find((r) => r.kind === kind && r.role === 'before'),
       after = results.find((r) => r.kind === kind && r.role === 'after');
     assert.ok(before && after);
-    const compared = await cli(
-      'render',
-      after.run,
-      '--renderer',
-      'hyperframes',
-      '--baseline',
-      before.run,
-    );
+    const compared = await cli('render', after.run, '--baseline', before.run);
     const name = `${kind}-comparison.mp4`;
     await copyFile(compared.outputPath, join(root, name));
     comparisons.push({ kind, ...compared });

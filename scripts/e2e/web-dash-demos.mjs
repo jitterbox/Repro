@@ -87,8 +87,6 @@ for (const name of selected) {
     {},
     'render',
     run,
-    '--renderer',
-    'hyperframes',
     '--treatment',
     join(scenarios, `${name}.treatment.json`),
   );

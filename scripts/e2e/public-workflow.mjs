@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { enforceOcrAudit } from '../../packages/render/dist/index.js';
 import { verifyIdentityProof } from './identity-proof.mjs';
 import { verifyDiagnosticReview } from './diagnostic-review.mjs';
-import { verifyPortableViewer } from './portable-viewer.mjs';
+import { verifySceneSources } from './scene-source-checks.mjs';
 import { verifyTerminalCheckpoint } from './terminal-checkpoint.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -37,6 +37,7 @@ async function repro(...args) {
 async function capture(role, dx = 0) {
   const result = await repro(
     'run',
+    '--verbose',
     join(example, 'scenario.spec.ts'),
     '--playwright-config',
     join(example, 'playwright.config.ts'),
@@ -146,222 +147,138 @@ for (const dx of [1, 4, 12]) {
   );
   assert.ok(result.geometryDeltas.some((delta) => delta.dx === dx));
 }
-console.log('Rendering presentation and verifying unchanged render reuse');
-await repro('render', before.directory);
-await repro('render', after.directory);
-const repeat = await repro('render', before.directory);
-assert.equal(repeat.cacheHit, true);
-console.log('Revising presentation without changing captured evidence');
-const originalManifest = JSON.parse(
+console.log('Rendering and checking the sole compositor');
+const renderedBefore = await repro('render', before.directory);
+const original = JSON.parse(
   await readFile(join(after.directory, 'run.json'), 'utf8'),
 );
-const capturedArtifacts = originalManifest.artifacts.filter(
-  (asset) =>
-    !asset.kind.startsWith('presentation-') && asset.kind !== 'captions',
-);
+const captureArtifacts = (run) =>
+  run.artifacts.filter(
+    (a) =>
+      !a.kind.startsWith('presentation-') &&
+      a.kind !== 'captions' &&
+      !a.kind.startsWith('scene-comparison'),
+  );
 const revised = JSON.parse(await readFile(join(example, 'after.json'), 'utf8'));
 revised.title = 'Checkout proof revised';
 revised.steps[0].title = 'Open the checkout scenario';
 const revisedPath = join(root, 'revised-evidence.json');
 await writeFile(revisedPath, JSON.stringify(revised));
-const edited = await repro(
+const renderedAfter = await repro(
   'render',
   after.directory,
   '--evidence',
   revisedPath,
 );
-assert.equal(edited.cacheHit, false);
-const revisedManifest = JSON.parse(
+const current = JSON.parse(
   await readFile(join(after.directory, 'run.json'), 'utf8'),
 );
 assert.deepEqual(
-  revisedManifest.artifacts.filter(
-    (asset) =>
-      !asset.kind.startsWith('presentation-') && asset.kind !== 'captions',
-  ),
-  capturedArtifacts,
+  captureArtifacts(current),
+  captureArtifacts(original),
+  'Presentation changes must preserve every captured artifact',
 );
-assert.ok(
-  (
-    await readFile(
-      join(
-        after.directory,
-        revisedManifest.artifacts.find((asset) => asset.kind === 'captions')
-          .path,
-      ),
-      'utf8',
-    )
-  ).includes('Checkout proof revised'),
+assert.deepEqual(current.stages.capture, original.stages.capture);
+const checkedBefore = await verifySceneSources(
+  before.directory,
+  renderedBefore,
 );
-console.log('Verifying actual checkpoint pixels, titles, step and outcome');
-const stillPath = join(
-  after.directory,
-  revisedManifest.artifacts.find((asset) => asset.kind === 'presentation-image')
-    .path,
+const checkedAfter = await verifySceneSources(after.directory, renderedAfter);
+const forged = structuredClone(checkedAfter.mapping);
+forged.find((f) => f.sourceSha256).sourceSha256 = '0'.repeat(64);
+await assert.rejects(
+  verifySceneSources(after.directory, renderedAfter, forged),
+  /Unknown source identity/,
 );
-// Layout OCR can merge a small callout with its nearby control. Verify its
-// complete text in the actual pixel ROI as well as auditing whole frames below.
-async function verifyCalloutText(imagePath, suffix, step = false) {
-  const plan = JSON.parse(
-    await readFile(
-      join(
-        after.directory,
-        revisedManifest.artifacts.find((a) =>
-          a.kind.startsWith('presentation-key:'),
-        ).path,
-      ),
-      'utf8',
-    ),
-  );
-  const callout = plan.annotations.find((a) =>
-    step
-      ? a.label === '3. Verify the Checkout heading'
-      : a.component === 'callout',
-  );
-  assert.ok(
-    callout,
-    'Required callout is missing from the shared presentation',
-  );
-  const { x, y, width, height } = callout.bounds;
-  const insetX = step ? 4 : 12;
-  const insetY = step ? 0 : 6;
-  const crop = join(root, `callout-${suffix}.png`);
+const stillPath = join(renderedAfter.directory, 'result.png');
+async function ocrRegion(image, rect, name) {
+  const target = join(root, `${name}.png`);
   await execute('ffmpeg', [
     '-v',
     'error',
     '-y',
     '-i',
-    imagePath,
+    image,
     '-vf',
-    `crop=${Math.floor(width - insetX * 2)}:${Math.floor(height - insetY * 2)}:${Math.floor(x + insetX)}:${Math.floor(y + insetY)},scale=iw*2:ih*2`,
+    `crop=${rect.width}:${rect.height}:${rect.x}:${rect.y},scale=iw*2:ih*2`,
     '-frames:v',
     '1',
-    crop,
+    target,
   ]);
-  const { stdout } = await execute('tesseract', [crop, 'stdout', '--psm', '7']);
-  assert.match(
-    stdout,
-    step ? /3\. Verify the Checkout heading/ : /Intended Checkout control/,
-  );
+  return (
+    await execute('tesseract', [target, 'stdout', '--psm', '6'])
+  ).stdout.replace(/\s+/g, ' ');
 }
-const still = PNG.sync.read(await readFile(stillPath));
-const context = PNG.sync.read(await readFile(frame.context));
-assert.equal(still.width, context.width);
-assert.equal(still.height, context.height);
-// The control's interior must retain the exact checkpoint pixels; outlines are outside it.
-for (let y = 90; y < 130; y++)
-  for (let x = 100; x < 240; x++) {
-    const offset = (y * context.width + x) * 4;
-    assert.deepEqual(
-      still.data.subarray(offset, offset + 4),
-      context.data.subarray(offset, offset + 4),
-    );
-  }
-const outline = (74 * still.width + 74) * 4;
-assert.ok(
-  still.data[outline + 2] > still.data[outline] + 40,
-  'Measured outline is missing from checkpoint pixels',
-);
-const { stdout: visibleText } = await execute('tesseract', [
+const titleText = await ocrRegion(
   stillPath,
-  'stdout',
-  '--psm',
-  '3',
-]);
-assert.match(visibleText, /Checkout proof revised/);
-assert.match(visibleText, /After/);
-assert.match(visibleText, /Fix verified/);
-await verifyCalloutText(stillPath, 'still');
+  { x: 24, y: 30, width: 1200, height: 50 },
+  'title-text',
+);
+assert.ok(titleText.includes('Checkout proof revised'), titleText);
+const gutterText = await ocrRegion(
+  stillPath,
+  { x: 1328, y: 0, width: 336, height: 960 },
+  'gutter-text',
+);
+for (const label of [
+  'Verify the Checkout heading',
+  'Intended Checkout control',
+])
+  assert.ok(gutterText.includes(label), gutterText);
+const outcomeCue = checkedAfter.scene.cues.find((c) => c.kind === 'outcome');
+const outcomeImage = join(
+  renderedAfter.directory,
+  'frames',
+  `frame_${String(Math.ceil(((outcomeCue.startMs + 400) * 30) / 1000)).padStart(6, '0')}.png`,
+);
+const outcomeText = await ocrRegion(
+  outcomeImage,
+  { x: 1328, y: 0, width: 336, height: 960 },
+  'outcome-text',
+);
+assert.ok(outcomeText.includes('Fix verified'), outcomeText);
 await assert.rejects(
   enforceOcrAudit({
-    path: stillPath,
+    path: outcomeImage,
     redaction: { strict: true, masks: [] },
     requireAudit: true,
     patterns: ['Fix verified'],
   }),
   /OCR audit found text/,
 );
-await verifyCalloutText(stillPath, 'step-still', true);
-console.log(
-  'Inspecting the exact checkpoint reading hold in decoded video pixels',
-);
-const holdMetadata = JSON.parse(
-  await readFile(
-    join(
-      after.directory,
-      revisedManifest.artifacts.find(
-        (asset) => asset.kind === 'presentation-holds',
-      ).path,
-    ),
-    'utf8',
-  ),
-);
-const resultHold = holdMetadata.find((hold) => hold.checkpoint === 'result');
-assert.ok(resultHold, 'Measured checkpoint has no reading hold');
-const heldFrame = join(root, 'checkpoint-hold.png');
-await execute('ffmpeg', [
-  '-v',
-  'error',
-  '-y',
-  '-ss',
-  String((resultHold.startMs + resultHold.endMs) / 2000),
-  '-i',
-  join(
-    after.directory,
-    revisedManifest.artifacts.find(
-      (asset) => asset.kind === 'presentation-video',
-    ).path,
-  ),
-  '-frames:v',
-  '1',
-  heldFrame,
-]);
-const heldPixels = PNG.sync.read(await readFile(heldFrame));
-assert.equal(heldPixels.width, still.width);
-assert.ok(
-  heldPixels.data[outline + 2] > heldPixels.data[outline] + 40,
-  'Measured outline is missing from the video reading hold',
-);
-const { stdout: holdText } = await execute('tesseract', [
-  heldFrame,
-  'stdout',
-  '--psm',
-  '3',
-]);
-assert.match(holdText, /Checkout proof revised/);
-assert.match(holdText, /Fix verified/);
-await verifyCalloutText(heldFrame, 'hold');
-await verifyCalloutText(heldFrame, 'step-hold', true);
-const editedRepeat = await repro(
-  'render',
-  after.directory,
-  '--evidence',
-  revisedPath,
-);
-assert.equal(editedRepeat.cacheHit, true);
-
-const presentationDurations = [];
-for (const captured of [before, after]) {
+const context = PNG.sync.read(await readFile(frame.context));
+const still = PNG.sync.read(await readFile(stillPath));
+const origin = checkedAfter.scene.sourceOrigin;
+assert.equal(still.width, checkedAfter.scene.output.width);
+assert.equal(still.height, checkedAfter.scene.output.height);
+// Keep a cursor-free interior tile of the actual control pixel-identical.
+for (let y = 110; y < 130; y++)
+  for (let x = 100; x < 130; x++) {
+    const src = (y * context.width + x) * 4,
+      dst = ((y + origin.y) * still.width + x + origin.x) * 4;
+    assert.deepEqual(
+      still.data.subarray(dst, dst + 4),
+      context.data.subarray(src, src + 4),
+    );
+  }
+const diagnosticReviews = [],
+  presentationDurations = [];
+for (const [captured, rendered] of [
+  [before, renderedBefore],
+  [after, renderedAfter],
+]) {
+  const role = captured === before ? 'before' : 'after';
   await verifyTerminalCheckpoint(
     captured.directory,
-    join(root, `terminal-${captured === before ? 'before' : 'after'}`),
+    join(root, `terminal-${role}`),
   );
-
-  const manifest = JSON.parse(
-    await readFile(join(captured.directory, 'run.json'), 'utf8'),
-  );
-  const artifact = (kind) =>
-    join(
+  diagnosticReviews.push(
+    await verifyDiagnosticReview(
       captured.directory,
-      manifest.artifacts.find(
-        (asset) => asset.kind === kind || asset.kind.startsWith(`${kind}:`),
-      ).path,
-    );
-  const plan = JSON.parse(await readFile(artifact('presentation-key'), 'utf8'));
-  const expectedMs = Math.max(
-    ...plan.timeline.beats.map((beat) => beat.outStartMs + beat.outDurationMs),
+      join(root, `diagnostic-${role}`),
+    ),
   );
-  const duration = async (path) =>
+  const actualMs =
     Number(
       (
         await execute('ffprobe', [
@@ -371,115 +288,96 @@ for (const captured of [before, after]) {
           'format=duration',
           '-of',
           'default=noprint_wrappers=1:nokey=1',
-          path,
+          rendered.outputPath,
         ])
       ).stdout.trim(),
     ) * 1000;
-  const actualMs = await duration(artifact('presentation-video'));
   assert.ok(
-    Math.abs(actualMs - expectedMs) <= 1000 / 30 + 0.01,
-    'Presentation end differs from its published timeline',
+    Math.abs(actualMs - rendered.receipt.durationMs) <= 1000 / 30 + 0.01,
   );
-  const originalMs = await duration(artifact('recording'));
-  assert.equal(comparison.originalDurations[manifest.variant.role], originalMs);
   presentationDurations.push({
-    role: manifest.variant.role,
-    expectedMs,
+    role,
     actualMs,
-    originalMs,
+    expectedMs: rendered.receipt.durationMs,
   });
+}
+// Repeat the same presentation: randomized seeking and source identity must agree.
+const repeated = await repro(
+  'render',
+  after.directory,
+  '--evidence',
+  revisedPath,
+);
+assert.equal(repeated.receipt.sceneSha256, renderedAfter.receipt.sceneSha256);
+assert.deepEqual(
+  JSON.parse(
+    await readFile(join(repeated.directory, 'frame-map.json'), 'utf8'),
+  ),
+  checkedAfter.mapping,
+);
+const paired = await repro(
+  'render',
+  after.directory,
+  '--baseline',
+  before.directory,
+);
+const pairMap = JSON.parse(await readFile(paired.frameMap, 'utf8'));
+assert.equal(pairMap.length, paired.receipt.frameCount);
+for (const f of pairMap) {
+  assert.deepEqual(f.a.source, checkedBefore.mapping[f.a.outputFrame]);
+  assert.deepEqual(f.b.source, checkedAfter.mapping[f.b.outputFrame]);
+}
+// These are explicit capability boundaries, never weakened privacy gates.
+await assert.rejects(
+  repro('export', after.directory, '--out-dir', join(root, 'not-final')),
+  /visual acceptance/,
+);
+await assert.rejects(
+  repro(
+    'export',
+    after.directory,
+    '--baseline',
+    before.directory,
+    '--draft',
+    '--out-dir',
+    join(root, 'not-paired'),
+  ),
+  /occurrence-aware/,
+);
+const exported = [];
+for (const [captured, rendered] of [
+  [before, renderedBefore],
+  [after, repeated],
+]) {
+  const role = captured === before ? 'before' : 'after',
+    bundle = join(root, role === 'after' ? 'bundle' : 'bundle-before');
+  const result = await repro(
+    'export',
+    captured.directory,
+    '--draft',
+    '--out-dir',
+    bundle,
+  );
+  const data = result.manifest.assets.find((a) => a.kind === 'devtools'),
+    video = result.manifest.assets.find((a) => a.kind === 'mp4');
+  assert.ok(data && video);
+  const report = devToolsReportSchema.parse(
+    JSON.parse(await readFile(join(bundle, data.path), 'utf8')),
+  );
+  assert.equal(report.video, basename(video.path));
+  assert.equal(report.variant.role, role);
+  assert.equal(report.frames.length, rendered.receipt.frameCount);
+  assert.ok(report.events.length > 0);
+  for (const asset of result.manifest.assets) {
+    assert.ok(!asset.path.startsWith('/'));
+    assert.ok(['mp4', 'vtt', 'png', 'json', 'devtools'].includes(asset.kind));
+  }
+  exported.push(result);
 }
 const identityControls = await verifyIdentityProof(
   before.directory,
   after.directory,
   join(root, 'identity-controls'),
-);
-const diagnosticReviews = [];
-for (const captured of [before, after]) {
-  const run = JSON.parse(
-    await readFile(join(captured.directory, 'run.json'), 'utf8'),
-  );
-  const sample = run.observations.find((o) => o.kind === 'hit-test');
-  const image = run.artifacts.find(
-    (a) =>
-      a.kind === 'presentation-image' &&
-      a.path.endsWith(`diagnostic-${sample.id}.png`),
-  );
-  assert.ok(image, 'Measured diagnostic image was not rendered');
-  const labelCrop = join(root, `diagnostic-label-${run.variant.role}.png`);
-  await execute('ffmpeg', [
-    '-v',
-    'error',
-    '-y',
-    '-i',
-    join(captured.directory, image.path),
-    '-vf',
-    'crop=1232:32:24:568,scale=iw*2:ih*2',
-    '-frames:v',
-    '1',
-    labelCrop,
-  ]);
-  const recognized = (
-    await execute('tesseract', [labelCrop, 'stdout', '--psm', '7'])
-  ).stdout;
-  assert.match(
-    recognized,
-    /Sampled recipient/,
-    'Diagnostic outline label missing from actual pixels',
-  );
-  diagnosticReviews.push(
-    await verifyDiagnosticReview(
-      captured.directory,
-      join(root, `diagnostic-${run.variant.role}`),
-    ),
-  );
-}
-console.log('Auditing output pixels and packaging proof');
-const exported = await repro(
-  'export',
-  after.directory,
-  '--baseline',
-  before.directory,
-  '--out-dir',
-  join(root, 'bundle'),
-);
-assert.ok(exported.manifest.compare.syncMap.length >= 3);
-assert.deepEqual(
-  exported.manifest.assets
-    .filter((asset) => asset.kind === 'mp4')
-    .map((asset) => asset.role),
-  ['before', 'after'],
-);
-for (const asset of exported.manifest.assets) {
-  assert.ok(!asset.path.startsWith('/'));
-  assert.ok(['mp4', 'vtt', 'png', 'json', 'devtools'].includes(asset.kind));
-}
-const diagnosticAssets = exported.manifest.assets.filter(
-  (asset) => asset.kind === 'devtools',
-);
-assert.equal(
-  diagnosticAssets.length,
-  2,
-  'Both variants export diagnostics by default',
-);
-for (const asset of diagnosticAssets) {
-  const report = devToolsReportSchema.parse(
-    JSON.parse(await readFile(join(root, 'bundle', asset.path), 'utf8')),
-  );
-  const video = exported.manifest.assets.find(
-    (candidate) => candidate.kind === 'mp4' && candidate.role === asset.role,
-  );
-  assert.ok(video, 'Diagnostic report must have a corresponding variant video');
-  assert.equal(report.video, basename(video.path));
-  assert.equal(report.variant.role, asset.role);
-  assert.ok(report.events.length > 0, 'Export retains captured browser events');
-}
-console.log(
-  'Checking relocated viewer, captions, images and keyboard controls',
-);
-const portable = await verifyPortableViewer(
-  join(root, 'bundle'),
-  join(root, 'portable'),
 );
 await writeFile(
   join(root, 'acceptance.json'),
@@ -495,8 +393,9 @@ await writeFile(
       diagnosticReviews,
       identityControls,
       presentationDurations,
-      exported,
-      portable,
+      exported: exported[1],
+      exports: exported,
+      paired,
     },
     null,
     2,

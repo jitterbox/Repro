@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/branding/repro-logo.png" alt="Repro — replay bug logo" width="480">
+</p>
+
 # Repro
 
 **Turn real browser interactions into clear, annotated reproduction videos and synchronized developer evidence.**
@@ -16,13 +20,16 @@ Choose your harness—Claude Code, Cursor, Codex or another supported agent—an
 
 The setup skill installs the CLI and checks Chromium, FFmpeg and OCR. Skills are portable instructions around the same CLI; they do not supply an AI model. [Installation guide →](docs/installation.md)
 
+Skills are also bundled in the npm CLI package. After the npm installation below,
+install them without GitHub access using `npx skills@latest add ./node_modules/@jitterbox/repro-cli/skills --copy`.
+
 
 ## Install the CLI
 
 From an evidence project with Node 22+:
 
 ```sh
-npm install --save-dev @jitterbox/repro-cli@0.2.1 @jitterbox/repro-playwright@0.2.1
+npm install --save-dev @jitterbox/repro-cli@0.3.0 @jitterbox/repro-playwright@0.3.0
 npx repro setup --system
 npx repro doctor
 npx repro init DASH2R-949 --description "Mobile metric overflow"
@@ -30,7 +37,7 @@ npx repro init DASH2R-949 --description "Mobile metric overflow"
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
 
-Optional: install `@jitterbox/repro-mcp@0.2.1` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
+Optional: install `@jitterbox/repro-mcp@0.3.0` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
 
 ## Record a website—with or without its source
 
@@ -50,7 +57,7 @@ Use the run directory returned by the command to render, inspect and export:
 npx repro defaults --out treatment.json
 npx repro treatments --json
 npx repro validate-treatment treatment.json
-npx repro render path/to/run --renderer hyperframes --treatment treatment.json
+npx repro render path/to/run --treatment treatment.json
 npx repro review path/to/run
 npx repro export path/to/run --draft --out-dir evidence-bundle
 ```
@@ -59,7 +66,7 @@ Issue IDs/descriptions belong to each scenario or run. The app-level `naming.use
 
 A persistent app version/build textbox is **on by default when values are known**. Supply `--app-version` / `--build-id`, or let Repro read declared version metadata at runtime. Configure app-specific selectors/property paths, or disable it with `versionOverlay.enabled: false` / `--no-version-overlay`. [Version/build settings →](docs/configuration.md#persistent-application-versionbuild-textbox)
 
-Add relevant treatments and step descriptions to `treatment.json` before rendering. Inspect the actual frames and motion; a valid plan alone does not establish good evidence. Hyperframes is currently an opt-in renderer with audited draft export. The legacy renderer remains the default while final promotion gates are completed. `--draft` never bypasses privacy/OCR checks. [Scene workflow and current limits →](docs/scene-renderer.md)
+Add relevant treatments and step descriptions to `treatment.json` before rendering. Inspect the actual frames and motion; a valid plan alone does not establish good evidence. The polished Hyperframes scene compositor is the only renderer. Audited draft export remains required while final-quality acceptance gates are completed. `--draft` never bypasses privacy/OCR checks. [Scene workflow and current limits →](docs/scene-renderer.md)
 
 Before and after can be captured on different days and reviewed independently. Use a controlled comparison when matching scenario identity and assertions justify a fix-verification claim; side-by-side output is optional.
 

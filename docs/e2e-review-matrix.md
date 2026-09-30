@@ -29,16 +29,15 @@ schemas so new features cannot disappear from the review requirements.
   actual browser recordings. Their coordinates and metric values do **not**
   establish a real application diagnosis. Tests check simultaneous plate bounds,
   actual active-frame text, decoding, and outcome visibility at the end.
-- **MIX-PIXEL** in the compositor suite: decoded RGBA pixels stay inside planner
-  bounds at 1× and 2× scale, including long console messages and vital summaries.
+- Scene compositor tests check adaptive placement and protected regions; every rendered fixture checks all output frames and randomized seeking. High-DPI acceptance checks source transforms and opaque masks at 2× scale.
 - **VO-01:** public CLI caption generation and audio-stream inspection.
   **VO-02** records audible narration as unsupported: the CLI currently does not
-  synthesize/mux it. The legacy silence mock is not speech verification.
+  synthesize/mux it. Captions do not imply synthesized speech.
 
-The legacy design-language ledger still counts **planned annotations and output
-files**. A separate blocking `legacy-review-index.mjs` pass now decodes every
+The diagnostic design-language ledger counts **planned annotations and output
+files**. A separate blocking `scene-fixture-review.mjs` pass now decodes every
 listed MP4, retains a decoded review frame and content hash, and checks actual
-Before/After role text for all seven encoded comparison layouts. These checks
+pane role text in the scene comparison output. Retired onion/wipe/blink encoders are no longer media requirements; numeric comparison metadata is tested independently. These checks
 do not promote synthetic fixture geometry into measured bug proof.
 The existing public timing, high-DPI, privacy, synchronization, diagnostics, recipe,
 export and viewer suites remain required in CI. Their negative controls complement
@@ -73,12 +72,10 @@ caption case), plus the explicit unsupported speech row. The review page can
 also include five public regression gate reports and 19 original fixture output
 rows. These counts are case counts, not claims of exhaustive Cartesian coverage.
 Run `node scripts/e2e/review-matrix-gates.mjs` to refresh the extra public gates.
-After a successful fixture run, execute `node scripts/e2e/legacy-review-index.mjs`.
+After a successful fixture run, execute `node scripts/e2e/scene-fixture-review.mjs`.
 An optional fixture log argument also checks that its 27 tests passed. CI runs the
-pixel index immediately after the fixture suite. `LEG-02` and `LEG-03` cover all
-seven comparison layouts; every legacy row links its decoded review frames.
-Role OCR normalizes the specific T/I/L glyph ambiguity in AFTER and requires
-Before and After in their respective caption regions; absent roles still fail.
+pixel index immediately after the fixture suite. `FIX-*` rows link current scene outputs and decoded review frames.
+Role OCR requires the fixture labels Broken and Fixed in their respective caption regions; absent roles still fail.
 
 The fresh-agent evaluation adds `FA-01`–`FA-06`: five unfamiliar browser claims
 and one native-surface rejection. These rows link independently verified exports

@@ -1,4 +1,4 @@
-import type { Rect } from '@jitterbox/repro-plan';
+import type { Rect } from '@jitterbox/repro-contracts/plan';
 
 export const PRIVACY_RENDER_METHOD = 'opaque-v2' as const;
 

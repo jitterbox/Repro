@@ -8,26 +8,6 @@ const exec = promisify(execFile),
   root = resolve(process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix'),
   dir = join(root, 'VO-01');
 await mkdir(dir, { recursive: true });
-const source = join(root, 'MIX-01');
-const config = JSON.parse(await readFile(join(source, 'config.json'), 'utf8'));
-config.features = { voiceover: true, redaction: true };
-config.metadata.bugId = 'VO-01';
-const events = (await readFile(join(source, 'events.jsonl'), 'utf8'))
-  .split('\n')
-  .filter(Boolean)
-  .map(JSON.parse);
-events.splice(1, 0, {
-  ...events[0],
-  id: 'voice',
-  kind: 'narration.voiceover',
-  payload: { text: 'Inspect the observed application result', durationMs: 600 },
-  t_mono: 800,
-});
-await writeFile(join(dir, 'config.json'), JSON.stringify(config));
-await writeFile(
-  join(dir, 'events.jsonl'),
-  events.map((e) => JSON.stringify(e)).join('\n'),
-);
 const strategy = JSON.parse(
   await readFile(join(root, 'strategies.json'), 'utf8'),
 ).rows.find((r) => r.id === 'STR-01');
@@ -44,30 +24,27 @@ const rows = [
 ];
 try {
   const cli = resolve('packages/cli/dist/bin.js');
-  await exec(process.execPath, [
-    cli,
-    'validate-config',
-    '--config',
-    join(dir, 'config.json'),
-  ]);
-  await exec(
-    process.execPath,
-    [
-      cli,
-      'annotate',
-      '--config',
-      join(dir, 'config.json'),
-      '--events',
-      join(dir, 'events.jsonl'),
-      '--video',
-      join(strategy.runs[0], 'capture.mp4'),
-      '--out-dir',
-      dir,
-      '--output-name',
-      'captions-only.mp4',
-    ],
-    { maxBuffer: 16 * 1024 * 1024 },
+  const evidence = JSON.parse(
+    await readFile(join(strategy.runs[0], 'evidence.json'), 'utf8'),
   );
+  evidence.steps[0].title = 'Inspect the observed application result';
+  const edited = join(dir, 'evidence.json');
+  await writeFile(edited, JSON.stringify(evidence));
+  const result = JSON.parse(
+    (
+      await exec(
+        process.execPath,
+        [cli, 'render', strategy.runs[0], '--evidence', edited],
+        { maxBuffer: 16 * 1024 * 1024 },
+      )
+    ).stdout,
+  );
+  const { copyFile } = await import('node:fs/promises');
+  await copyFile(
+    join(result.directory, 'captions.vtt'),
+    join(dir, 'captions.vtt'),
+  );
+  await copyFile(result.outputPath, join(dir, 'captions-only.mp4'));
   assert.match(
     await readFile(join(dir, 'captions.vtt'), 'utf8'),
     /Inspect the observed application result/,
@@ -86,7 +63,7 @@ try {
   assert.equal(JSON.parse(stdout).streams.length, 0);
   rows[0].status = 'passed';
   rows[0].checks.push(
-    'Caption contains committed narration; no audio stream is misrepresented as synthesized speech',
+    'Caption contains the committed step title; no audio stream is misrepresented as synthesized speech',
   );
   rows[0].artifacts.push(
     { label: 'Captions', path: join(dir, 'captions.vtt') },

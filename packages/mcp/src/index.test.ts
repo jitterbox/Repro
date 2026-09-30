@@ -29,6 +29,9 @@ it('discovers authoritative guidance and forwards revised presentations and pair
         capabilities.find((c) => c.id === id)?.description,
       );
     }
+    expect(
+      tools.find((tool) => tool.name === 'render')?.inputSchema.properties,
+    ).not.toHaveProperty('renderer');
     const run = tools.find((tool) => tool.name === 'run');
     expect(Object.keys(run?.inputSchema.properties ?? {})).toEqual(
       expect.arrayContaining(['project', 'buildId', 'config', 'repeat']),

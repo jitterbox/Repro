@@ -1,4 +1,4 @@
-> For Repro 0.2.1 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
+> For Repro 0.3.0 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
 
 # Repro — AI agent usage guide
 
@@ -13,8 +13,7 @@ before/after runs, and file artifacts into Azure DevOps or Jira.
 3. Follow **claim → recipe → capture → inspect → verify → export**. Discover with
    `capabilities` / `describe` / `recipes`, commit a scenario with `init`, then use
    `run` → `frame` / `review` → `compare` → `render` → `export`. CI reruns the
-   committed specs without an LLM. Existing `capture` / `annotate` / `package`
-   verbs remain compatibility interfaces (see `.github/workflows/ci.yml`).
+   committed specs without an LLM. `capture` and `package` are low-level interfaces; presentation uses `render RUN`.
 4. Always `repro validate-config` before capture when features/mode change.
 5. Pipeline completion ≠ success — run `repro quality` / OCR gates as required.
 6. Do not silently fall back from `surfaceCapture: "page"` to OS capture.
@@ -50,6 +49,12 @@ Visual language, overlay theming, viewer UI, and Claude Design prompts:
 [`design-brief.md`](design-brief.md).
 
 ---
+
+## Efficient execution and audit coverage
+
+Reuse a successful capture for presentation-only repairs. Before every recapture, identify the missing observation or execution/privacy failure and the changed scenario input; retain the attempt and its outcome. Discover tooling once per environment, inspect source evidence before rendering, and use at most three automatic presentation repair attempts. Prefer adaptive gutter/header/corner placement over increasing output height. Declare units for custom data streams.
+
+When asked to audit speed or tool usage, follow [workflow audit](workflow-audit.md): preserve the native harness transcript, enable private CLI timings, and distinguish measured command time from unknown agent time. A prose diary alone is not a complete tool transcript.
 
 ## Source-referenced bug discovery
 
@@ -247,6 +252,8 @@ Additional knobs on config (not feature flags):
 
 ---
 
+Presentation uses `repro render` and validated treatments. Feature flags below still govern capture and diagnostic planning; they do not select a second renderer. The retired narration flag does not synthesize speech. Consult `repro treatments --json` for the supported visual effects.
+
 ## 5. Bug / issue class → recommended config
 
 Use this matrix when classifying a ticket. Start from the row, then add
@@ -273,8 +280,8 @@ not after the action fades.
 | Network / API error UX                | `repro`   | `faithful`                  | `steps`, `consoleOverlay`, `specCard`                  | Keep sanitized HAR                       | Raw HAR bodies                               |
 | Perf / INP / LCP                      | `repro`   | `faithful`                  | `vitalsHud`, `steps`, `slowmo`                         | —                                        | Artificial `controlled` that hides jank      |
 | Multi-page / popup flow               | `repro`   | `faithful`                  | `steps`, `specCard`, `clickViz`                        | Expect editorial cuts                    | Single-page assumptions                      |
-| Demo / stakeholder walkthrough        | `demo`    | `controlled`                | `steps`, `voiceover`, `specCard`, `cursor`             | Drop `preserveRealTiming`                | `timingSensitive`                            |
-| Fix verification (pass expected)      | `demo`    | `controlled`                | `steps`, `specCard`, optional `voiceover`              | Assert no failure                        | Filing as “bug” without outcome slate        |
+| Demo / stakeholder walkthrough        | `demo`    | `controlled`                | `steps`, `specCard`, `cursor`             | Drop `preserveRealTiming`                | `timingSensitive`                            |
+| Fix verification (pass expected)      | `demo`    | `controlled`                | `steps`, `specCard`              | Assert no failure                        | Filing as “bug” without outcome slate        |
 
 \* Use `controlled` for CLS only when comparing two builds; use `faithful` to
 prove a real-user shift.
@@ -326,7 +333,6 @@ prove a real-user shift.
   },
   "demo": {
     "steps": true,
-    "voiceover": true,
     "cursor": true,
     "clickViz": true,
     "specCard": true
@@ -395,7 +401,7 @@ Warnings: redaction enabled without `strict` on protected captures.
 
 The current CLI writes narration captions only; it does not synthesize or mux audible speech. Do not use silence-mock as evidence of narration.
 
-1. `mode: "demo"`, `profile: "controlled"`, `voiceover: true` for caption planning.
+1. `mode: "demo"`, `profile: "controlled"`. Captions come from the rendered scene; no voiceover flag is required.
 2. Do **not** set `preserveRealTiming`.
 3. Narration document drives VTT + transcript; video pads to audio.
 
@@ -403,7 +409,7 @@ The current CLI writes narration captions only; it does not synthesize or mux au
 
 ```bash
 repro capture -c repro.config.json --url "$URL" -o .repro/run --resume .repro/run
-repro annotate -c … --events … --video … -o .repro/rendered --resume .repro/rendered
+repro render RUN --treatment treatment.json
 ```
 
 Stages are content-addressed; matching cache keys skip completed work.
@@ -504,7 +510,7 @@ use `render <run> --evidence <revision.json>` without recapture.
 | Golden eval            | `node scripts/evaluation/run-golden.mjs`          |
 
 Build first: `pnpm build` (or `pnpm --filter @jitterbox/repro-cli build`).
-Compatibility interfaces: `capture`, `annotate`, `package`, and JSON-file inputs
+Compatibility interfaces: `capture`, `package`, and JSON-file inputs
 to `compare` support existing low-level workflows. Prefer the run-directory
 interfaces above for committed scenarios and measured evidence.
 
@@ -532,7 +538,7 @@ Artifacts typically include: MP4, VTT, `evidence.json` / signed manifest,
 Is this before/after or visual regression?
   YES → mode=compare, profile=controlled, identical viewport/DSF
   NO  → Is failure expected?
-          NO  → mode=demo (optional voiceover)
+          NO  → mode=demo (captions from committed steps)
           YES → mode=repro
                  Is it a race/timing bug?
                    YES → faithful + timingSensitive; no showActions
@@ -618,7 +624,7 @@ Keep scenario titles separate from variant labels, use numbered meaningful steps
 
 `repro compare <before-run-directory> <after-run-directory>` compares measured semantic checkpoints. Environments and roles must agree. Missing checkpoints, unknown provenance, and corrupt artifacts prevent successful proof. Local inspection and comparison do not require OCR; missing OCR blocks strict export. Raw local captures are not shareable exports. Portable paired viewers default to side-by-side and offer Before/After focus, synchronized transport, captions and keyboard controls.
 
-Pass the resulting `comparison.json` directly to `repro render-compare --composition after-run/comparison.json --video-a before-run/capture.mp4 --video-b after-run/capture.mp4 --out-dir comparison-review`. The renderer accepts the legacy composition shape too. Every synchronization knot controls playback; checkpoint numbers and committed titles change at their measured output times. Checkpoints are distinct from executable scenario steps. Inspect both panes and the original durations before exporting audited evidence. Comparison renders from raw captures remain local inspection artifacts.
+Compare rendered runs with `repro render AFTER --baseline BEFORE`. The source-mapped scene compositor aligns semantic checkpoints. Faithful recordings require `--observational`; paired output stays local until occurrence-aware packaging is accepted. Export each reviewed run separately with `--draft`.
 
 The authoritative comparison contract lives in `@jitterbox/repro-contracts`; its generated JSON Schema is available at `@jitterbox/repro-contracts/schemas/compare-composition.schema.json` and MCP resource `repro://compare-composition-schema`. Cross-field validation additionally requires Before/After pane roles, strictly increasing source/output knot times, measured ROI bounds and explicit blink opt-in. Legacy compositions with fewer than two knots play in original timing, reported as `timing: "original"`; they do not establish synchronized proof. Public run comparisons require measured matching checkpoints. Normal builds check the published schema without modifying tracked sources; after editing its Zod source, explicitly run `pnpm --filter @jitterbox/repro-contracts generate:schemas` and review the change.
 
@@ -900,6 +906,6 @@ machine and capture to compare annotation work. A current measurement does not
 reconstruct the missing historical Phase 1 median; the report explicitly leaves
 the 50% improvement gate unassessed without an approved comparable baseline.
 
-## Opt-in scene renderer
+## Scene renderer
 
-For Hyperframes treatments, replayed source intervals, scene review, or scene before/after output, read [scene-renderer.md](scene-renderer.md) before selecting commands. It documents the acceptance slice and its export gate; the legacy renderer remains the default.
+For Hyperframes treatments, replayed source intervals, scene review, or scene before/after output, read [scene-renderer.md](scene-renderer.md) before selecting commands. It documents the sole rendering path and its export gate.

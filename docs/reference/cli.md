@@ -11,9 +11,13 @@ Repro AI capture, annotation, and evidence CLI
 
 Options:
   -V, --version                     output the version number
+  --workflow-log <file>             Append private command timing records (or
+                                    use REPRO_WORKFLOW_LOG)
   -h, --help                        display help for command
 
 Commands:
+  workflow-report <file>            Summarize command timings, capture
+                                    invocations and incomplete workflow records
   setup [options]                   Install pinned Chromium; optionally
                                     provision Windows/Ubuntu system dependencies
   defaults [options]                Print a complete editable treatment plan
@@ -39,16 +43,24 @@ Commands:
   frame [options] <run>
   review [options] <run>
   capture [options]                 Validate config and capture a run
-  annotate [options]                Build an annotation plan and render video
   compare [options] <left> <right>  Compare before/after run directories, or
-                                    legacy manifests
-  render-compare [options]          Render a compare composition MP4 from two
-                                    videos
+                                    numeric comparison manifests
   file [options]                    Gate evidence with OCR and upload to ALM
   package [options]                 Package viewer bundle and evidence manifest
   quality [options]                 Build and gate a quality report
   validate-config [options]         Print mode and feature conflicts
   help [command]                    display help for command
+```
+
+## repro workflow-report
+
+```text
+Usage: repro workflow-report [options] <file>
+
+Summarize command timings, capture invocations and incomplete workflow records
+
+Options:
+  -h, --help  display help for command
 ```
 
 ## repro setup
@@ -157,7 +169,6 @@ Options:
                          (default on)
   --no-version-overlay   Omit the app version/build textbox
   --build-id <id>        Target application build label for presentation
-  --renderer <backend>   legacy or hyperframes (default: "legacy")
   --treatment <file>     Evidence-referenced scene treatments
   --baseline <run>       Compare two previously rendered scene compositions
   --observational        Label faithful paired playback without controlled proof
@@ -361,55 +372,21 @@ Options:
   -h, --help            display help for command
 ```
 
-## repro annotate
-
-```text
-Usage: repro annotate [options]
-
-Build an annotation plan and render video
-
-Options:
-  -c, --config <path>   Repro config JSON
-  --events <path>       Event JSONL file
-  --frames <path>       Frame manifest JSON file
-  --video <path>        Input MP4 path
-  -o, --out-dir <path>  Render output directory
-  --plan-out <path>     Plan JSON output path
-  --output-name <name>  Rendered MP4 file name
-  --resume <rootDir>    Resume from verified stage root
-  -h, --help            display help for command
-```
-
 ## repro compare
 
 ```text
 Usage: repro compare [options] <left> <right>
 
-Compare before/after run directories, or legacy manifests
+Compare before/after run directories, or numeric comparison manifests
 
 Arguments:
-  left                  Before run directory, or legacy JSON manifest
-  right                 After run directory, or legacy JSON manifest
+  left                  Before run directory, or numeric comparison JSON
+                        manifest
+  right                 After run directory, or numeric comparison JSON manifest
 
 Options:
   -o, --out <path>      Write compare result JSON
   --override-env-drift  Allow material environment drift
-  -h, --help            display help for command
-```
-
-## repro render-compare
-
-```text
-Usage: repro render-compare [options]
-
-Render a compare composition MP4 from two videos
-
-Options:
-  --composition <path>  Compare composition JSON
-  --video-a <path>      Before / left MP4 path
-  --video-b <path>      After / right MP4 path
-  -o, --out-dir <path>  Render output directory
-  --ffmpeg <path>       ffmpeg binary path
   -h, --help            display help for command
 ```
 

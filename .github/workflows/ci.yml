@@ -29,14 +29,14 @@ jobs:
         run: pnpm lint
       - name: Evidence artifact staging excludes dependency links
         run: node --test scripts/stage-ci-artifacts.test.mjs
-      - name: Install FFmpeg for filtergraph integration tests
+      - name: Install FFmpeg for media and privacy integration tests
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
       - name: Contracts, pipeline, privacy and compatibility tests
         run: >-
           node node_modules/vitest/vitest.mjs run packages/contracts packages/core packages/capture packages/plan packages/render packages/compare packages/evaluation packages/cli packages/pipeline packages/alm packages/viewer packages/mcp packages/playwright/src
-          --exclude '**/compare-encode.test.ts' --exclude '**/voiceover.test.ts'
+
       - name: Builds and tests leave tracked sources unchanged
         run: git diff --exit-code
 
@@ -105,10 +105,12 @@ jobs:
           mkdir -p .repro/ci
           node packages/cli/dist/bin.js doctor > .repro/ci/doctor.json
           dpkg-query -W ffmpeg tesseract-ocr fonts-liberation > .repro/ci/system-versions.txt
-      - name: Synthetic media encoding and silence fallback
-        run: node node_modules/vitest/vitest.mjs run packages/render/src/compare-encode.test.ts packages/render/src/voiceover.test.ts
+      - name: Source sanitization, scene audio, and captions
+        run: node node_modules/vitest/vitest.mjs run packages/render/src/media.test.ts packages/compositor/src/scene-audio.test.ts packages/pipeline/src/scene-captions.test.ts
       - name: Public CLI before/after proof with real pixels and strict OCR
         run: node scripts/e2e/public-workflow.mjs
+      - name: Shorter scene rerenders cannot include stale frames
+        run: node scripts/e2e/scene-regressions.mjs
       - name: Source-referenced discovery to actual before/after proof
         run: node scripts/e2e/discovery.mjs
       - name: Strategy and balanced visual-overlay review matrix
@@ -156,7 +158,7 @@ jobs:
         run: |
           pnpm --filter @jitterbox/repro-compositor test
           pnpm test:e2e-fixture
-          node scripts/e2e/legacy-review-index.mjs
+          node scripts/e2e/scene-fixture-review.mjs
       - name: Clean project installation and public scenario
         run: pnpm test:clean-install
       - name: Agent mock evaluation (no model or API keys)

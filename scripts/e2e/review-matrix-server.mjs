@@ -12,7 +12,7 @@ async function results() {
     'overlays',
     'voiceover',
     'coverage',
-    'legacy',
+    'fixtures',
     'fresh-agent',
   ]) {
     try {

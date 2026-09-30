@@ -44,14 +44,14 @@ This is Repro diagnostic JSON, not a Chrome-importable trace or a full browser-m
 
 ## Persistent application version/build textbox
 
-`versionOverlay.enabled` defaults to true. When a target-app version or build is known, both renderers display a textbox for the entire video, including holds and replay. The scene renderer reserves annotation-gutter space; the legacy renderer wraps text and avoids measured evidence regions. Missing values produce no placeholder. The textbox never uses Repro's package version, Node version, or the evidence repository's Git SHA as a substitute.
+`versionOverlay.enabled` defaults to true. When a target-app version or build is known, the renderer displays a textbox for the entire video, including holds and replay. It prefers annotation-gutter space and can use safe overflow placements. Missing values produce no placeholder. The textbox never uses Repro's package version, Node version, or the evidence repository's Git SHA as a substitute.
 
 Supply values per run:
 
 ```sh
 repro run scenario.spec.ts --evidence evidence.json --config repro.config.json --app-version 2.7.1 --build-id qa-42
-repro render path/to/run --renderer hyperframes --app-version 2.7.1 --build-id qa-42
-repro render path/to/run --renderer hyperframes --no-version-overlay
+repro render path/to/run --app-version 2.7.1 --build-id qa-42
+repro render path/to/run --no-version-overlay
 ```
 
 `--version-overlay` / `--no-version-overlay` override the saved policy on `run` and `render`. Render-time version/build labels are presentation metadata; they do not change the captured build identity used for verified before/after comparison. Supplied values take precedence over discovered values independently for version and build.
@@ -84,7 +84,7 @@ Recorded metadata lives in `run.environment.appVersion` and an `app.version` dia
 ```sh
 repro defaults --out treatment.json
 repro validate-treatment treatment.json
-repro render path/to/run --renderer hyperframes --treatment treatment.json
+repro render path/to/run --treatment treatment.json
 ```
 
 `--out` creates UTF-8 JSON on both operating systems and refuses to overwrite an existing file. `--json` prints the same defaults for an agent. Keep the template in version control and add relevant treatments/steps. There is no machine-global hidden theme: the treatment file is the reproducible source of presentation choices.
@@ -131,9 +131,35 @@ All dimensions are logical output pixels before `outputScale`. Font sizes are in
 | Output | `outputScale` | 1 or 2; viewport remains unchanged, annotations and source pixels scale together |
 | Pointer/audio | `cursorGlow`, `actionAudio` | true / false; pointer positions come from actual recorded input |
 
-Cards live in a right annotation gutter. Output width is viewport width + two outer insets + gutter gap + card width, rounded up to an even pixel count. Height accommodates source chrome and `minHeight`, also even. Magnifier crop width follows card padding and width without stretching evidence. Increasing type size can need wider cards or a taller output. Layout and overlap gates still apply; configuration never disables them or silently truncates a required explanation.
+Cards prefer a right annotation gutter; adaptive layout can reuse header space and safe corners as described below. Output width is viewport width + two outer insets + gutter gap + card width, rounded up to an even pixel count. Height accommodates source chrome and `minHeight`, also even. Magnifier crop width follows card padding and width without stretching evidence. Increasing type size can need wider cards or a taller output. Layout and overlap gates still apply; configuration never disables them or silently truncates a required explanation.
 
 Source Sans 3 and Source Code Pro remain bundled, pinned fonts. Arbitrary fonts, freeform CSS, z-order and evidence-pixel distortion are intentionally not customization points. Individual treatments choose text, critical/normal severity, expected values, dotted outlines, 2×/4× magnification, 0.1×/0.2× replay and data-panel formats. `repro treatments --json` explains selection and evidence prerequisites; the [treatment schema](reference/schemas/treatment-schema.json) covers every field.
+
+## Adaptive panel placement
+
+These treatment settings also appear in `repro defaults` and the generated schemas:
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "layout": {
+    "overlayPanels": "as-needed",
+    "retireSteps": true,
+    "minStepVisibleMs": 5000,
+    "useHeaderSpace": true,
+    "protectedPadding": 12,
+    "protectedRegions": []
+  }
+}
+```
+
+The renderer measures complete cards after fonts load and plans placement over output time. It first packs the gutter from the outer top inset, using the previously empty space beside the title. Thin persistent panels may use unused header lanes when their measured size fits outside the title. Under pressure, it retires the oldest eligible numbered groups, moving the remaining panels up. A step's marker and attached panel appear and retire together; retirement requires at least `minStepVisibleMs` at full opacity plus entry/exit transitions. This minimum governs removal under crowding; it does not extend a deliberately short sequence past its declared end. Set `retireSteps: false` to retain the original full-sequence behavior.
+
+If these measures are insufficient, `overlayPanels: "as-needed"` allows persistent data/version cards inside the captured viewport. It tries aligned corners and stacks with the same card spacing. `"never"` keeps them outside the footage. Both modes prefer the gutter; neither automatically increases output height, removes required evidence panels or truncates text. If no safe placement exists, rendering fails with the affected time and panel IDs so the agent can split the beat or reduce simultaneous treatments.
+
+Placement protects measured targets, reference edges, magnifier source regions, markers, cursor paths, titles, connectors and other cards, including entry/exit frames. Add known critical application areas to `protectedRegions` as `{ "x": 0, "y": 0, "width": 120, "height": 60 }` rectangles in captured viewport CSS pixels. Protection depends on recorded geometry and explicit regions; Repro cannot infer the importance of arbitrary unmeasured pixels. Leaders are rerouted around neighboring panels before leaving avoidable gaps. Layout changes happen at cue boundaries without animating a card across the footage, and random seeking reconstructs the same placement. `layout.json` records placements by beat and retirement times.
+
+Data values reserve the measured height of the largest recorded sample and unknown-state labels, rather than a fixed blank block. Declare `unit: "KB"`, `"MB"`, `"ms"`, etc. for custom numeric streams. Numeric `unit: "B"` or `"bytes"` values display in compact SI B/KB/MB/GB/TB units (1000-based). Known CDP `browser.transfer` byte fields default to B when no unit is supplied. Arbitrary application values receive no guessed unit. The graph and its displayed value advance together in source time, freeze on holds and rewind on replay.
 
 ## Timing and encoding
 
@@ -141,7 +167,7 @@ Source Sans 3 and Source Code Pro remain bundled, pinned fonts. Arbitrary fonts,
 
 Capture action pacing is separate: commit waits and `humanPointer` motion in the scenario. Changing a reading hold never invents or changes a recorded mouse path. Keep timing-sensitive intervals faithful; replay captured source frames slowly afterward.
 
-`encoding.crf` is 0–35 (default 18; lower means higher quality/larger files). `encoding.preset` is an x264 preset from ultrafast through veryslow (default veryfast; slower uses more CPU for compression). H.264 High, yuv420p, BT.709, fast-start MP4 and 30fps remain pinned compatibility defaults in 0.2. Encoder settings are recorded in render receipts. Pair output uses the left pane's encoding settings; each pane retains its own rendered typography. The legacy renderer keeps its existing encoding/theme contract; these new settings apply to Hyperframes.
+`encoding.crf` is 0–35 (default 18; lower means higher quality/larger files). `encoding.preset` is an x264 preset from ultrafast through veryslow (default veryfast; slower uses more CPU for compression). H.264 High, yuv420p, BT.709, fast-start MP4 and 30fps remain pinned compatibility defaults in 0.2. Encoder settings are recorded in render receipts. Pair output uses the left pane's encoding settings; each pane retains its own rendered typography.
 
 ## Capture, diagnostics, privacy and advanced interfaces
 
@@ -156,6 +182,7 @@ The [Playwright API guide](playwright-api.md) describes targets, checkpoints, hu
 | `REPRO_FFMPEG`, `REPRO_FFPROBE`, `REPRO_TESSERACT` | Explicit native executable paths; otherwise PATH/Windows discovery |
 | `PLAYWRIGHT_BROWSERS_PATH` | Playwright browser cache location, shared by setup and execution |
 | `TESSDATA_PREFIX` | Custom Tesseract language-data directory; English data is required |
+| `REPRO_WORKFLOW_LOG` | Optional local CLI timing JSONL; inspect with `workflow-report` ([workflow audit](workflow-audit.md)) |
 | `REPRO_OCR_WORKERS` | OCR concurrency, integer 1–8, default 2 |
 | `REPRO_OCR_COMMAND` | Advanced external OCR adapter command; must supply actual frame-audit evidence, never bypasses strict export |
 | `REPRO_ADO_TOKEN`, `REPRO_JIRA_TOKEN` | Delivery-only secrets; keep out of prompts and artifacts |

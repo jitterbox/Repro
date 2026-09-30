@@ -199,14 +199,7 @@ treatment.treatments = [
 ];
 await writeFile(defaultsFile, JSON.stringify(treatment));
 await consumerCli('validate-treatment', defaultsFile);
-const rendered = await consumerCli(
-  'render',
-  run,
-  '--renderer',
-  'hyperframes',
-  '--treatment',
-  defaultsFile,
-);
+const rendered = await consumerCli('render', run, '--treatment', defaultsFile);
 assert.equal(rendered.receipt.encoding.crf, 22);
 assert.equal(rendered.receipt.encoding.preset, 'fast');
 assert.equal(rendered.receipt.randomSeekPassed, true);
@@ -228,7 +221,11 @@ assert.equal(
 const layout = JSON.parse(
   await readFile(join(rendered.directory, 'layout.json'), 'utf8'),
 );
-assert.ok(layout.every((card) => card.width === 400));
+assert.ok(
+  layout.beats
+    .flatMap((beat) => beat.panels)
+    .every((card) => card.width === 400),
+);
 const bundle = await consumerCli(
   'export',
   run,
@@ -304,7 +301,7 @@ await writeFile(
     {
       platform: process.platform,
       project,
-      version: '0.2.1',
+      version: '0.3.0',
       capture: true,
       scene: true,
       strictExport: true,

@@ -29,15 +29,15 @@ repro file \
 
 - Compare mode requires the controlled capture profile.
 - `showActions` conflicts with timing-sensitive captures and pixel diffs.
-- Onion/difference compare modes require matching viewport DSF.
-- Voiceover conflicts with preserved real timing.
+- Scene comparison requires matching viewport and source scale.
+- Narration synthesis is not available; optional action audio is off by default.
 - Strict redaction requires the redaction feature gate.
 
 ## Pre-flight for filing
 
 1. Config has `features.redaction` + `redaction.strict` when evidence may contain
    PII.
-2. `repro package` produced external MP4/VTT/JSON (no base64 embeds).
+2. `repro export RUN --draft` produced an audited bundle. Final-quality scene export remains gated pending visual acceptance; draft does not relax privacy.
 3. OCR gate must pass — missing audit inputs fail closed under strict mode.
 4. Filename: `{work-item}_{variant}_repro.mp4` for exported video; the matching default diagnostic file is `{work-item}_{variant}_devtools.json`. ALM upload naming retains content identity.
 
@@ -90,7 +90,7 @@ committed example lives in `packages/playwright/examples/discovery-assessment.js
 
 ## Scene presentation acceptance
 
-For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/master/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. This opt-in slice keeps the legacy renderer as default and does not yet provide the full diagnostics or automatic repair system.
+For Hyperframes treatments, source-time replay, scene comparisons, or draft scene export, read [the scene renderer workflow](https://github.com/jitterbox/Repro/blob/master/docs/scene-renderer.md). Inspect the treatment catalog before selecting effects. All presentations use the scene compositor; check the guide for remaining acceptance and diagnostics limits.
 
 ## Installation and visual preferences
 

@@ -38,7 +38,7 @@ export function setupCommands(
     } else {
       if (!['ubuntu', 'debian'].includes(options.linuxId ?? ''))
         throw new Error(
-          'Automatic system setup supports Ubuntu/Debian. Install FFmpeg with libass, Tesseract (English data), fontconfig and Chromium system libraries using your distribution package manager, then run repro setup.',
+          'Automatic system setup supports Ubuntu/Debian. Install FFmpeg, Tesseract (English data) and Chromium system libraries using your distribution package manager, then run repro setup.',
         );
       commands.push(
         {
@@ -55,10 +55,8 @@ export function setupCommands(
             'ffmpeg',
             'tesseract-ocr',
             'tesseract-ocr-eng',
-            'fontconfig',
-            'fonts-liberation',
           ],
-          purpose: 'Install video, OCR and font tools',
+          purpose: 'Install video and OCR tools',
         },
       );
     }

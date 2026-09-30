@@ -1,5 +1,10 @@
 # Consolidated implementation ledger
 
+This is a historical implementation and acceptance log. The ASS/static-card
+renderer and its comparison encoders have since been removed. Current rendering
+uses the single [scene compositor](scene-renderer.md); older entries below do not
+describe the current CLI or supported rendering paths.
+
 The **Phase 1–3 milestone is complete and verified locally**. The full five-phase specification remains the scope; remaining Phase 4–5 work below is not claimed complete. Consolidated acceptance: `.repro/milestone-acceptance.json` (also `/tmp/repro-milestone148/acceptance.json`). Remote CI has not been triggered.
 
 ## Implemented and exercised

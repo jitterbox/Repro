@@ -21,10 +21,14 @@ export {
 
 export * from './bug-discovery.js';
 
-export { treatmentCatalog, parseTreatmentPlan } from '@jitterbox/repro-contracts';
+export {
+  treatmentCatalog,
+  parseTreatmentPlan,
+} from '@jitterbox/repro-contracts';
 
 export { renderScenePair } from './scene-comparison.js';
 
 export { importJiraIssue } from './jira-import.js';
 
 export { setup, setupCommands } from './setup.js';
+export { startWorkflowCommand, workflowReport } from './workflow-log.js';

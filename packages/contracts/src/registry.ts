@@ -19,6 +19,15 @@ export type Capability = z.infer<typeof capabilitySchema>;
 const entries: [string, string, string, string, string[], string[], string][] =
   [
     [
+      'workflow-report',
+      'Inspect workflow command timings',
+      'repro workflow-report workflow.jsonl',
+      'Summarize private CLI command timing logs enabled by --workflow-log or REPRO_WORKFLOW_LOG. Reports capture invocation counts, failures and incomplete entries; full agent auditing requires the native harness transcript.',
+      ['Workflow JSONL path'],
+      ['Timing summary and coverage limitations'],
+      'A command log does not include browser exploration, prompts, tool arguments, or reasons for recapture.',
+    ],
+    [
       'setup',
       'Provision local runtime',
       'repro setup --system',
@@ -34,7 +43,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'Emit a complete validated treatment template with visual, timing and encoding preferences.',
       [],
       ['Treatment plan JSON'],
-      'Settings apply to the opt-in scene renderer; inspect rendered frames after styling changes.',
+      'Settings apply to the scene renderer; inspect rendered frames after styling changes.',
     ],
     [
       'import-jira',
@@ -49,7 +58,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'treatments',
       'Discover scene treatments',
       'repro treatments --json',
-      'List the opt-in Hyperframes slice treatments, their measured evidence requirements and editorial guidance.',
+      'List scene treatments, their measured evidence requirements and editorial guidance.',
       [],
       ['Treatment catalog'],
       'Each selected effect must link to captured evidence.',
@@ -103,12 +112,12 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'render',
       'Render a run presentation',
       'repro render run',
-      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Opt in to the acceptance slice with --renderer hyperframes --treatment treatment.json: it requires verified original frames, adds source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.',
+      'Render titles, steps, measured highlights and reading holds from a committed evidence run. Known target-app version/build metadata appears throughout playback by default; use --app-version/--build-id or runtime declarations, and --no-version-overlay to omit it. Checkpoint highlights select up to three measured targets with short descriptive callout labels; [] suppresses outlines. Labels are placed outside measured targets and presentation chrome. Missing or ambiguous geometry and unplaceable callouts fail explicitly. Use --evidence edited.json for presentation-only revisions without recapture. Use --treatment treatment.json for editorial overrides. The renderer requires verified original frames and provides source-mapped replay, measured magnifiers/alignment, diagnostic panels, and a reserved annotation gutter. Compare rendered scenes with --baseline; faithful pairs also require --observational. Scene final-quality export remains gated; --draft retains strict OCR. See docs/scene-renderer.md for supported scope.',
       [
         'run directory',
         'optional --evidence edited.json with checkpoint highlights: [{target, label}]',
       ],
-      ['annotated video', 'annotated stills', 'captions'],
+      ['annotated video', 'annotated stills', 'captions', 'source-frame map'],
       'Inspect titles, steps and outlines in actual output pixels. Step titles omit numeric prefixes because numbering is automatic. Preserve native focus rings and measured edges; suppress highlights that hide the actual defect. Keep the decisive expected condition visible and inspect full context when a target crop omits a related result.',
     ],
     [
@@ -116,7 +125,10 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'Export audited presentation',
       'repro export run --out-dir bundle --work-item DASH2R-949',
       'Package complete presentation evidence after a real-frame privacy audit. Filenames follow naming.useWorkItemId (default true): prefer a supplied per-run ID, otherwise use a brief description and stable scenario suffix. --no-use-work-item-id selects descriptive naming. Sanitized synchronized browser DevTools JSON is included by default; --no-devtools omits it.',
-      ['complete run', 'optional workItem, description, useWorkItemId, devtools, config overrides'],
+      [
+        'complete run',
+        'optional workItem, description, useWorkItemId, devtools, config overrides',
+      ],
       [
         'named media and checkpoints',
         'DevTools report (default on)',
@@ -229,37 +241,16 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'Verify timestamps and complete frame tables; raw media is private.',
     ],
     [
-      'annotate',
-      'Render presentation',
-      'repro annotate --config repro.config.json --events run/events.jsonl --video run/capture.mp4 --out-dir output',
-      'Render a deterministic timeline without another application run.',
-      ['events', 'recording', 'config'],
-      ['annotated MP4', 'captions'],
-      'Inspect highlights and reading holds in output pixels.',
-    ],
-    [
       'compare',
       'Compare before and after',
       'repro compare before-run-directory after-run-directory',
       'Compare controlled runs and reject incompatible environments.',
       [
         'before run directory',
-        'after run directory; legacy JSON manifests supported by adapter',
+        'after run directory; numeric comparison JSON manifests supported by adapter',
       ],
       ['comparison report'],
       'Check measured observations and unmatched checkpoints.',
-    ],
-    [
-      'render-compare',
-      'Render comparison',
-      'repro render-compare --composition after-run/comparison.json --video-a before.mp4 --video-b after.mp4 --out-dir output',
-      'Render a compare report or legacy composition using every measured synchronization knot. Legacy inputs with fewer than two knots use explicitly reported original timing. Synchronized outputTiming reports the measured endpoint, encoded duration and up to one added terminal frame so the final cue is visible without advancing its timestamp. Pane a must be Before and pane b After; all source and output knot times must increase. ROI requires measured shared bounds; blink requires explicit opt-in.',
-      [
-        'comparison report or composition',
-        'normalized before and after videos',
-      ],
-      ['comparison MP4', 'outputTiming for synchronized media'],
-      'Measure checkpoint alignment within two output frames.',
     ],
     [
       'quality',
@@ -309,13 +300,7 @@ export const capabilities: Capability[] = entries.map(
     verification,
     status: 'implemented',
     surface: 'cli',
-    prerequisites: [
-      'run',
-      'capture',
-      'annotate',
-      'render-compare',
-      'frame',
-    ].includes(id)
+    prerequisites: ['run', 'capture', 'render', 'frame'].includes(id)
       ? ['Chromium installed', 'FFmpeg installed']
       : [],
     timingEffects: ['run', 'capture'].includes(id)
@@ -517,7 +502,7 @@ capabilities.push({
   surface: 'mcp',
   title: 'Render scene comparison',
   status: 'implemented',
-  invocation: 'repro render AFTER --renderer hyperframes --baseline BEFORE',
+  invocation: 'repro render AFTER --baseline BEFORE',
   description:
     'Render two scene presentations at equal scale with independent clocks. Observational playback makes no controlled comparison claim.',
   inputs: ['Rendered before and after runs', 'Optional observational flag'],
@@ -536,6 +521,5 @@ capabilities.push({
   ],
   verification:
     'Inspect pane clocks, held states, and recorded source identities.',
-  example:
-    'repro render AFTER --renderer hyperframes --baseline BEFORE --observational',
+  example: 'repro render AFTER --baseline BEFORE --observational',
 });

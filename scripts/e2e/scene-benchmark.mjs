@@ -12,7 +12,7 @@ const original = JSON.parse(
   await readFile(join(result.run, 'run.json'), 'utf8'),
 );
 const measurements = [];
-for (const renderer of ['legacy', 'hyperframes']) {
+for (const renderer of ['hyperframes']) {
   const directory = join(root, 'benchmark', renderer);
   await mkdir(directory, { recursive: true });
   const run = {
@@ -39,11 +39,8 @@ for (const renderer of ['legacy', 'hyperframes']) {
     'packages/cli/dist/bin.js',
     'render',
     directory,
-    '--renderer',
-    renderer,
-    ...(renderer === 'hyperframes'
-      ? ['--treatment', join(root, 'geometry-before.treatment.json')]
-      : []),
+    '--treatment',
+    join(root, 'geometry-before.treatment.json'),
   ];
   const started = performance.now();
   const { stdout } = await exec('/usr/bin/time', args, {

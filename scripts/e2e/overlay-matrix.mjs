@@ -7,6 +7,7 @@ import { resolve, join } from 'node:path';
 const exec = promisify(execFile),
   root = resolve(process.env.REPRO_MATRIX_OUT ?? '.repro/review-matrix');
 const cli = resolve('packages/cli/dist/bin.js');
+const { renderOverlayFixture } = await import('./overlay-scene-fixture.mjs');
 const rows = [];
 const groups = [
   {
@@ -96,6 +97,11 @@ const strategies = JSON.parse(
 for (const [g, group] of groups.entries())
   for (const long of [false, true]) {
     const id = `MIX-${String(g * 2 + (long ? 2 : 1)).padStart(2, '0')}`;
+    if (
+      process.env.REPRO_OVERLAY_ONLY &&
+      !process.env.REPRO_OVERLAY_ONLY.split(',').includes(id)
+    )
+      continue;
     const row = {
       id,
       title: group.reason,
@@ -217,33 +223,29 @@ for (const [g, group] of groups.entries())
         '--config',
         configPath,
       ]);
-      const { stdout } = await exec(
-        process.execPath,
-        [
-          cli,
-          'annotate',
-          '--config',
-          configPath,
-          '--events',
-          eventsPath,
-          '--video',
-          join(source, 'capture.mp4'),
-          '--out-dir',
-          folder,
-          '--output-name',
-          'stress.mp4',
-        ],
-        { maxBuffer: 16 * 1024 * 1024 },
-      );
-      const result = JSON.parse(stdout),
-        plan = result.plan;
+      const result = await renderOverlayFixture({
+        config,
+        events,
+        source,
+        folder,
+      });
+      const plan = result.plan;
       row.artifacts.push(
         {
           label: 'Encoded MP4',
-          path: result.render.videoPath ?? join(folder, 'stress.mp4'),
+          path: result.render.outputPath,
         },
         { label: 'Plan and full labels', path: result.planPath },
       );
+      const layout = JSON.parse(
+        await readFile(join(folder, 'layout.json'), 'utf8'),
+      );
+      const placementAt = (id, ms) => {
+        const beat = layout.beats.find((b) => ms >= b.startMs && ms < b.endMs);
+        const panel = beat?.panels.find((p) => p.id === id);
+        assert.ok(panel, `Missing scene panel ${id} at ${ms}`);
+        return panel;
+      };
       const plates = plan.annotations.filter(
         (a) =>
           ![
@@ -292,7 +294,7 @@ for (const [g, group] of groups.entries())
         '-ss',
         String(timestamp),
         '-i',
-        join(folder, 'stress.mp4'),
+        result.render.outputPath,
         '-frames:v',
         '1',
         image,
@@ -315,22 +317,28 @@ for (const [g, group] of groups.entries())
             'rgb24',
             'pipe:1',
           ],
-          { encoding: 'buffer', maxBuffer: 8 * 1024 * 1024 },
+          { encoding: 'buffer', maxBuffer: 32 * 1024 * 1024 },
         );
         const rgb = (x, y) => [
           ...pixels.subarray(
-            (Math.floor(y) * 1280 + Math.floor(x)) * 3,
-            (Math.floor(y) * 1280 + Math.floor(x)) * 3 + 3,
+            (Math.floor(y) * result.scene.output.width + Math.floor(x)) * 3,
+            (Math.floor(y) * result.scene.output.width + Math.floor(x)) * 3 + 3,
           ),
         ];
         if (g === 2) {
           const roi = plan.annotations.find(
             (a) => a.component === 'roi-magnifier',
           );
-          const p = roi.bounds,
+          const p = placementAt(roi.id, timestamp * 1000),
             src = roi.anchor.bbox;
-          const a = rgb(p.x + p.width / 2, p.y + p.height / 2),
-            b = rgb(src.x + src.w / 2, src.y + src.h / 2);
+          const a = rgb(
+              p.x + p.width / 2,
+              p.y + p.height - result.scene.style.cardPadding - 88 - 1,
+            ),
+            b = rgb(
+              src.x + src.w / 2 + result.scene.sourceOrigin.x,
+              src.y + src.h / 2 + result.scene.sourceOrigin.y,
+            );
           assert.ok(
             a.every((v, i) => Math.abs(v - b[i]) < 25),
             'Magnifier must contain corresponding application pixels',
@@ -345,8 +353,11 @@ for (const [g, group] of groups.entries())
           ];
           assert.ok(
             points.every(([x, y]) => {
-              const [r, g, b] = rgb(x, y);
-              return b > r + 30 && b > g + 20;
+              const [r, g, b] = rgb(
+                x + result.scene.sourceOrigin.x,
+                y + result.scene.sourceOrigin.y,
+              );
+              return b > r + 30 && g > r + 30;
             }),
             'Measured cursor segment missing from encoded pixels',
           );
@@ -359,7 +370,7 @@ for (const [g, group] of groups.entries())
       for (const [index, a] of plates.entries()) {
         const r = a.outTimeRange ?? a.timeRange;
         if (timestamp * 1000 < r.start || timestamp * 1000 >= r.end) continue;
-        const b = a.bounds,
+        const b = placementAt(a.id, timestamp * 1000),
           crop = join(folder, `plate-${index}.png`);
         await exec('ffmpeg', [
           '-v',
@@ -405,15 +416,16 @@ for (const [g, group] of groups.entries())
         '-ss',
         String((plan.metadata.durationMs - 500) / 1000),
         '-i',
-        join(folder, 'stress.mp4'),
+        result.render.outputPath,
         '-frames:v',
         '1',
         end,
       ]);
       row.artifacts.push({ label: 'Outcome frame', path: end });
-      const outcomeBox = plan.annotations.find(
-        (a) => a.component === 'outcome-pair',
-      ).bounds;
+      const outcomeBox = placementAt(
+        plan.annotations.find((a) => a.component === 'outcome-pair').id,
+        plan.metadata.durationMs - 500,
+      );
       const outcomeCrop = join(folder, 'outcome-text.png');
       await exec('ffmpeg', [
         '-v',
@@ -432,7 +444,7 @@ for (const [g, group] of groups.entries())
         '6',
       ]);
       assert.match(outcome, /EXPECTED/i);
-      assert.match(outcome, /ACTUAL/i);
+      assert.match(outcome, /OBSERVED/i);
       const { stdout: fullText } = await exec('tesseract', [
         image,
         'stdout',
@@ -441,12 +453,12 @@ for (const [g, group] of groups.entries())
       ]);
       assert.doesNotMatch(fullText, /review-canary/);
       row.checks.push(
-        'Encoded frame decoded, privacy canary absent, expected/actual cards OCR-visible',
+        'Encoded frame decoded, privacy canary absent, expected/observed cards OCR-visible',
       );
       row.status = 'passed';
     } catch (e) {
       row.status = 'failed';
-      row.error = [e.message, e.stdout, e.stderr].filter(Boolean).join('\n');
+      row.error = [e.message, typeof e.stdout === 'string' ? e.stdout.slice(0,8192) : '', typeof e.stderr === 'string' ? e.stderr.slice(0,8192) : ''].filter(Boolean).join('\n');
     }
     await save();
     console.log(`${id}: ${row.status}`);

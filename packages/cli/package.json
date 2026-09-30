@@ -1,6 +1,6 @@
 {
   "name": "@jitterbox/repro-cli",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "bin": {
     "repro": "./dist/bin.js"
@@ -15,10 +15,11 @@
   "files": [
     "dist",
     "skills",
-    "docs"
+    "docs",
+    "assets/branding/repro-logo.png"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node -e \"for (const p of ['dist', 'tsconfig.build.tsbuildinfo']) require('node:fs').rmSync(p, { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"

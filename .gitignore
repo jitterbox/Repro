@@ -20,3 +20,5 @@ playwright-report/
 /packages/*/README.md
 /packages/cli/skills/
 /packages/cli/docs/
+
+/packages/cli/assets/

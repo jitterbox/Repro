@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os';
 import { basename, dirname, extname, join, parse } from 'node:path';
 
-import type { Rect } from '@jitterbox/repro-plan';
+import type { Rect } from '@jitterbox/repro-contracts/plan';
 import type { ReproConfig } from '@jitterbox/repro-core';
 
 import { DEFAULT_CANARY_SECRET } from './redaction/canaries.js';

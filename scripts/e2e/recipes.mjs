@@ -98,6 +98,9 @@ for (const recipe of recipes) {
           a.kind === 'presentation-image' && a.path.endsWith('/during.png'),
       );
       assert.ok(image);
+      const scene = JSON.parse(
+        await readFile(join(rendered.result.directory, 'scene.json'), 'utf8'),
+      );
       const pixels = await execute(
         'ffmpeg',
         [
@@ -106,7 +109,7 @@ for (const recipe of recipes) {
           '-i',
           join(directory, image.path),
           '-vf',
-          'crop=20:20:300:300,scale=1:1,format=rgb24',
+          `crop=20:20:${300 + scene.sourceOrigin.x}:${300 + scene.sourceOrigin.y},scale=1:1,format=rgb24`,
           '-frames:v',
           '1',
           '-f',
@@ -133,9 +136,8 @@ for (const recipe of recipes) {
 
     const exported = await invoke(
       'export',
+      '--draft',
       directories[1],
-      '--baseline',
-      directories[0],
       '--out-dir',
       join(output, 'transient-bundle'),
     );

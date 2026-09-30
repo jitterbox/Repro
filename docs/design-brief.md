@@ -8,6 +8,8 @@ skills). This brief defines **what the product should look and feel like**, what
 surfaces exist, token systems, overlay language, and acceptance criteria for
 designs.
 
+**Project identity:** Use the approved [Repro logo and branding](branding.md) for documentation and package identity. Evidence overlay colors remain semantic.
+
 **Related docs**
 
 | Doc | Role |
@@ -94,7 +96,7 @@ Design storyboards should follow this narrative arc:
 ```mermaid
 flowchart LR
   capture[Capture screencast] --> plan[Plan annotations]
-  plan --> render[Burn ASS + filters]
+  plan --> render[Render one seekable scene]
   render --> package[Package + viewer]
   captureB[Capture B controlled] --> compare[Compare encode]
   capture --> compare
@@ -167,7 +169,7 @@ Every flag that can be on should have a **named visual component** with states
 
 ### 6.2 Semantic colors (burn-in + viewer)
 
-Use these as the **canonical token set**. Map to ASS/ffmpeg and CSS variables.
+Use these as the **canonical token set**. Map to the scene style configuration and viewer CSS variables.
 
 | Token | Hex (light evidence) | Meaning |
 | --- | --- | --- |
@@ -231,7 +233,7 @@ Line styles: solid (default), dashed (shift/hidden), dotted (low confidence).
 
 Prefer a distinctive but sober UI sans for **viewer** (not Inter-by-default if
 alternatives are available). Overlays may use a highly legible system sans for
-ASS compatibility (`Arial` / `DejaVu Sans` style).
+Bundled Source Sans 3 for interface text and Source Code Pro for data.
 
 ### 6.5 Safe zones (1280×720 reference)
 
@@ -261,7 +263,7 @@ Ship intentional motion, not noise. Recommended defaults:
 | Step badge appear | 150ms fade + slight scale 0.96→1 |
 | Click ripple | 350ms expand + fade |
 | Console toast | Slide/fade 200ms in, hold, 400ms out |
-| Trigger highlight | ASS fade 200/400 |
+| Trigger highlight | Scene entry/exit transitions |
 | Compare wipe | Static 50% or slow animated wipe (optional) |
 | Blink compare | 2–4 Hz max; offer static onion as default for a11y |
 
@@ -527,5 +529,5 @@ Copy/adapt:
 | ShopLite defect only | §11 if it changes content patterns |
 
 Owners: keep this doc aligned with `ai-usage.md` (behavior) and the video polish
-roadmap; when tokens change, update viewer CSS variables and ASS style tables
+roadmap; when tokens change, update viewer CSS variables and scene styles
 together.

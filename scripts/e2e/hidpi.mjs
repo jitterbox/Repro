@@ -94,15 +94,22 @@ await repro('render', directory);
 const run = JSON.parse(await readFile(join(directory, 'run.json'), 'utf8'));
 const asset = (kind) =>
   join(directory, run.artifacts.find((a) => a.kind === kind).path);
-const holds = JSON.parse(await readFile(asset('presentation-holds'), 'utf8'));
-const hold = holds.find((entry) => entry.checkpoint === 'result');
+const scene = JSON.parse(await readFile(asset('presentation-scene'), 'utf8'));
+const hold = scene.segments.find(
+  (entry) =>
+    entry.checkpoint ===
+    run.observations.find(
+      (o) => o.checkpoint === 'result' && o.kind === 'screenshot',
+    ).id,
+);
+const origin = scene.sourceOrigin;
 const frame = join(output, 'checkpoint-hold.png');
 await execute('ffmpeg', [
   '-v',
   'error',
   '-y',
   '-ss',
-  String((hold.startMs + hold.endMs) / 2000),
+  String((hold.outStartMs + hold.outDurationMs / 2) / 1000),
   '-i',
   asset('presentation-video'),
   '-frames:v',
@@ -110,16 +117,29 @@ await execute('ffmpeg', [
   frame,
 ]);
 const pixels = PNG.sync.read(await readFile(frame));
-assert.equal(pixels.width, 1280);
-assert.equal(pixels.height, 720);
-const index = (74 * pixels.width + 74) * 4;
+assert.equal(pixels.width, scene.output.width);
+assert.equal(pixels.height, scene.output.height);
+const index = ((76 + origin.y) * pixels.width + 140 + origin.x) * 4;
 assert.ok(
   pixels.data[index + 2] > pixels.data[index] + 40,
   'High-DPI checkpoint outline is misaligned in the normalized video',
 );
 // Input-relative opaque masks must also cover full-resolution, fractional edges.
 if (privateTarget) {
-  const still = PNG.sync.read(await readFile(asset('presentation-image')));
+  const mapping = JSON.parse(
+    await readFile(asset('presentation-frame-map'), 'utf8'),
+  );
+  const source = mapping.find((entry) => entry.segmentId === hold.id);
+  const still = PNG.sync.read(
+    await readFile(
+      join(
+        directory,
+        run.artifacts.find((a) => a.kind === 'presentation-frame-map').path,
+        '..',
+        source.asset,
+      ),
+    ),
+  );
   const bounds = run.observations.find(
     (o) => o.kind === 'bounds' && o.target === 'target',
   ).bounds;
@@ -142,7 +162,7 @@ if (privateTarget) {
   }
 }
 // Video retains the intended source position; private interiors are opaque.
-const button = (110 * pixels.width + 100) * 4;
+const button = ((110 + origin.y) * pixels.width + 100 + origin.x) * 4;
 assert.ok(
   privateTarget
     ? [0, 1, 2].every((channel) => pixels.data[button + channel] < 5)

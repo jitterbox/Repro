@@ -82,6 +82,7 @@ for (const fail of [false, true]) {
     );
     const blocked = await invoke(
       'export',
+      '--draft',
       directory,
       '--out-dir',
       join(output, 'rejected'),

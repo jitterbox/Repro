@@ -16,15 +16,23 @@ export async function verifyTerminalCheckpoint(
   videoOverride,
 ) {
   const run = JSON.parse(await readFile(join(directory, 'run.json'), 'utf8'));
-  const holdArtifact = run.artifacts.find(
-    (a) => a.kind === 'presentation-holds',
+  const sceneArtifact = run.artifacts.find(
+    (a) => a.kind === 'presentation-scene',
   );
-  const holdsPath = join(directory, holdArtifact.path);
-  const holds = JSON.parse(await readFile(holdsPath, 'utf8'));
-  const hold = holds.toSorted((a, b) => b.startMs - a.startMs)[0];
-  assert.ok(hold, 'Outcome checkpoint hold required');
+  assert.ok(sceneArtifact, 'Scene presentation required');
+  const sceneDir = dirname(join(directory, sceneArtifact.path));
+  const mapping = JSON.parse(
+    await readFile(join(sceneDir, 'frame-map.json'), 'utf8'),
+  );
+  const finalIndex = mapping.length - 1;
   const expected = PNG.sync.read(
-    await readFile(join(dirname(holdsPath), hold.image)),
+    await readFile(
+      join(
+        sceneDir,
+        'frames',
+        `frame_${String(finalIndex).padStart(6, '0')}.png`,
+      ),
+    ),
   );
   const video =
     videoOverride ??
@@ -38,10 +46,10 @@ export async function verifyTerminalCheckpoint(
     '-v',
     'error',
     '-y',
-    '-sseof',
-    '-0.06',
     '-i',
     video,
+    '-vf',
+    `select=eq(n\\,${finalIndex})`,
     '-frames:v',
     '1',
     frame,
@@ -84,7 +92,7 @@ export async function verifyTerminalCheckpoint(
   return {
     passed: true,
     frame,
-    checkpoint: hold.checkpoint,
+    source: mapping.at(-1),
     worstTileFraction,
   };
 }

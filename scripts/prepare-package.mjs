@@ -1,5 +1,5 @@
 /** Build-time package assets. Run from the repository root, never during consumer install. */
-import { cp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -11,9 +11,15 @@ export async function preparePackages() {
     await cp(join(root, 'LICENSE'), join(path, 'LICENSE'));
     await writeFile(
       join(path, 'README.md'),
-      `# ${pkg.name}\n\n${pkg.description}\n\nVersion ${pkg.version}. Node.js 22+. Windows x64 / Linux x64.\n\nSee the [Repro README](https://github.com/jitterbox/Repro#readme), [installation](https://github.com/jitterbox/Repro/blob/master/docs/installation.md), and [complete reference](https://github.com/jitterbox/Repro/blob/master/docs/README.md).\n\nRepro uses your existing AI harness; no AI API key is required to capture, render or replay committed scenarios.\n\nLicense: Apache-2.0. Third-party dependencies retain their own licenses.\n`,
+      `<p align="center">\n  <img src="https://cdn.jsdelivr.net/npm/@jitterbox/repro-cli@${pkg.version}/assets/branding/repro-logo.png" alt="Repro — replay bug logo" width="480">\n</p>\n\n# ${pkg.name}\n\n${pkg.description}\n\nVersion ${pkg.version}. Node.js 22+. Windows x64 / Linux x64.\n\nSee the [Repro README](https://github.com/jitterbox/Repro#readme), [installation](https://github.com/jitterbox/Repro/blob/master/docs/installation.md), and [complete reference](https://github.com/jitterbox/Repro/blob/master/docs/README.md).\n\nRepro uses your existing AI harness; no AI API key is required to capture, render or replay committed scenarios.\n\nLicense: Apache-2.0. Third-party dependencies retain their own licenses.\n`,
     );
   }
+  await mkdir(join(root, 'packages/cli/assets/branding'), { recursive: true });
+  await cp(
+    join(root, 'assets/branding/repro-logo.png'),
+    join(root, 'packages/cli/assets/branding/repro-logo.png'),
+    { recursive: true },
+  );
   await cp(join(root, 'skills'), join(root, 'packages/cli/skills'), {
     recursive: true,
   });

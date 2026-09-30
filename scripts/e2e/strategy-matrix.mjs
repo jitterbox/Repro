@@ -240,7 +240,7 @@ for (const [index, kind] of kinds.entries()) {
           'Accessibility must not create scratch popup evidence',
         );
       }
-      await command('render', directory);
+      const sceneRender = await command('render', directory);
       const rendered = JSON.parse(
         await readFile(join(directory, 'run.json'), 'utf8'),
       );
@@ -256,15 +256,31 @@ for (const [index, kind] of kinds.entries()) {
         { label: `${role} PNG`, path: frame },
         { label: `${role} MP4`, path: join(directory, video.path) },
       );
+      const scene = JSON.parse(
+        await readFile(join(sceneRender.directory, 'scene.json'), 'utf8'),
+      );
+      const outcomeCue = scene.cues.find((c) => c.kind === 'outcome');
+      const at = (outcomeCue.startMs + outcomeCue.endMs) / 2;
+      const schedule = JSON.parse(
+        await readFile(join(sceneRender.directory, 'layout.json'), 'utf8'),
+      );
+      const panel = schedule.beats
+        .find((b) => at >= b.startMs && at < b.endMs)
+        .panels.find((p) => p.id === outcomeCue.id);
+      const outcomeFrame = join(
+        sceneRender.directory,
+        'frames',
+        `frame_${String(Math.floor((at * 30) / 1000)).padStart(6, '0')}.png`,
+      );
       const outcomeCrop = join(folder, 'outcome-ocr.png');
       await exec('ffmpeg', [
         '-v',
         'error',
         '-y',
         '-i',
-        frame,
+        outcomeFrame,
         '-vf',
-        'crop=1232:60:24:548',
+        `crop=${Math.floor(panel.width)}:${Math.floor(panel.height)}:${Math.floor(panel.x)}:${Math.floor(panel.y)},scale=iw*2:ih*2`,
         outcomeCrop,
       ]);
       const { stdout: text } = await exec('tesseract', [

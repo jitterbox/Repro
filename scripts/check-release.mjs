@@ -30,7 +30,8 @@ for (const file of Object.keys(checksums)) {
       !String(version).startsWith('workspace:'),
       `${name}: unresolved workspace dependency`,
     );
-    if (name.startsWith('@jitterbox/repro-')) assert.equal(version, root.version);
+    if (name.startsWith('@jitterbox/repro-'))
+      assert.equal(version, root.version);
   }
   for (const path of ['LICENSE', 'README.md', ...Object.values(pkg.bin ?? {})])
     assert.ok(
@@ -43,6 +44,39 @@ for (const file of Object.keys(checksums)) {
     ),
     `Private/runtime files in ${pkg.name}`,
   );
+  const retired = {
+    '@jitterbox/repro-render': [
+      'ass',
+      'ass-source',
+      'compare-encode',
+      'encode-pipeline',
+      'filtergraph',
+      'theme',
+      'text-fit',
+      'voiceover',
+    ],
+    '@jitterbox/repro-compositor': [
+      'render',
+      'card-view',
+      'theme.css',
+      'types',
+    ],
+    '@jitterbox/repro-pipeline': [
+      'commands/annotate',
+      'commands/render-compare',
+    ],
+    '@jitterbox/repro-cli': ['commands/annotate', 'commands/render-compare'],
+  };
+  for (const module of retired[pkg.name] ?? [])
+    assert.ok(
+      !files.some((f) => f.startsWith(`package/dist/${module}.`)),
+      `${pkg.name}: retired module ${module} leaked into tarball`,
+    );
+  if (pkg.name === '@jitterbox/repro-compositor')
+    assert.ok(
+      !files.some((f) => f.startsWith('package/dist/components/')),
+      'Retired PNG card components leaked into tarball',
+    );
   if (pkg.name === '@jitterbox/repro-cli') {
     for (const path of [
       'skills/repro-setup/SKILL.md',
@@ -50,6 +84,7 @@ for (const file of Object.keys(checksums)) {
       'docs/reference/cli.md',
       'docs/reference/mcp.md',
       'docs/configuration.md',
+      'assets/branding/repro-logo.png',
     ])
       assert.ok(files.includes(`package/${path}`), `CLI missing ${path}`);
   }

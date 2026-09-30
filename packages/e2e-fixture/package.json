@@ -1,6 +1,6 @@
 {
   "name": "@jitterbox/repro-e2e-fixture",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -25,7 +25,8 @@
     "@jitterbox/repro-evaluation": "workspace:*",
     "@jitterbox/repro-plan": "workspace:*",
     "@jitterbox/repro-render": "workspace:*",
-    "playwright": "1.62.0"
+    "playwright": "1.62.0",
+    "@jitterbox/repro-playwright": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.0.7",

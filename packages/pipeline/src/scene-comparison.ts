@@ -1,4 +1,4 @@
-import { withFileLock } from '@jitterbox/repro-core';
+import { withRunLocks } from './run-locks.js';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -134,7 +134,7 @@ export async function renderScenePair(
   afterDirectory: string,
   observational = false,
 ) {
-  return withFileLock(join(afterDirectory, 'render.lock'), () =>
+  return withRunLocks([beforeDirectory, afterDirectory], () =>
     renderScenePairLocked(beforeDirectory, afterDirectory, observational),
   );
 }

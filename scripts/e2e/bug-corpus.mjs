@@ -430,8 +430,6 @@ for (const [kind, title, width, height, expected, detail, issues] of cases) {
   const rendered = await cli(
     'render',
     run,
-    '--renderer',
-    'hyperframes',
     '--treatment',
     join(root, `${name}.treatment.json`),
   );

@@ -1,6 +1,8 @@
+import { splitScenePages } from './scene-pages.js';
+import { sceneCaptions } from './scene-captions.js';
 import { appVersionLabel, type VersionOverlayOptions } from './app-version.js';
 import { sceneReviewHtml } from './scene-review.js';
-import { readFile, mkdir, copyFile } from 'node:fs/promises';
+import { writeFile, readFile, mkdir, copyFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -16,7 +18,10 @@ import {
   selectSceneFrame,
   type SceneSourceFrame,
 } from '@jitterbox/repro-compositor';
-import { renderCheckpointImage, PRIVACY_RENDER_METHOD } from '@jitterbox/repro-render';
+import {
+  sanitizeSourceImage,
+  PRIVACY_RENDER_METHOD,
+} from '@jitterbox/repro-render';
 import { motionMaskEnvelopes } from '@jitterbox/repro-core';
 import { redactText } from '@jitterbox/repro-core/redactor';
 import {
@@ -31,6 +36,7 @@ export async function renderSceneEvidence(
   directory: string,
   options: { evidence?: string; treatment?: string } & VersionOverlayOptions,
 ) {
+  const started = performance.now();
   const run = await verifyRun(directory);
   run.stages.presentation = {
     status: 'failed',
@@ -55,7 +61,7 @@ export async function renderSceneEvidence(
   const index = run.artifacts.find((a) => a.kind === 'source-frame-index');
   if (!index)
     throw new Error(
-      'Verified pre-normalization frames missing. Recapture this scenario; legacy runs remain available with --renderer legacy.',
+      'Verified original source frames missing. Capture this scenario with repro run before rendering.',
     );
   const events = (await readFile(join(directory, 'events.jsonl'), 'utf8'))
     .trim()
@@ -106,22 +112,7 @@ export async function renderSceneEvidence(
   const cuts = events
     .filter((e) => e.kind === 'editorial.cut')
     .sort((a, b) => a.t_mono - b.t_mono);
-  for (const segment of scene.segments) {
-    if (segment.kind === 'play' && !segment.pageId) {
-      const start = segment.sourceStartMs ?? 0;
-      const inside = cuts.filter(
-        (e) =>
-          e.t_mono > start &&
-          e.t_mono < start + segment.outDurationMs * segment.rate,
-      );
-      if (inside.length)
-        throw new Error(
-          'Scene slice does not yet support a page cut inside a playback segment; use a separate scenario step per page',
-        );
-      segment.pageId =
-        cuts.filter((e) => e.t_mono <= start).at(-1)?.pageId ?? raw[0]?.pageId;
-    }
-  }
+  scene.segments = splitScenePages(scene.segments, cuts, raw[0]?.pageId);
   const source: SceneSourceFrame[] = [
     ...raw,
     ...run.observations.flatMap((o) =>
@@ -183,7 +174,8 @@ export async function renderSceneEvidence(
     )
   )
     throw new Error('Required privacy mask observations missing');
-  const legacy = compileEvidencePresentation(
+  scene.privacyMasks = masks;
+  const reviewMetadata = compileEvidencePresentation(
     spec,
     run,
     config.viewport,
@@ -192,7 +184,7 @@ export async function renderSceneEvidence(
   const plan = parsePlan({
     schemaVersion: 1,
     viewport: config.viewport,
-    annotations: legacy.annotations.map((a) => {
+    annotations: reviewMetadata.annotations.map((a) => {
       const cue = scene.cues.find((c) =>
         [`step-${a.id}`, `marker-${a.id}`].includes(c.id),
       );
@@ -203,7 +195,7 @@ export async function renderSceneEvidence(
     chapters: [],
     redactionRects: masks,
     segments: [],
-    timeline: legacy.timeline,
+    timeline: reviewMetadata.timeline,
     metadata: {
       durationMs: duration,
       generatedAtEpoch: 0,
@@ -213,20 +205,28 @@ export async function renderSceneEvidence(
   const outputDir = join(directory, 'presentations', `scene-${randomUUID()}`);
   await mkdir(join(outputDir, 'assets'), { recursive: true });
   const sanitized: SceneSourceFrame[] = [];
+  const sanitizedByHash = new Map<string, { path: string; sha256: string }>();
   for (const frame of source.filter((f) => selected.has(f.id))) {
+    const cached = sanitizedByHash.get(frame.sha256);
+    if (cached) {
+      sanitized.push({ ...frame, ...cached, originalSha256: frame.sha256 });
+      continue;
+    }
     const path = join(
       outputDir,
       'assets',
       `${createHash('sha256').update(frame.id).digest('hex')}.png`,
     );
-    await renderCheckpointImage({
+    await sanitizeSourceImage({
       image: await containedArtifact(directory, frame.path),
-      plan: { ...plan, annotations: [], chapters: [] },
+      viewport: config.viewport,
+      masks,
       output: path,
     });
     const artifact = await artifactRef(directory, path, 'sanitized-source');
     const named = join(outputDir, 'assets', `${artifact.sha256}.png`);
     await copyFile(path, named);
+    sanitizedByHash.set(frame.sha256, { path: named, sha256: artifact.sha256 });
     sanitized.push({
       ...frame,
       path: named,
@@ -246,7 +246,9 @@ export async function renderSceneEvidence(
       } catch (error) {
         if (
           attempt === 3 ||
-          !String(error).includes('No readable space for required group')
+          !/No (?:readable space for required group|safe panel layout)/.test(
+            String(error),
+          )
         )
           throw error;
         repairs.push({
@@ -265,6 +267,13 @@ export async function renderSceneEvidence(
     throw new Error('Presentation repair limit reached');
   };
   const rendered = await renderWithRepairs();
+  const layout = JSON.parse(
+    await readFile(join(outputDir, 'layout.json'), 'utf8'),
+  ) as { retired: Record<string, number> };
+  await writeFile(
+    join(outputDir, 'captions.vtt'),
+    sceneCaptions(scene, layout.retired),
+  );
   await writeJson(join(outputDir, 'plan.json'), plan);
   await writeJson(join(outputDir, 'evidence.json'), spec);
   await writeJson(
@@ -311,6 +320,7 @@ export async function renderSceneEvidence(
   }
   const artifacts = await Promise.all([
     artifactRef(directory, rendered.outputPath, 'presentation-video'),
+    artifactRef(directory, join(outputDir, 'captions.vtt'), 'captions'),
     artifactRef(
       directory,
       join(outputDir, 'plan.json'),
@@ -327,7 +337,7 @@ export async function renderSceneEvidence(
       join(outputDir, 'composition.html'),
       'presentation-composition',
     ),
-    ...sanitized.map((f) =>
+    ...[...new Map(sanitized.map((f) => [f.path, f])).values()].map((f) =>
       artifactRef(directory, f.path, 'presentation-source'),
     ),
     artifactRef(
@@ -351,7 +361,7 @@ export async function renderSceneEvidence(
     .concat(artifacts, stills);
   run.stages.presentation = {
     status: 'passed',
-    durationMs: rendered.receipt.renderMs,
+    durationMs: performance.now() - started,
     cacheHit: false,
   };
   await writeJson(join(directory, 'run.json'), run);

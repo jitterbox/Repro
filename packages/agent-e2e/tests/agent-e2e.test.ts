@@ -23,11 +23,9 @@ describe('agent-e2e mock agent', () => {
     expect(
       transcript.steps.some((step) => step.tool === 'validate-config'),
     ).toBe(true);
-    expect(transcript.steps.some((step) => step.tool === 'capture')).toBe(true);
+    expect(transcript.steps.some((step) => step.tool === 'run')).toBe(true);
     expect(transcript.steps.some((step) => step.tool === 'compare')).toBe(true);
-    expect(
-      transcript.steps.some((step) => step.tool === 'render-compare'),
-    ).toBe(true);
+    expect(transcript.steps.some((step) => step.tool === 'render')).toBe(true);
 
     await access(join(runDir, 'repro.config.json'));
     await access(transcript.artifacts.transcriptPath);

@@ -26,7 +26,8 @@ import {
   driveHitTarget,
   driveHoverHidden,
   driveMenuExport,
-  driveMultiShape,
+  driveMultiShapeFixture,
+  driveQuiet,
   drivePointer,
   drivePopup,
   driveRedaction,
@@ -361,7 +362,7 @@ describe('ShopLite feature-coverage videos', () => {
       expect(result.layouts.edgeOverlay.length).toBeGreaterThan(0);
       expect(result.geometryDeltas.length).toBeGreaterThan(0);
       expect(result.composition?.sync.anchors?.length ?? 0).toBeGreaterThan(0);
-      expect(result.compareVideoPaths?.length).toBe(5);
+      expect(result.compareVideoPaths?.length).toBe(1);
       for (const path of result.compareVideoPaths ?? []) {
         await assertVideo(path);
       }
@@ -398,7 +399,7 @@ describe('ShopLite feature-coverage videos', () => {
       });
       expect(result.layouts.wipe.length).toBeGreaterThan(0);
       expect(result.layouts.blink.length).toBeGreaterThan(0);
-      expect(result.compareVideoPaths?.length).toBe(2);
+      expect(result.compareVideoPaths?.length).toBe(1);
       for (const path of result.compareVideoPaths ?? []) {
         await assertVideo(path);
       }
@@ -530,7 +531,7 @@ describe('ShopLite feature-coverage videos', () => {
     await withServer(async (server) => {
       const capture = await runScenarioCapture({
         config,
-        drive: (session) => driveMultiShape(session, bug),
+        drive: driveMultiShapeFixture,
         fixture: 'broken',
         scenario: 'annotate-multi-shape',
         server,
@@ -556,17 +557,18 @@ describe('ShopLite feature-coverage videos', () => {
       profile: 'controlled',
       surfaceCapture: 'page',
       viewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
-      features: { steps: true, specCard: true, redaction:true },
-      redaction:{strict:true,masks:['[data-testid="input-email"]','[data-testid="input-ssn"]']},
+      features: { steps: true, specCard: true, redaction: true },
+      redaction: {
+        strict: true,
+        masks: ['[data-testid="input-email"]', '[data-testid="input-ssn"]'],
+      },
       metadata: { bugId: 'PKG-001', specTitle: 'package-quality' },
     };
 
     await withServer(async (server) => {
       const capture = await runScenarioCapture({
         config,
-        drive: async (session) => {
-          await session.page.waitForTimeout(400);
-        },
+        drive: driveQuiet,
         fixture: 'fixed',
         scenario,
         server,

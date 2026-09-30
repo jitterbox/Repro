@@ -68,3 +68,19 @@ it('holds the committed checkpoint even when a newer movie frame exists', () => 
   expect(selectSceneFrame(plan, sources, 0)?.source.id).toBe('shot');
   expect(selectSceneFrame(plan, sources, 999)?.source.id).toBe('shot');
 });
+
+it('formats data units consistently without inventing units for arbitrary state', async () => {
+  const { formatSceneValue } = await import('./scene-render.js');
+  expect(formatSceneValue({ text: '466000', value: 466000 }, 'B')).toBe(
+    '466 KB',
+  );
+  expect(formatSceneValue({ text: '1250000', value: 1250000 }, 'B')).toBe(
+    '1.25 MB',
+  );
+  expect(formatSceneValue({ text: '3000000000', value: 3000000000 }, 'B')).toBe(
+    '3 GB',
+  );
+  expect(formatSceneValue({ text: '0', value: 0 }, 'B')).toBe('0 B');
+  expect(formatSceneValue({ text: '466', value: 466 }, 'KB')).toBe('466 KB');
+  expect(formatSceneValue({ text: '466', value: 466 }, '')).toBe('466');
+});

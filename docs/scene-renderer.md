@@ -1,21 +1,24 @@
-> Release 0.2.1: [installation](installation.md), [configurable presentation](configuration.md), and [complete CLI/MCP/schema references](README.md) are now available. Windows x64 and Linux x64 use a platform-aware pinned headless-shell resolver. See CI results for actual platform validation; this does not promote the renderer.
+> Release 0.3.0: [installation](installation.md), [configurable presentation](configuration.md), and [complete CLI/MCP/schema references](README.md) are now available. Windows x64 and Linux x64 use a platform-aware pinned headless-shell resolver. See CI results for actual platform validation; this does not promote the renderer.
 
 # Scene renderer and application-defect corpus
 
-Status: opt-in scene renderer with an accepted initial visual direction and an expanded
-application-defect corpus. The legacy renderer remains the default while the remaining
-promotion gates below are open.
+The polished scene compositor is the only renderer. It has an accepted initial visual direction and an expanded application-defect corpus. Final-quality export remains gated by the acceptance work listed below.
 
-## Use the slice
+## Single rendering path
+
+`render RUN` always uses the polished scene compositor. The renderer switch, raw-event `annotate` command and FFmpeg `render-compare` command were removed. Use `render AFTER --baseline BEFORE` for scene comparisons. Numeric comparison reports remain separate from video rendering. Old onion/wipe/blink/difference encoders and the unused narration prototype were retired; they are not scene effects.
+
+`@jitterbox/repro-render` now contains shared source sanitization, media inspection and privacy auditing, not an alternate presentation renderer. Captions, stills, source mappings and video all derive from the scene. Removal does not relax source-frame, privacy, OCR or final-quality acceptance requirements.
+
+## Render a captured run
 
 Capture through the normal committed scenario workflow. New runs retain hashed
-pre-normalization frame files and a source index. Existing runs remain readable with
-the legacy renderer; recapture when the original frames are unavailable.
+pre-normalization frame files and a source index. Rendering requires these original frames; recapture when they are unavailable.
 
 ```sh
 repro treatments --json
 repro validate-treatment treatment.json
-repro render RUN --renderer hyperframes --treatment treatment.json
+repro render RUN --treatment treatment.json
 repro review RUN --presentation
 repro export RUN --draft --out-dir acceptance-bundle
 ```
@@ -31,9 +34,9 @@ Required treatments fail when their evidence is absent; there is no renderer fal
 For already rendered before/after runs:
 
 ```sh
-repro render AFTER --renderer hyperframes --baseline BEFORE
+repro render AFTER --baseline BEFORE
 # Faithful recordings are observational, never controlled comparison proof:
-repro render AFTER --renderer hyperframes --baseline BEFORE --observational
+repro render AFTER --baseline BEFORE --observational
 ```
 
 The first command applies the existing controlled-comparison proof checks.
@@ -208,3 +211,9 @@ and WebMCP remains dependent on the pinned browser capabilities. Jira ingestion
 accepts saved issue JSON and local media; authenticated live issue downloading is not
 yet exposed. The review network panel is an event timeline, not a full DevTools waterfall.
 These limitations are explicit; missing observations are never manufactured.
+
+## Adaptive space and workflow timing
+
+See [adaptive panel placement](configuration.md#adaptive-panel-placement) for gutter/header reuse, timed step retirement and protected corner overlays. [Workflow audits](workflow-audit.md) combine command timing logs with native harness transcripts to explain capture and rendering costs. Presentation changes reuse existing source footage.
+
+Recorded active-page cuts split scene playback at the observed source timestamps. Original source selection, slow-play rates, and checkpoint page identities remain intact. Opaque privacy masks are also applied above source-surface decorations, and annotation panels avoid these regions.

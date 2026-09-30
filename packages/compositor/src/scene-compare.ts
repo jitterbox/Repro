@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { runSceneWorker } from './scene-process.js';
 import { createHash } from 'node:crypto';
 import { captureComposition } from './scene-render.js';
+import { withFileLock } from '@jitterbox/repro-core';
 
 export interface ComparisonBeat {
   id: string;
@@ -57,12 +58,23 @@ export function comparisonFrameMap(a: ComparisonBeat[], b: ComparisonBeat[]) {
           (s) => outputMs >= s.startMs && outputMs < s.startMs + s.durationMs,
         ) ?? last;
       const elapsed = outputMs - beat.startMs;
-      const pane = (s: ComparisonBeat) => ({
-        outputFrame: Math.floor(
-          ((s.startMs + Math.min(elapsed, s.durationMs - 0.001)) * 30) / 1000,
-        ),
-        held: elapsed >= s.durationMs,
-      });
+      const pane = (s: ComparisonBeat) => {
+        const firstFrame = Math.ceil((s.startMs * 30) / 1000 - 1e-9);
+        const lastFrame =
+          Math.ceil(((s.startMs + s.durationMs) * 30) / 1000 - 1e-9) - 1;
+        if (lastFrame < firstFrame)
+          throw new Error(`Comparison beat has no output frame: ${s.id}`);
+        return {
+          outputFrame: Math.max(
+            firstFrame,
+            Math.min(
+              lastFrame,
+              Math.floor(((s.startMs + elapsed) * 30) / 1000 + 1e-9),
+            ),
+          ),
+          held: elapsed >= s.durationMs,
+        };
+      };
       return {
         frame,
         outputMs,
@@ -109,7 +121,7 @@ export async function renderSceneComparisonInProcess(
   const mapping=${json(frames)},labels=${json([input.a.label, input.b.label])},mode=${json(input.mode)};
   const panes=['a','b'].map(id=>document.getElementById(id));let pending=Promise.resolve();
   Promise.all(panes.map(p=>new Promise(resolve=>p.addEventListener('load',async()=>{await p.contentDocument.fonts.ready;p.contentWindow.__reproLayout();resolve();},{once:true})))).then(()=>{
-    window.__hf={duration:mapping.length/30,seek(time){const f=mapping[Math.min(mapping.length-1,Math.max(0,Math.round(time*30)))];pending=Promise.all(panes.map(async(p,i)=>{const cursor=i?f.b:f.a;document.getElementById(i?'lb':'la').textContent=labels[i]+' · '+(mode==='verified'?'Controlled comparison':'Observational playback')+(cursor.held?' · Held at checkpoint':'');p.contentWindow.__hf.seek(cursor.outputFrame/30);await p.contentWindow.__hfWaitForSeekCompletion();})).then(()=>{const left=panes[0].contentDocument,right=panes[1].contentDocument;for(const group of right.querySelectorAll('[data-kind=data-panel],[data-kind=marker],[data-kind=step],[data-kind=callout],[data-kind=alignment],[data-kind=highlight],[data-kind=title]')){const card=group.querySelector('.card');const peer=Array.from(left.querySelectorAll('[data-cue]')).find(g=>g.dataset.cue===group.dataset.cue)?.querySelector('.card');if(!card||!peer)continue;const text=c=>Array.from(c.children).filter(n=>!n.classList.contains('eyebrow')).map(n=>n.textContent).join(' ');const common=text(card)===text(peer);for(const c of [card,peer]){const label=c.querySelector('.eyebrow');if(label && group.dataset.kind!=='title')label.textContent=common?'SHARED · BOTH VIEWS':'DIFFERENCE · '+(c===card?labels[1]:labels[0]);}card.style.visibility=common?'hidden':'visible';for(const leader of group.querySelectorAll('.leader'))leader.style.visibility=common?'hidden':'visible';card.setAttribute('aria-label',common?'Common observations shown on left':'Different observation in this view');}});}};
+    window.__hf={duration:mapping.length/30,seek(time){const f=mapping[Math.min(mapping.length-1,Math.max(0,Math.round(time*30)))];pending=Promise.all(panes.map(async(p,i)=>{const cursor=i?f.b:f.a;document.getElementById(i?'lb':'la').textContent=labels[i]+' · '+(mode==='verified'?'Controlled comparison':'Observational playback')+(cursor.held?' · Held at checkpoint':'');p.contentWindow.__hf.seek(cursor.outputFrame/30);await p.contentWindow.__hfWaitForSeekCompletion();})).then(()=>{const left=panes[0].contentDocument,right=panes[1].contentDocument;for(const group of right.querySelectorAll('[data-kind=data-panel],[data-kind=marker],[data-kind=step],[data-kind=callout],[data-kind=alignment],[data-kind=highlight],[data-kind=title]')){const card=group.querySelector('.card');const peerGroup=Array.from(left.querySelectorAll('[data-cue]')).find(g=>g.dataset.cue===group.dataset.cue);const peer=peerGroup?.querySelector('.card');if(!card||!peer)continue;const text=c=>Array.from(c.children).filter(n=>!n.classList.contains('eyebrow')).map(n=>n.textContent).join(' ');const common=Number(peerGroup.style.opacity)>0 && text(card)===text(peer) && group.dataset.comparisonKey===peerGroup.dataset.comparisonKey;for(const c of [card,peer]){const label=c.querySelector('.eyebrow');if(label && group.dataset.kind!=='title')label.textContent=common?'SHARED · BOTH VIEWS':'DIFFERENCE · '+(c===card?labels[1]:labels[0]);}card.style.visibility=common?'hidden':'visible';for(const leader of group.querySelectorAll('.leader'))leader.style.visibility=common?'hidden':'visible';card.setAttribute('aria-label',common?'Common observations shown on left':'Different observation in this view');}});}};
     window.__hfWaitForSeekCompletion=()=>pending;
     window.__reproValidate=()=>panes.forEach(p=>p.contentWindow.__reproValidate());window.__hf.seek(0);
   });</script>`;
@@ -141,13 +153,15 @@ export async function renderSceneComparison(
   input: SceneComparisonInput,
 ): Promise<Awaited<ReturnType<typeof renderSceneComparisonInProcess>>> {
   await mkdir(input.outDir, { recursive: true });
-  const request = join(input.outDir, 'render-request.json');
-  await writeFile(
-    request,
-    JSON.stringify({ ...input, signal: undefined, comparison: true }),
-  );
-  await runSceneWorker(request, input.signal);
-  return JSON.parse(
-    await readFile(join(input.outDir, 'render-result.json'), 'utf8'),
-  ) as Awaited<ReturnType<typeof renderSceneComparisonInProcess>>;
+  return withFileLock(join(input.outDir, 'scene.lock'), async () => {
+    const request = join(input.outDir, 'render-request.json');
+    await writeFile(
+      request,
+      JSON.stringify({ ...input, signal: undefined, comparison: true }),
+    );
+    await runSceneWorker(request, input.signal);
+    return JSON.parse(
+      await readFile(join(input.outDir, 'render-result.json'), 'utf8'),
+    ) as Awaited<ReturnType<typeof renderSceneComparisonInProcess>>;
+  });
 }

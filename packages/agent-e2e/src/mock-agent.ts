@@ -72,7 +72,7 @@ export async function runMockAgent(
     });
   }
 
-  const captureRoot = join(runDir, 'capture');
+  const captureRoot = join(runDir, 'run');
   await mkdir(captureRoot, { recursive: true });
 
   if (config.mode === 'compare') {
@@ -152,7 +152,7 @@ async function runReproBugFlow(input: {
     const captureDir = join(input.captureRoot, 'broken');
     const capture = await runStep(
       input.steps,
-      'capture',
+      'run',
       {
         configPath: input.configPath,
         fixture: 'broken',
@@ -177,7 +177,7 @@ async function runReproBugFlow(input: {
     const renderDir = join(input.captureRoot, 'render');
     const annotated = await runStep(
       input.steps,
-      'annotate',
+      'render',
       {
         configPath: input.configPath,
         events: capture.eventsPath,
@@ -233,7 +233,7 @@ async function runCompareBugFlow(input: {
 
     await runStep(
       input.steps,
-      'capture',
+      'run',
       {
         broken: broken.captureDir,
         configPath: input.configPath,
@@ -296,7 +296,7 @@ async function runCompareBugFlow(input: {
 
     await runStep(
       input.steps,
-      'render-compare',
+      'render',
       {
         composition: compositionPath,
         outDir: join(input.runDir, 'compare-render'),

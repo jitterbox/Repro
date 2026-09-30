@@ -1,6 +1,6 @@
 # Install Repro
 
-Repro 0.2.1 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
+Repro 0.3.0 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
 
 ## Install the skills first
 
@@ -20,6 +20,10 @@ npx skills@latest add jitterbox/Repro --skill repro-setup repro-capture repro-an
 
 Add `--global` for user-wide skills. `--copy` avoids requiring Windows symlink privileges. Other supported harnesses can be selected interactively. A local checkout or unpacked CLI package works too: `npx skills@latest add ./skills --copy`. See the [installer's official reference](https://github.com/vercel-labs/skills#readme) for discovery, update and removal. This uses the same open installer approach as [Matt Pocock's skills](https://github.com/mattpocock/skills#readme).
 
+The npm CLI includes the same skills. After installing the packages below, run
+`npx skills@latest add ./node_modules/@jitterbox/repro-cli/skills --copy` to install
+them using the package contents. This path requires no GitHub repository access.
+
 
 ## npm installation
 
@@ -29,7 +33,7 @@ These commands work in PowerShell and Linux shells:
 mkdir repro-evidence
 cd repro-evidence
 npm init -y
-npm install --save-dev @jitterbox/repro-cli@0.2.1 @jitterbox/repro-playwright@0.2.1 @jitterbox/repro-mcp@0.2.1
+npm install --save-dev @jitterbox/repro-cli@0.3.0 @jitterbox/repro-playwright@0.3.0 @jitterbox/repro-mcp@0.3.0
 npx repro setup --system
 npx repro doctor
 npx repro init
@@ -55,8 +59,8 @@ For skills from this checkout, run `npx skills@latest add ./skills --copy`. Invo
 
 ```sh
 pnpm release:prepare
-pnpm release:pack .repro/release-0.2.1
-cd .repro/release-0.2.1
+pnpm release:pack .repro/release-0.3.0
+cd .repro/release-0.3.0
 pnpm install
 pnpm exec repro setup
 pnpm exec repro init
@@ -69,7 +73,7 @@ The release directory contains local tarball dependencies and checksums. Move th
 `repro setup --system --dry-run` prints exactly what would execute. `repro setup` installs only the pinned Chromium browser and headless shell, then checks prerequisites. `--no-browser` skips the browser download; `--system` provisions native dependencies.
 
 - **Windows 10/11 x64:** WinGet installs `Gyan.FFmpeg` and `UB-Mannheim.TesseractOCR`. Install Windows App Installer if WinGet is missing. Package installers may request elevation. Repro resolves WinGet executable links and the normal Tesseract installation directly; portable locations can be configured below. Use a current Windows release supported by Playwright.
-- **Ubuntu 24.04 / Debian x64:** setup uses apt for FFmpeg (including libass), Tesseract English data, fontconfig and Liberation fonts, then Playwright's browser dependency installer. System setup needs root/sudo; browser-only setup works in an ordinary account once those packages exist.
+- **Ubuntu 24.04 / Debian x64:** setup uses apt for FFmpeg and Tesseract English data, then Playwright's browser dependency installer. System setup needs root/sudo; browser-only setup works in an ordinary account once those packages exist.
 - **Other Linux distributions:** install those native dependencies using your distribution's package manager, satisfy Playwright's Chromium libraries, then run `repro setup`. Automatic system provisioning intentionally reports unsupported distributions instead of guessing package names. Musl/Alpine, ARM, macOS and OS-desktop capture are outside the validated 0.2 baseline.
 
 The compatibility workflow exercises packed consumer installation, process cancellation, capture, rendering, OCR and scene seeking on Ubuntu 24.04 and Windows Server 2022. A configured CI job is not evidence of a successful run: inspect the latest [CI result](https://github.com/jitterbox/Repro/actions) for a particular release. Real GUI interactions beyond browser content are not captured.

@@ -121,6 +121,7 @@ for (const mode of ['passthrough', 'absent', 'scroll', 'frame']) {
       (
         await invoke(
           'export',
+          '--draft',
           directory,
           '--out-dir',
           join(output, 'forbidden-frame-export'),
