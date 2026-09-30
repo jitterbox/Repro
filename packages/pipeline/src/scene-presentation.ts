@@ -1,9 +1,10 @@
+import { operationMetadata } from '@jitterbox/repro-core';
 import { splitScenePages } from './scene-pages.js';
 import { sceneCaptions } from './scene-captions.js';
 import { appVersionLabel, type VersionOverlayOptions } from './app-version.js';
 import { sceneReviewHtml } from './scene-review.js';
 import { writeFile, readFile, mkdir, copyFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   validateEvidence,
@@ -38,6 +39,7 @@ export async function renderSceneEvidence(
 ) {
   const started = performance.now();
   const run = await verifyRun(directory);
+  operationMetadata({ runId: run.id });
   run.stages.presentation = {
     status: 'failed',
     durationMs: 0,
@@ -234,6 +236,10 @@ export async function renderSceneEvidence(
       sha256: artifact.sha256,
     });
   }
+  operationMetadata({
+    phases: { 'render.prepareMs': performance.now() - started },
+    presentationId: basename(outputDir),
+  });
   const repairs: { attempt: number; reason: string; height: number }[] = [];
   const renderWithRepairs = async () => {
     for (let attempt = 0; attempt <= 3; attempt++) {
@@ -267,6 +273,16 @@ export async function renderSceneEvidence(
     throw new Error('Presentation repair limit reached');
   };
   const rendered = await renderWithRepairs();
+  operationMetadata({
+    phases: {
+      'render.composeMs': rendered.receipt.renderMs,
+      'render.encodeMs': rendered.receipt.encodeMs,
+    },
+    metrics: {
+      'render.frames': rendered.receipt.frameCount,
+      'render.reusedFrames': rendered.receipt.reusedFrames,
+    },
+  });
   const layout = JSON.parse(
     await readFile(join(outputDir, 'layout.json'), 'utf8'),
   ) as { retired: Record<string, number> };

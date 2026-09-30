@@ -1,3 +1,4 @@
+import { operationMetadata } from '@jitterbox/repro-core';
 import {
   scenarioConfigFile,
   scenarioSourceIdentity,
@@ -6,7 +7,11 @@ import { compareEvidence } from './comparison.js';
 import { createRequire } from 'node:module';
 import { mkdir, mkdtemp, readFile, writeFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { runProcess, artifactBaseName, ReproConfigSchema } from '@jitterbox/repro-core';
+import {
+  runProcess,
+  artifactBaseName,
+  ReproConfigSchema,
+} from '@jitterbox/repro-core';
 import { validateEvidence, appVersionSchema } from '@jitterbox/repro-contracts';
 import { recipes } from './discovery.js';
 import { readRun } from './evidence-run.js';
@@ -148,6 +153,8 @@ export async function runScenario(options: RunOptions) {
       });
     }
   }
+  if (runs.length === 1 && runs[0])
+    operationMetadata({ runId: runs[0].run.id });
   const comparisons = options.baseline
     ? await Promise.all(
         runs.map((r) =>

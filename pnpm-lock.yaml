@@ -111,6 +111,9 @@ importers:
       '@jitterbox/repro-contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@jitterbox/repro-core':
+        specifier: workspace:*
+        version: link:../core
       '@jitterbox/repro-pipeline':
         specifier: workspace:*
         version: link:../pipeline

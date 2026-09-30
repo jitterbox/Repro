@@ -29,7 +29,7 @@ install them without GitHub access using `npx skills@latest add ./node_modules/@
 From an evidence project with Node 22+:
 
 ```sh
-npm install --save-dev @jitterbox/repro-cli@0.3.0 @jitterbox/repro-playwright@0.3.0
+npm install --save-dev @jitterbox/repro-cli@0.3.1 @jitterbox/repro-playwright@0.3.1
 npx repro setup --system
 npx repro doctor
 npx repro init DASH2R-949 --description "Mobile metric overflow"
@@ -37,7 +37,7 @@ npx repro init DASH2R-949 --description "Mobile metric overflow"
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
 
-Optional: install `@jitterbox/repro-mcp@0.3.0` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
+Optional: install `@jitterbox/repro-mcp@0.3.1` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
 
 ## Record a website—with or without its source
 
@@ -85,6 +85,7 @@ The agent chooses evidence and treatment intent; shipped components implement th
 - [All configuration and artifact schemas](docs/reference/schemas.md)
 - [Playwright observation and input API](docs/playwright-api.md)
 - [Agent workflows and bug-class recipes](docs/ai-usage.md)
+- [Workflow timings, privacy audit reports and efficient retries](docs/workflow-audit.md)
 - [Rendering, diagnostics and acceptance status](docs/scene-renderer.md)
 - [Release and npm publishing](docs/releasing.md)
 - [Complete documentation index](docs/README.md)

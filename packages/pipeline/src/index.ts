@@ -7,6 +7,7 @@ export * from './export.js';
 export * from './presentation.js';
 export * from './watch.js';
 export * from './errors.js';
+export * from './audit.js';
 export * from './experiment.js';
 export * from './delivery.js';
 export { scenarioSourceIdentity } from './source-identity.js';

@@ -1,3 +1,4 @@
+import { auditProgress } from '../audit-progress.js';
 import { withFileLock } from '@jitterbox/repro-core';
 import {
   shareReportSchema,
@@ -37,6 +38,7 @@ export interface EvidenceAssetInput {
   readonly role?: 'before' | 'after';
   readonly title?: string;
   readonly fileName?: string;
+  readonly auditFrameMapPath?: string;
 }
 
 export interface EvidenceManifestAsset extends EvidenceAssetInput {
@@ -104,6 +106,7 @@ export async function packageCommand(
           staging,
           options.assets ?? [],
           options.privacyPatterns ?? [],
+          `${options.outDir}.audit`,
         )),
       ];
       for (const diagnostic of options.devtools ?? []) {
@@ -183,6 +186,7 @@ async function copyEvidenceAssets(
   outDir: string,
   assets: readonly EvidenceAssetInput[],
   patterns: readonly string[],
+  diagnosticsDir: string,
 ): Promise<readonly EvidenceManifestAsset[]> {
   const targetDir = join(outDir, 'assets');
   await mkdir(targetDir, { recursive: true });
@@ -213,10 +217,21 @@ async function copyEvidenceAssets(
     await writeFile(destination, bytes, { flag: 'wx' });
     if (asset.kind === 'mp4' || asset.kind === 'png') {
       await enforceOcrAudit({
+        onProgress: auditProgress(),
         path: destination,
         redaction: { masks: [], strict: true },
         requireAudit: true,
         patterns,
+        diagnosticsDir,
+        cacheDir: join(dirname(asset.path), '.repro-ocr-cache'),
+        artifactPath: asset.path,
+        ...(asset.auditFrameMapPath
+          ? {
+              sourceFrameMap: JSON.parse(
+                await readFile(asset.auditFrameMapPath, 'utf8'),
+              ) as unknown[],
+            }
+          : {}),
       });
       const receipt = JSON.parse(
         await readFile(`${destination}.audit.json`, 'utf8'),
@@ -258,7 +273,9 @@ async function assertDirectory(path: string): Promise<void> {
 }
 
 function defaultViewerDir(): string {
-  return dirname(createRequire(import.meta.url).resolve('@jitterbox/repro-viewer'));
+  return dirname(
+    createRequire(import.meta.url).resolve('@jitterbox/repro-viewer'),
+  );
 }
 
 function assertShareableText(text: string, patterns: readonly string[]): void {

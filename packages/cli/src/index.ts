@@ -24,6 +24,7 @@ import {
   initScenario,
   recordScenario,
   inspectFrame,
+  auditEvidence,
   reviewRun,
   renderEvidence,
   exportEvidence,
@@ -34,6 +35,11 @@ import {
 } from '@jitterbox/repro-pipeline';
 import { Command } from 'commander';
 import { z } from 'zod';
+import {
+  withOperationTelemetry,
+  type OperationTelemetry,
+} from '@jitterbox/repro-core';
+import { pipelineProblem } from '@jitterbox/repro-pipeline';
 
 import { captureCommand } from './commands/capture.js';
 import { compareCommand } from './commands/compare.js';
@@ -49,7 +55,7 @@ export * from './commands/package.js';
 export * from './commands/quality.js';
 export * from './commands/validate-config.js';
 
-export const REPRO_CLI_VERSION = '0.3.0' as const;
+export const REPRO_CLI_VERSION = '0.3.1' as const;
 
 type Writer = (text: string) => void;
 
@@ -505,9 +511,26 @@ export function createReproProgram(writer: Writer = console.log): Command {
       },
     );
   program
+    .command('audit <run>')
+    .description(
+      'Audit rendered pixels and preserve private frame-linked privacy diagnostics',
+    )
+    .option('--json', 'Print a structured audit summary (also the default)')
+    .action(async (run: string) =>
+      { writer(JSON.stringify(await auditEvidence(run), null, 2)); },
+    );
+  program
     .command('frame <run>')
     .option('--checkpoint <id>')
-    .option('--time-ms <number>', 'Run-relative milliseconds', Number)
+    .option(
+      '--time-ms <number>',
+      'Run-relative milliseconds; output milliseconds with --presentation',
+      Number,
+    )
+    .option(
+      '--presentation',
+      'Inspect an encoded presentation frame and its source mapping',
+    )
     .option('--target <id>')
     .action(
       async (run: string, options: Parameters<typeof inspectFrame>[1]) => {
@@ -546,29 +569,46 @@ export function createReproProgram(writer: Writer = console.log): Command {
 export async function runCli(
   argv: readonly string[] = process.argv,
 ): Promise<void> {
-  const program = createReproProgram();
-  let finish: Awaited<ReturnType<typeof startWorkflowCommand>> | undefined;
-  program.hook('preAction', async (_root, command) => {
-    const file =
-      program.opts<{ workflowLog?: string }>().workflowLog ??
-      process.env.REPRO_WORKFLOW_LOG;
-    if (file && command.name() !== 'workflow-report') {
-      const names = [command.name()];
-      let parent = command.parent;
-      while (parent && parent !== program) {
-        names.unshift(parent.name());
-        parent = parent.parent;
+  const telemetry: OperationTelemetry = { phases: {}, metrics: {} };
+  return withOperationTelemetry(telemetry, async () => {
+    const program = createReproProgram();
+    let finish: Awaited<ReturnType<typeof startWorkflowCommand>> | undefined;
+    program.hook('preAction', async (_root, command) => {
+      const file =
+        program.opts<{ workflowLog?: string }>().workflowLog ??
+        process.env.REPRO_WORKFLOW_LOG;
+      if (file && command.name() !== 'workflow-report') {
+        const names = [command.name()];
+        let parent = command.parent;
+        while (parent && parent !== program) {
+          names.unshift(parent.name());
+          parent = parent.parent;
+        }
+        finish = await startWorkflowCommand(
+          file,
+          names.join(' '),
+          REPRO_CLI_VERSION,
+        );
       }
-      finish = await startWorkflowCommand(file, names.join(' '));
+    });
+    try {
+      await program.parseAsync(argv);
+      await finish?.(process.exitCode ? 'failed' : 'passed', telemetry);
+    } catch (error) {
+      const problem = pipelineProblem(error).error;
+      await finish?.('failed', {
+        ...telemetry,
+        errorCode:
+          'code' in problem && typeof problem.code === 'string'
+            ? problem.code
+            : problem.category,
+        ...('reportPath' in problem && typeof problem.reportPath === 'string'
+          ? { reportPath: problem.reportPath }
+          : {}),
+      });
+      throw error;
     }
   });
-  try {
-    await program.parseAsync(argv);
-    await finish?.(process.exitCode ? 'failed' : 'passed');
-  } catch (error) {
-    await finish?.('failed');
-    throw error;
-  }
 }
 
 function addCapture(program: Command, writer: Writer): void {

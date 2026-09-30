@@ -28,7 +28,7 @@ Or prefix individual commands with `repro --workflow-log .repro/workflow.jsonl â
 repro workflow-report .repro/workflow.jsonl
 ```
 
-The mirrored MCP `workflow-report` tool accepts `file`. Logging instruments CLI action execution only; MCP calls need the host's tool transcript. Each CLI invocation writes a start and a finish record with a unique ID, UTC timestamps, monotonic elapsed duration, command name and outcome. No command arguments, URLs, environment values, errors or output are logged. A killed process may leave an incomplete entry; the report keeps its outcome unknown. Help, argument parsing failures and commands run without logging are outside coverage. A fresh log per task avoids mixing unrelated sessions. Timing logs are local and are not included in evidence exports.
+The mirrored MCP `workflow-report` tool accepts `file`. Logging instruments CLI action execution only; MCP calls need the host's tool transcript. Each CLI invocation writes a start and a finish record with a unique ID, UTC timestamps, monotonic elapsed duration, command name and outcome. Records also include CLI version and, when available, run/presentation identity, named phase timings, frame/cache counts, safe error codes and private report paths. Command arguments, URLs, environment values, raw errors, OCR findings and output are not logged. A killed process may leave an incomplete entry; the report keeps its outcome unknown. Help, argument parsing failures and commands run without logging are outside coverage. A fresh log per task avoids mixing unrelated sessions. Timing logs are local and are not included in evidence exports.
 
 The report groups time by command and counts capture invocations. Overlapping commands have overlapping wall time; do not sum them into a claimed total agent duration. Repeated `run` commands may target different scenarios or deliberate comparison variants. Use transcript references and a short attempt ledger to explain them:
 
@@ -37,7 +37,7 @@ The report groups time by command and counts capture invocations. Overlapping co
 | 1 | Returned by `run` | Initial capture | Committed scenario | Passed / failed / inconclusive |
 | 2 | Returned by `run` | Specific missing observation or execution failure | Exact input change | Outcome |
 
-Use `run.json` stage timings to separate capture and review preparation from presentation. Scene render receipts report `renderMs` (browser setup, layout, frame capture and seek checks), `encodeMs` (encoding), and `totalMs` (both). These renderer timings exclude pipeline source sanitization and export OCR; the CLI log measures the full command. Report unmeasured time as unknown rather than assigning it to capture.
+Use `run.json` stage timings to separate capture and review preparation from presentation. Scene render receipts report `renderMs` (browser setup, layout, frame capture and seek checks), `encodeMs` (encoding), and `totalMs` (both). These renderer timings exclude pipeline source sanitization and export OCR; the CLI log measures the full command. Its `render.prepareMs` phase measures verification, scene preparation and source sanitization; `render.composeMs` and `render.encodeMs` report compositor work. `audit.decodeMs`, `audit.ocrMs` and `audit.totalMs` measure privacy checks. Total timings contain their component timings: do not add totals and components together. Audit metrics sum across audited assets. `reusedFrames` in a render receipt counts held frames whose complete scene and canvas state matched the preceding frame; entry/exit transitions still render. Report unmeasured time as unknown rather than assigning it to capture.
 
 ## Agent execution policy
 
@@ -49,3 +49,24 @@ Use `run.json` stage timings to separate capture and review preparation from pre
 6. Summarize the native transcript alongside command timings, run stages, render receipt and export result. Identify redundant discovery calls, avoidable recaptures, repeated full renders and repeated exports separately. Name any unavailable coverage.
 
 The timing log provides a baseline for optimization; it does not promise a particular generation speed or prove that every tool call was efficient.
+
+## Diagnose a failed privacy audit
+
+Workflow auditing above measures the agent's work. `repro audit` audits the final **presentation pixels** for privacy:
+
+```sh
+repro audit RUN --json
+repro frame RUN --presentation --time-ms 24102
+```
+
+Both have mirrored MCP tools (`audit` and `frame` with `presentation: true`). Presentation timestamps are output time, including holds and replay; source inspection remains the default. The frame result includes the selected output frame and its source mapping.
+
+A strict OCR failure returns a safe error code, hit count, timings and `reportPath`. Open that private JSON report and its `reviewImage` files locally. Each pixel finding records its detector, OCR mode, rectangle, first output frame/time, source mapping when available and all identical-frame occurrences. The report's raw matched text and images can contain secrets; do not paste them into a harness transcript or attach them to an issue. Export reports live beside the requested bundle in `<out-dir>.audit/`, outside temporary staging; standalone reports live in the run's `inspection/privacy-audits/`. Incomplete scans never count as passing audits.
+
+OCR scans every encoded frame at both page segmentation modes (3 and 11), batching up to eight distinct frames per Tesseract process. Word geometry separates distant table cells while preserving ordinary spaced and wrapped text. Exact-frame results are cached locally in the presentation's `.repro-ocr-cache/`, bound to image bytes, OCR version/model, implementation and privacy patterns. Completed batches survive a later failure; a retry rescans missing or invalid entries and retains all findings. This also lets `audit` warm the export audit. A cache hit is not permission to ignore a finding. These private caches/reports are excluded from exported bundles; delete them when no longer needed.
+
+Interactive progress events appear on stderr; set `REPRO_AUDIT_PROGRESS=1` to also stream them in a harness or redirected session. Leave that option off if a client parses the entire error stream as one JSON value. Stdout remains the final machine-readable result. `REPRO_OCR_WORKERS` accepts 1â€“8 (default 2). More workers trade memory/CPU for throughput; measure on the target machine. Engine/model identification failure disables cache reuse. Successful whole-bundle reuse still requires valid content-bound receipts.
+
+Run render, audit, export and frame-inspection commands sequentially for a given run. `RUN_BUSY` means another command owns its lock; wait for that command instead of recapturing.
+
+On privacy failure, inspect the saved report first. If pixels expose private content, update measured masks and rerender the existing capture where possible. If OCR grouped unrelated text, retain the report as a detector regression; do not disable strict checks or disguise the text to force a pass. Retry export after a justified correction. No recapture is needed unless required source evidence or capture privacy is wrong.

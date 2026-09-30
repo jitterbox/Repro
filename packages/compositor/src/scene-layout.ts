@@ -275,21 +275,20 @@ export function planPanelLayout(
             });
         }
         if (persistent && allowOverlay) {
-          for (const x of [
-            origin.x + scene.viewport.width - pad - card.width,
-            origin.x + pad,
-          ]) {
+          for (const corner of layout.overlayCornerOrder) {
+            const x = corner.endsWith('right')
+              ? origin.x + scene.viewport.width - pad - card.width
+              : origin.x + pad;
             const top = origin.y + pad,
               bottom = origin.y + scene.viewport.height - pad - card.height;
+            const fromBottom = corner.startsWith('bottom');
             for (const y of [
-              top,
+              fromBottom ? bottom : top,
               ...placed
                 .filter((p) => p.zone === 'overlay' && p.x === x)
-                .map((p) => p.y + p.height + gap),
-              bottom,
-              ...placed
-                .filter((p) => p.zone === 'overlay' && p.x === x)
-                .map((p) => p.y - gap - card.height),
+                .map((p) =>
+                  fromBottom ? p.y - gap - card.height : p.y + p.height + gap,
+                ),
             ]) {
               if (
                 x >= origin.x + pad &&
@@ -310,6 +309,16 @@ export function planPanelLayout(
         let chosen: PanelPlacement | undefined;
         for (const candidate of candidates) {
           if (!safe(candidate)) continue;
+          // Persistent overflow must not spend existing connector clearance.
+          // Try another corner instead of forcing a clean leader into a detour.
+          // Gutter packing can still reroute leaders to avoid unnecessary gaps.
+          if (
+            candidate.zone !== 'gutter' &&
+            placed.some(
+              (p) => p.leader && hitsLine(inflate(candidate, pad), p.leader),
+            )
+          )
+            continue;
           const proposed = [...placed, candidate];
           const routes = new Map<string, string>();
           try {

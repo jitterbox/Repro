@@ -1,6 +1,6 @@
 # Install Repro
 
-Repro 0.3.0 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
+Repro 0.3.1 is a local Node.js tool. Its CLI, Playwright fixture and optional MCP server run on **Windows x64 and Linux x64**. Use Node.js 22+; the pinned validation environment is Node 22.22.3. The scene renderer uses the same bundled fonts on both systems. Browser and native dependencies are installed explicitly, never by a hidden npm postinstall script.
 
 ## Install the skills first
 
@@ -33,7 +33,7 @@ These commands work in PowerShell and Linux shells:
 mkdir repro-evidence
 cd repro-evidence
 npm init -y
-npm install --save-dev @jitterbox/repro-cli@0.3.0 @jitterbox/repro-playwright@0.3.0 @jitterbox/repro-mcp@0.3.0
+npm install --save-dev @jitterbox/repro-cli@0.3.1 @jitterbox/repro-playwright@0.3.1 @jitterbox/repro-mcp@0.3.1
 npx repro setup --system
 npx repro doctor
 npx repro init
@@ -59,8 +59,8 @@ For skills from this checkout, run `npx skills@latest add ./skills --copy`. Invo
 
 ```sh
 pnpm release:prepare
-pnpm release:pack .repro/release-0.3.0
-cd .repro/release-0.3.0
+pnpm release:pack .repro/release-0.3.1
+cd .repro/release-0.3.1
 pnpm install
 pnpm exec repro setup
 pnpm exec repro init

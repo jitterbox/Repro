@@ -40,6 +40,8 @@ Commands:
                                     with a bug/work-item ID or name
   record [options] <url>
   run [options] <spec>
+  audit [options] <run>             Audit rendered pixels and preserve private
+                                    frame-linked privacy diagnostics
   frame [options] <run>
   review [options] <run>
   capture [options]                 Validate config and capture a run
@@ -331,6 +333,18 @@ Options:
   -h, --help                  display help for command
 ```
 
+## repro audit
+
+```text
+Usage: repro audit [options] <run>
+
+Audit rendered pixels and preserve private frame-linked privacy diagnostics
+
+Options:
+  --json      Print a structured audit summary (also the default)
+  -h, --help  display help for command
+```
+
 ## repro frame
 
 ```text
@@ -338,7 +352,10 @@ Usage: repro frame [options] <run>
 
 Options:
   --checkpoint <id>
-  --time-ms <number>  Run-relative milliseconds
+  --time-ms <number>  Run-relative milliseconds; output milliseconds with
+                      --presentation
+  --presentation      Inspect an encoded presentation frame and its source
+                      mapping
   --target <id>
   -h, --help          display help for command
 ```

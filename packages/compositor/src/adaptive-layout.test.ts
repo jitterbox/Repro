@@ -71,8 +71,8 @@ it('uses a safe aligned corner for overflow, avoiding targets and connectors', (
   const data = result.beats[0]?.panels.find((p) => p.id === 'state');
   if (!data) throw new Error('Missing state panel');
   expect(data.zone).toBe('overlay');
-  expect(data.x).toBe(36); // top-right is protected; choose top-left
-  expect(data.y).toBe(108);
+  expect(data.x).toBe(36); // right corners are protected; use bottom-left
+  expect(data.y).toBe(424);
 });
 it('never mode fails instead of covering evidence, hiding required panels or growing the canvas', () => {
   expect(() =>
@@ -136,8 +136,86 @@ it('stacks overflow panels along one corner without changing a mobile viewport',
   expect(a?.zone).toBe('overlay');
   expect(b?.zone).toBe('overlay');
   expect(a?.x).toBe(b?.x);
-  expect(b?.y).toBe((a?.y ?? 0) + (a?.height ?? 0) + s.style.cardGap);
+  expect((b?.y ?? 0) + (b?.height ?? 0) + s.style.cardGap).toBe(a?.y);
   expect(s.viewport.width).toBe(393);
+});
+
+it('puts persistent overflow in the bottom-right without bending a direct callout leader', () => {
+  const detail = card('detail', 'magnifier', 480);
+  detail.anchor = { x: 150, y: 560 };
+  const cards = [
+    detail,
+    card('explanation', 'callout', 250),
+    card('transfer', 'data-panel', 240),
+  ];
+  const result = planPanelLayout(scene(), cards, []);
+  const panels = result.beats[0]?.panels ?? [];
+  expect(panels.find((p) => p.id === 'transfer')).toMatchObject({
+    zone: 'overlay',
+    x: 956,
+    y: 564,
+  });
+  expect(panels.find((p) => p.id === 'detail')?.leader).toBe(
+    'M 150 560 L 1328 264',
+  );
+});
+
+it('skips an otherwise safe top-right preference when it would force a connector detour', () => {
+  const detail = card('detail', 'magnifier', 480);
+  detail.anchor = { x: 150, y: 560 };
+  const result = planPanelLayout(
+    scene({
+      overlayCornerOrder: [
+        'top-right',
+        'bottom-right',
+        'bottom-left',
+        'top-left',
+      ],
+    }),
+    [
+      detail,
+      card('explanation', 'callout', 250),
+      card('data', 'data-panel', 240),
+    ],
+    [],
+  );
+  const panels = result.beats[0]?.panels ?? [];
+  expect(panels.find((p) => p.id === 'data')?.y).toBe(564);
+  expect(panels.find((p) => p.id === 'detail')?.leader).toBe(
+    'M 150 560 L 1328 264',
+  );
+});
+
+it('uses bottom-left when bottom-right intersects the existing connector corridor', () => {
+  const detail = card('detail', 'magnifier', 480);
+  detail.anchor = { x: 500, y: 760 };
+  const result = planPanelLayout(
+    scene(),
+    [detail, card('state', 'data-panel', 380)],
+    [],
+  );
+  const panels = result.beats[0]?.panels ?? [];
+  expect(panels.find((p) => p.id === 'state')).toMatchObject({
+    zone: 'overlay',
+    x: 36,
+    y: 424,
+  });
+  expect(panels.find((p) => p.id === 'detail')?.leader).toBe(
+    'M 500 760 L 1328 264',
+  );
+});
+
+it('falls back to an upper corner when both lower corners contain protected evidence', () => {
+  const result = planPanelLayout(
+    scene(),
+    [card('detail', 'magnifier', 750), card('state', 'data-panel', 220)],
+    [{ x: 24, y: 500, width: 1280, height: 316, startMs: 0, endMs: 20000 }],
+  );
+  expect(result.beats[0]?.panels.find((p) => p.id === 'state')).toMatchObject({
+    zone: 'overlay',
+    x: 36,
+    y: 108,
+  });
 });
 
 it('reroutes a steep connector so mobile panels can pack tightly', () => {

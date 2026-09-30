@@ -7,4 +7,4 @@ export * from './redaction/har-policy.js';
 export * from './redaction/presidio.js';
 export * from './redaction/source-mask.js';
 
-export const REPRO_RENDER_VERSION = '0.3.0' as const;
+export const REPRO_RENDER_VERSION = '0.3.1' as const;

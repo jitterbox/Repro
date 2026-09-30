@@ -6,17 +6,35 @@ import { createServer } from 'node:http';
 import { access, mkdir, readFile } from 'node:fs/promises';
 import { join, resolve, extname, sep } from 'node:path';
 import { runProcess } from '@jitterbox/repro-core';
-import { rasterCropBounds, observationUncertaintyMs } from '@jitterbox/repro-contracts';
+import {
+  rasterCropBounds,
+  observationUncertaintyMs,
+} from '@jitterbox/repro-contracts';
 import { containedArtifact, verifyRun, writeJson } from './evidence-run.js';
+import { withRunLocks } from './run-locks.js';
 export async function inspectFrame(
   directory: string,
   selection: {
     checkpoint?: string | undefined;
     timeMs?: number | undefined;
     target?: string | undefined;
+    presentation?: boolean | undefined;
   },
 ) {
   directory = resolve(directory);
+  if (selection.presentation) {
+    if (
+      selection.checkpoint ||
+      selection.target ||
+      selection.timeMs === undefined
+    )
+      throw new Error(
+        'Presentation inspection requires --time-ms in output time; checkpoint/target select source evidence',
+      );
+    return withRunLocks([directory], () =>
+      inspectPresentationFrame(directory, selection.timeMs ?? NaN),
+    );
+  }
   const run = await verifyRun(directory);
   if ((selection.checkpoint === undefined) === (selection.timeMs === undefined))
     throw new Error('Select exactly one checkpoint or timestamp');
@@ -127,6 +145,69 @@ export async function inspectFrame(
   };
   await writeJson(join(output, 'selection.json'), result);
   return result;
+}
+
+async function inspectPresentationFrame(
+  directory: string,
+  requestedMs: number,
+) {
+  const run = await verifyRun(directory);
+  const video = run.artifacts.find((a) => a.kind === 'presentation-video');
+  const map = run.artifacts.find((a) => a.kind === 'presentation-frame-map');
+  if (!video || !map) throw new Error('Render a scene presentation first');
+  const mapping = JSON.parse(
+    await readFile(await containedArtifact(directory, map.path), 'utf8'),
+  ) as { frame: number; outputMs: number; sourceMs: number | null }[];
+  const duration = await recordingDurationMsForPresentation(
+    await containedArtifact(directory, video.path),
+  );
+  if (
+    !Number.isFinite(requestedMs) ||
+    requestedMs < 0 ||
+    requestedMs >= duration
+  )
+    throw new Error('Timestamp outside presentation interval');
+  const entry = mapping.filter((f) => f.outputMs <= requestedMs).at(-1);
+  if (!entry || !Number.isSafeInteger(entry.frame) || entry.frame < 0)
+    throw new Error('Missing presentation frame mapping');
+  const output = join(directory, 'inspection');
+  await mkdir(output, { recursive: true });
+  const context = join(
+    output,
+    `presentation-${video.sha256.slice(0, 12)}-${entry.frame}.png`,
+  );
+  await runProcess('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
+    await containedArtifact(directory, video.path),
+    '-vf',
+    `select=eq(n\\,${entry.frame})`,
+    '-frames:v',
+    '1',
+    context,
+  ]);
+  await access(context);
+  const result = {
+    context,
+    crop: null,
+    runId: run.id,
+    presentation: true,
+    coordinateSpace: 'output-pixels',
+    requestedMs,
+    actualMs: entry.outputMs,
+    selectionOffsetMs: entry.outputMs - requestedMs,
+    uncertaintyMs: 1000 / 30,
+    source: entry,
+  };
+  await writeJson(join(output, 'presentation-selection.json'), result);
+  return result;
+}
+
+async function recordingDurationMsForPresentation(path: string) {
+  const { probeMediaDurationMs } = await import('@jitterbox/repro-render');
+  return (await probeMediaDurationMs(path)) ?? 0;
 }
 export async function reviewRun(
   directory: string,

@@ -22,6 +22,8 @@ import {
   runScenario,
   summarizeRunResult,
   inspectFrame,
+  auditEvidence,
+  pipelineProblem,
   verifyRun,
   compareEvidence,
   exportEvidence,
@@ -48,7 +50,7 @@ const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });
 export function createReproMcpServer() {
-  const server = new McpServer({ name: 'repro', version: '0.3.0' });
+  const server = new McpServer({ name: 'repro', version: '0.3.1' });
   server.registerTool(
     'workflow-report',
     {
@@ -177,6 +179,20 @@ export function createReproMcpServer() {
     async (options) => json(summarizeRunResult(await runScenario(options))),
   );
   server.registerTool(
+    'audit',
+    {
+      description: describeCapability('audit').description,
+      inputSchema: { run: z.string() },
+    },
+    async ({ run }) => {
+      try {
+        return json(await auditEvidence(run));
+      } catch (error) {
+        return { ...json(pipelineProblem(error)), isError: true };
+      }
+    },
+  );
+  server.registerTool(
     'frame',
     {
       description: describeCapability('frame').description,
@@ -185,6 +201,7 @@ export function createReproMcpServer() {
         checkpoint: z.string().optional(),
         timeMs: z.number().optional(),
         target: z.string().optional(),
+        presentation: z.boolean().optional(),
       },
     },
     async ({ run, ...selection }) => {
@@ -282,24 +299,29 @@ export function createReproMcpServer() {
       useWorkItemId,
       devtools,
       config,
-    }) =>
-      json(
-        workItem !== undefined ||
-          description !== undefined ||
-          useWorkItemId !== undefined ||
-          devtools !== undefined ||
-          config !== undefined
-          ? await exportEvidence(run, outDir, baseline, draft, {
-              ...(workItem === undefined ? {} : { workItem }),
-              ...(description === undefined ? {} : { description }),
-              ...(useWorkItemId === undefined ? {} : { useWorkItemId }),
-              ...(devtools === undefined ? {} : { devtools }),
-              ...(config === undefined ? {} : { config }),
-            })
-          : draft === undefined
-            ? await exportEvidence(run, outDir, baseline)
-            : await exportEvidence(run, outDir, baseline, draft),
-      ),
+    }) => {
+      try {
+        return json(
+          workItem !== undefined ||
+            description !== undefined ||
+            useWorkItemId !== undefined ||
+            devtools !== undefined ||
+            config !== undefined
+            ? await exportEvidence(run, outDir, baseline, draft, {
+                ...(workItem === undefined ? {} : { workItem }),
+                ...(description === undefined ? {} : { description }),
+                ...(useWorkItemId === undefined ? {} : { useWorkItemId }),
+                ...(devtools === undefined ? {} : { devtools }),
+                ...(config === undefined ? {} : { config }),
+              })
+            : draft === undefined
+              ? await exportEvidence(run, outDir, baseline)
+              : await exportEvidence(run, outDir, baseline, draft),
+        );
+      } catch (error) {
+        return { ...json(pipelineProblem(error)), isError: true };
+      }
+    },
   );
   server.registerTool(
     'recipes',

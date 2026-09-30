@@ -1,4 +1,4 @@
-> For Repro 0.3.0 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
+> For Repro 0.3.1 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
 
 # Repro — AI agent usage guide
 
@@ -909,3 +909,7 @@ the 50% improvement gate unassessed without an approved comparable baseline.
 ## Scene renderer
 
 For Hyperframes treatments, replayed source intervals, scene review, or scene before/after output, read [scene-renderer.md](scene-renderer.md) before selecting commands. It documents the sole rendering path and its export gate.
+
+### Privacy audit diagnosis and efficient retries
+
+After an export failure, open the returned private audit report before taking any new action. `repro audit RUN --json` performs the same frame OCR without packaging; `repro frame RUN --presentation --time-ms N` inspects a rendered frame in output time. Findings retain source-frame provenance when available. Completed OCR batches are reused under the same image/model/policy identity; failures still block export. Presentation repairs reuse capture footage. See [workflow auditing](workflow-audit.md) for report privacy, CLI/MCP interfaces, progress and phase timings.

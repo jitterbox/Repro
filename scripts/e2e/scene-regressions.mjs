@@ -53,6 +53,13 @@ await renderScene({ scene, sources, outDir: folder });
 scene.segments[0].outDurationMs = 100;
 const rendered = await renderScene({ scene, sources, outDir: folder });
 assert.equal(rendered.receipt.frameCount, 3);
+assert.equal(
+  rendered.receipt.reusedFrames,
+  2,
+  'Settled held compositions reuse exact pixels',
+);
+assert.equal(rendered.receipt.layoutFramesChecked, 3);
+assert.ok(rendered.receipt.randomSeekPassed);
 const streams = JSON.parse(
   await runProcess('ffprobe', [
     '-v',
@@ -74,6 +81,36 @@ assert.equal(
 );
 assert.ok(Math.abs(Number(streams[0].duration) - 0.1) < 0.001);
 assert.equal(rendered.frames.length, 3);
+
+// A held source is not a static scene while cue opacity changes.
+const transitionScene = parseScenePlan({
+  ...scene,
+  segments: [{ ...scene.segments[0], outDurationMs: 1000 }],
+  cues: [
+    {
+      id: 'fade',
+      kind: 'data-panel',
+      title: 'Held evidence',
+      startMs: 0,
+      endMs: 1000,
+      layer: 50,
+    },
+  ],
+});
+const transition = await renderScene({
+  scene: transitionScene,
+  sources,
+  outDir: join(folder, 'hold-transition'),
+});
+assert.ok(
+  transition.receipt.reusedFrames > 0 && transition.receipt.reusedFrames < 29,
+);
+assert.equal(transition.receipt.layoutFramesChecked, 30);
+assert.ok(transition.receipt.randomSeekPassed);
+assert.notDeepEqual(
+  await readFile(join(folder, 'hold-transition', 'frames', 'frame_000000.png')),
+  await readFile(join(folder, 'hold-transition', 'frames', 'frame_000015.png')),
+);
 
 const pane = async (label, targetX, lateEnd, name) => {
   const variant = parseScenePlan({

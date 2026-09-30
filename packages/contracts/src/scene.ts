@@ -107,6 +107,13 @@ export const sceneEncodingSchema = z.strictObject({
 });
 export const sceneLayoutSchema = z.strictObject({
   overlayPanels: z.enum(['never', 'as-needed']).default('as-needed'),
+  overlayCornerOrder: z
+    .array(z.enum(['bottom-right', 'bottom-left', 'top-left', 'top-right']))
+    .length(4)
+    .refine((corners) => new Set(corners).size === 4, {
+      message: 'List each overlay corner exactly once',
+    })
+    .default(['bottom-right', 'bottom-left', 'top-left', 'top-right']),
   retireSteps: z.boolean().default(true),
   minStepVisibleMs: z.number().int().min(1000).max(30000).default(5000),
   useHeaderSpace: z.boolean().default(true),

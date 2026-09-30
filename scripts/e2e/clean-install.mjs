@@ -301,7 +301,7 @@ await writeFile(
     {
       platform: process.platform,
       project,
-      version: '0.3.0',
+      version: '0.3.1',
       capture: true,
       scene: true,
       strictExport: true,
