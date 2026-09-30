@@ -32,6 +32,10 @@ it('discovers authoritative guidance and forwards revised presentations and pair
     expect(
       tools.find((tool) => tool.name === 'render')?.inputSchema.properties,
     ).not.toHaveProperty('renderer');
+    expect(tools.some((tool) => tool.name === 'audit')).toBe(true);
+    expect(
+      tools.find((tool) => tool.name === 'frame')?.inputSchema.properties,
+    ).toHaveProperty('presentation');
     const run = tools.find((tool) => tool.name === 'run');
     expect(Object.keys(run?.inputSchema.properties ?? {})).toEqual(
       expect.arrayContaining(['project', 'buildId', 'config', 'repeat']),
@@ -92,6 +96,21 @@ it('discovers authoritative guidance and forwards revised presentations and pair
       undefined,
       { workItem: 'DASH2R-949', devtools: false },
     );
+    calls.export.mockRejectedValueOnce(
+      Object.assign(new Error('Strict OCR blocked export'), {
+        name: 'GateError',
+        code: 'OCR_PII_DETECTED',
+        reportPath: '/private/report.json',
+        hits: [{ text: 'private-value' }],
+      }),
+    );
+    const failure = await client.callTool({
+      name: 'export',
+      arguments: { run: '/after', outDir: '/bundle' },
+    });
+    expect(failure.isError).toBe(true);
+    expect(JSON.stringify(failure)).toContain('/private/report.json');
+    expect(JSON.stringify(failure)).not.toContain('private-value');
   } finally {
     await client.close();
     await server.close();

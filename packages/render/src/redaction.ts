@@ -1,8 +1,15 @@
 import { createHash } from 'node:crypto';
-import { mapBounded, runProcess as executeProcess } from '@jitterbox/repro-core';
+import {
+  operationMetadata,
+  runProcess as executeProcess,
+} from '@jitterbox/repro-core';
+import { scanOcrBatches, OCR_POLICY_VERSION } from './ocr-batch.js';
 import { spawn } from 'node:child_process';
 import {
   access,
+  copyFile,
+  chmod,
+  mkdir,
   mkdtemp,
   readFile,
   readdir,
@@ -10,7 +17,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, dirname, extname, join, parse } from 'node:path';
+import { basename, dirname, extname, join, parse, resolve } from 'node:path';
 
 import type { Rect } from '@jitterbox/repro-contracts/plan';
 import type { ReproConfig } from '@jitterbox/repro-core';
@@ -22,10 +29,23 @@ export interface OcrHit {
   readonly text: string;
   readonly confidence: number;
   readonly rect?: Rect;
+  readonly detector?: string;
+  readonly mode?: string;
+  readonly frame?: number;
+  readonly occurrences?: readonly number[];
 }
 
 export interface OcrAuditOptions {
   readonly adapter?: OcrAdapter;
+  readonly cacheDir?: string;
+  readonly diagnosticsDir?: string;
+  readonly sourceFrameMap?: readonly unknown[];
+  readonly artifactPath?: string;
+  readonly onProgress?: (progress: {
+    phase: string;
+    completed: number;
+    total: number;
+  }) => void;
   readonly captionsPath?: string;
   readonly eventsPath?: string;
   readonly ffmpegPath?: string;
@@ -39,6 +59,8 @@ export interface OcrAdapter {
 }
 
 export interface OcrAdapterInput {
+  readonly cacheDir?: string;
+  readonly onProgress?: OcrAuditOptions['onProgress'];
   readonly frameDir: string;
   readonly framePaths: readonly string[];
   readonly patterns?: readonly string[];
@@ -53,11 +75,15 @@ export interface OcrAdapterResult {
   readonly source?: 'frame-ocr';
   readonly framesScanned?: number;
   readonly toolVersion?: string;
+  readonly stats?: Record<string, number>;
   readonly hits: readonly OcrHit[];
 }
 
 export class GateError extends Error {
   public readonly hits: readonly OcrHit[];
+  public reportPath?: string | undefined;
+  public code = 'OCR_AUDIT_UNAVAILABLE';
+  public timings?: Record<string, number>;
 
   public constructor(message: string, hits: readonly OcrHit[]) {
     super(message);
@@ -74,40 +100,193 @@ export async function runOcrAudit(
   videoPath: string,
   options: OcrAuditOptions = {},
 ): Promise<readonly OcrHit[]> {
-  const frameDir = await mkdtemp(join(tmpdir(), 'repro-ocr-'));
+  return (await inspectOcrAudit(videoPath, options)).hits;
+}
 
+/** Private diagnostics are retained even when a strict export is blocked. */
+export async function inspectOcrAudit(
+  videoPath: string,
+  options: OcrAuditOptions = {},
+) {
+  const started = performance.now();
+  const frameDir = await mkdtemp(join(tmpdir(), 'repro-ocr-'));
+  const diagnosticsDir = options.diagnosticsDir
+    ? await mkdtemp(await privatePrefix(options.diagnosticsDir))
+    : undefined;
+  const reportPath = diagnosticsDir
+    ? join(diagnosticsDir, 'report.json')
+    : undefined;
+  const timings: Record<string, number> = {};
+  let hits: readonly OcrHit[] = [],
+    audited = false;
+  let stats: Record<string, number> = {},
+    toolVersion: string | undefined;
+  let sha256: string | undefined;
+  let failureDetail: { code: string; message: string } | undefined;
+  let frameTimes: (number | null)[] = [];
   try {
-    const command = options.ocrCommand ?? process.env.REPRO_OCR_COMMAND;
+    sha256 = createHash('sha256')
+      .update(await readFile(videoPath))
+      .digest('hex');
+    const decodeStarted = performance.now();
     const framePaths = await sampleFrames({
       ffmpegPath: options.ffmpegPath ?? 'ffmpeg',
       frameDir,
       videoPath,
     });
-    const input = adapterInput(videoPath, frameDir, framePaths, options);
-    const results = await Promise.all(
-      adapters(options.adapter, command).map((adapter) => adapter.scan(input)),
-    );
-    const hits = uniqueHits(results.flatMap((result) => result.hits));
-    const audited =
-      framePaths.length > 0 &&
-      results.some(
-        (result) =>
-          result.audited &&
-          result.source === 'frame-ocr' &&
-          result.framesScanned === framePaths.length,
+    timings.decodeMs = performance.now() - decodeStarted;
+    try {
+      const probe = await executeProcess('ffprobe', [
+        '-v',
+        'error',
+        '-select_streams',
+        'v:0',
+        '-show_frames',
+        '-show_entries',
+        'frame=best_effort_timestamp_time',
+        '-of',
+        'json',
+        videoPath,
+      ]);
+      frameTimes = (
+        JSON.parse(probe) as {
+          frames: { best_effort_timestamp_time?: string }[];
+        }
+      ).frames.map((f) =>
+        f.best_effort_timestamp_time === undefined
+          ? null
+          : Number(f.best_effort_timestamp_time) * 1000,
       );
-
-    if (options.requireAudit === true && !audited) {
+    } catch {
+      /* Missing timing is reported as unknown; it cannot establish source identity. */
+    }
+    const input = adapterInput(videoPath, frameDir, framePaths, options);
+    const scanStarted = performance.now();
+    const results = await Promise.all(
+      adapters(
+        options.adapter,
+        options.ocrCommand ?? process.env.REPRO_OCR_COMMAND,
+      ).map((adapter) => adapter.scan(input)),
+    );
+    timings.ocrMs = performance.now() - scanStarted;
+    hits = uniqueHits(results.flatMap((r) => r.hits));
+    const pixel = results.find(
+      (r) =>
+        r.audited &&
+        r.source === 'frame-ocr' &&
+        r.framesScanned === framePaths.length,
+    );
+    audited = framePaths.length > 0 && !!pixel;
+    stats = pixel?.stats ?? { frames: framePaths.length };
+    toolVersion = pixel?.toolVersion;
+    if (diagnosticsDir) {
+      for (const frame of new Set(
+        hits.flatMap((h) => (h.frame === undefined ? [] : [h.frame])),
+      )) {
+        const source = framePaths[frame];
+        if (!source) continue;
+        const path = join(diagnosticsDir, `frame-${frame}.png`);
+        await copyFile(source, path);
+        await chmod(path, 0o600);
+      }
+    }
+    if (options.requireAudit && !audited)
       throw new GateError(
         'OCR audit is required for strict redaction but could not run',
         hits,
       );
+    if (
+      createHash('sha256')
+        .update(await readFile(videoPath))
+        .digest('hex') !== sha256
+    ) {
+      const failure = new GateError('Artifact changed during audit', []);
+      failure.code = 'OCR_ARTIFACT_CHANGED';
+      throw failure;
     }
-
-    return hits;
+    timings.totalMs = performance.now() - started;
+    if (reportPath) await writeReport('complete');
+    return { hits, audited, reportPath, timings, stats, toolVersion, sha256 };
+  } catch (error) {
+    timings.totalMs = performance.now() - started;
+    const failure =
+      error instanceof GateError
+        ? error
+        : new GateError(
+            'OCR audit could not complete; inspect the private audit report',
+            hits,
+          );
+    failureDetail = {
+      code: failure.code,
+      message: error instanceof Error ? error.message : 'Unknown OCR failure',
+    };
+    failure.reportPath = reportPath;
+    failure.timings = timings;
+    if (reportPath) await writeReport('incomplete');
+    throw failure;
   } finally {
+    operationMetadata({
+      phases: Object.fromEntries(
+        Object.entries(timings).map(([key, value]) => [`audit.${key}`, value]),
+      ),
+      metrics: Object.fromEntries(
+        Object.entries(stats)
+          .filter(([key]) => !['workers', 'ocrMs'].includes(key))
+          .map(([key, value]) => [`audit.${key}`, value]),
+      ),
+      ...(reportPath ? { reportPath } : {}),
+    });
     await rm(frameDir, { force: true, recursive: true });
   }
+  async function writeReport(status: string) {
+    if (!reportPath || !diagnosticsDir) return;
+    await writeFile(
+      reportPath,
+      JSON.stringify(
+        {
+          schemaVersion: '1.0.0',
+          kind: 'repro.privacy-audit',
+          status,
+          passed: status === 'complete' && audited && hits.length === 0,
+          audited,
+          artifact: resolve(options.artifactPath ?? videoPath),
+          sha256,
+          policyVersion: OCR_POLICY_VERSION,
+          toolVersion,
+          ...(failureDetail ? { failure: failureDetail } : {}),
+          modes: [3, 11],
+          timings,
+          stats,
+          findings: hits.map((h) => ({
+            ...h,
+            outputMs:
+              h.frame === undefined ? null : (frameTimes[h.frame] ?? null),
+            source:
+              h.frame === undefined
+                ? null
+                : (options.sourceFrameMap?.[h.frame] ?? null),
+            reviewImage:
+              h.frame === undefined
+                ? null
+                : join(diagnosticsDir, `frame-${h.frame}.png`),
+            occurrences:
+              h.occurrences?.map((frame) => ({
+                frame,
+                outputMs: frameTimes[frame] ?? null,
+                source: options.sourceFrameMap?.[frame] ?? null,
+              })) ?? [],
+          })),
+        },
+        null,
+        2,
+      ),
+      { mode: 0o600 },
+    );
+  }
+}
+async function privatePrefix(directory: string) {
+  await mkdir(directory, { recursive: true, mode: 0o700 });
+  return join(directory, 'audit-');
 }
 
 export async function enforceOcrAudit(input: {
@@ -117,16 +296,20 @@ export async function enforceOcrAudit(input: {
   readonly eventsPath?: string;
   readonly requireAudit?: boolean;
   readonly patterns?: readonly string[];
+  readonly diagnosticsDir?: string;
+  readonly cacheDir?: string;
+  readonly artifactPath?: string;
+  readonly sourceFrameMap?: readonly unknown[];
+  readonly onProgress?: OcrAuditOptions['onProgress'];
 }): Promise<readonly OcrHit[]> {
-  const auditedBytes = await readFile(input.path).catch(() => {
-    throw new GateError(
-      'Required output artifact is missing or unreadable',
-      [],
-    );
-  });
-  const auditedHash = createHash('sha256').update(auditedBytes).digest('hex');
   const requireAudit = input.requireAudit ?? input.redaction?.strict === true;
-  const hits = await runOcrAudit(input.path, {
+  const audit = await inspectOcrAudit(input.path, {
+    diagnosticsDir:
+      input.diagnosticsDir ?? join(dirname(input.path), '.repro-audits'),
+    ...(input.cacheDir ? { cacheDir: input.cacheDir } : {}),
+    ...(input.artifactPath ? { artifactPath: input.artifactPath } : {}),
+    ...(input.sourceFrameMap ? { sourceFrameMap: input.sourceFrameMap } : {}),
+    ...(input.onProgress ? { onProgress: input.onProgress } : {}),
     ...(input.captionsPath === undefined
       ? {}
       : { captionsPath: input.captionsPath }),
@@ -135,20 +318,29 @@ export async function enforceOcrAudit(input: {
     ...(input.patterns ? { patterns: input.patterns } : {}),
   });
 
+  const hits = audit.hits;
   if (input.redaction?.strict === true && hits.length > 0) {
-    throw new GateError('OCR audit found text after strict redaction', hits);
+    const error = new GateError(
+      'OCR audit found text after strict redaction; inspect the private audit report',
+      hits,
+    );
+    error.code = 'OCR_PII_DETECTED';
+    error.reportPath = audit.reportPath;
+    error.timings = audit.timings;
+    throw error;
   }
 
   if (requireAudit) {
     const sha256 = createHash('sha256')
       .update(await readFile(input.path))
       .digest('hex');
-    if (sha256 !== auditedHash)
-      throw new GateError('Artifact changed during audit', []);
-    const toolVersion = await runProcess({
-      command: 'tesseract',
-      args: ['--version'],
-    });
+    if (sha256 !== audit.sha256) {
+      const failure = new GateError('Artifact changed during audit', []);
+      failure.code = 'OCR_ARTIFACT_CHANGED';
+      failure.reportPath = audit.reportPath;
+      failure.timings = audit.timings;
+      throw failure;
+    }
     const policyHash = createHash('sha256')
       .update(
         JSON.stringify({
@@ -164,11 +356,11 @@ export async function enforceOcrAudit(input: {
           schemaVersion: 1,
           sha256,
           policyHash,
-          policyVersion: '1.1.0',
+          policyVersion: OCR_POLICY_VERSION,
           pageSegmentationModes: [3, 11],
           source: 'frame-ocr',
           tool: 'tesseract',
-          toolVersion: toolVersion.output.split('\n')[0],
+          toolVersion: audit.toolVersion ?? 'unknown',
           auditedAt: new Date().toISOString(),
           passed: hits.length === 0,
         },
@@ -189,52 +381,7 @@ export class TesseractOcrAdapter implements OcrAdapter {
       );
   }
   async scan(input: OcrAdapterInput): Promise<OcrAdapterResult> {
-    const version = await runProcess({
-      command: 'tesseract',
-      args: ['--version'],
-    });
-    if (!version.ok || !input.framePaths.length)
-      return { audited: false, hits: [] };
-    const uniqueFrames = new Map<string, string>();
-    for (const path of input.framePaths) {
-      const hash = createHash('sha256')
-        .update(await readFile(path))
-        .digest('hex');
-      if (!uniqueFrames.has(hash)) uniqueFrames.set(hash, path);
-    }
-    // Deduplicate before scheduling: duplicate frames cannot start duplicate OCR jobs.
-    const results = await mapBounded(
-      [...uniqueFrames.values()],
-      this.workers,
-      async (path) => {
-        const texts: string[] = [];
-        // Both layouts are mandatory, including when another worker reports a hit.
-        for (const mode of ['3', '11']) {
-          const result = await runProcess({
-            command: 'tesseract',
-            args: [path, 'stdout', '--psm', mode],
-            env: { ...process.env, OMP_THREAD_LIMIT: '1' },
-          });
-          if (!result.ok)
-            throw new GateError('A required frame OCR worker failed', []);
-          texts.push(result.output);
-        }
-        return texts.flatMap((text) => [
-          ...hitsFromText(text),
-          ...(input.patterns ?? [])
-            .filter((pattern) => text.includes(pattern))
-            .map((text) => ({ text, confidence: 1 })),
-        ]);
-      },
-    );
-    const hits = results.flat();
-    return {
-      audited: true,
-      source: 'frame-ocr',
-      framesScanned: input.framePaths.length,
-      toolVersion: version.output.split('\n')[0] ?? 'unknown',
-      hits: uniqueHits(hits),
-    };
+    return scanOcrBatches(input, this.workers);
   }
 }
 
@@ -347,6 +494,8 @@ function adapterInput(
   return {
     frameDir,
     framePaths,
+    ...(options.cacheDir ? { cacheDir: options.cacheDir } : {}),
+    ...(options.onProgress ? { onProgress: options.onProgress } : {}),
     ...(options.patterns ? { patterns: options.patterns } : {}),
     sidecarPath: `${videoPath}.ocr.json`,
     videoPath,
@@ -395,6 +544,7 @@ async function framePaths(frameDir: string): Promise<readonly string[]> {
   const entries = await readdir(frameDir);
   return entries
     .filter((entry) => extname(entry).toLowerCase() === '.png')
+    .sort()
     .map((entry) => join(frameDir, entry));
 }
 
@@ -491,7 +641,7 @@ function safeParseHits(text: string): readonly OcrHit[] {
 function hitsFromText(text: string): readonly OcrHit[] {
   const redactor = createPresidioLikeRedactor();
   const piiHits = redactor.redactText(text).hits.map((hit) => {
-    return { confidence: 0.65, text: hit.text };
+    return { confidence: 0.65, text: hit.text, detector: hit.entity };
   });
 
   return [...piiHits, ...canaryHits(text)];
@@ -517,7 +667,10 @@ function uniqueHits(hits: readonly OcrHit[]): readonly OcrHit[] {
   const keyed = new Map<string, OcrHit>();
 
   for (const hit of hits) {
-    keyed.set(hit.text, hit);
+    keyed.set(
+      JSON.stringify([hit.text, hit.detector, hit.mode, hit.frame, hit.rect]),
+      hit,
+    );
   }
 
   return [...keyed.values()];

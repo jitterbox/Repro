@@ -8,6 +8,6 @@ export * from './types.js';
 export * from './variance-grid.js';
 export * from './visual-cues.js';
 
-export const REPRO_PLAN_VERSION = '0.3.0' as const;
+export const REPRO_PLAN_VERSION = '0.3.1' as const;
 
 export * from './scene.js';

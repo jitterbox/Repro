@@ -8,7 +8,7 @@ import {
 } from './scene-layout.js';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runSceneWorker } from './scene-process.js';
 import { createServer } from 'node:http';
@@ -146,6 +146,7 @@ function sceneRuntime(
   const root = window as unknown as {
     __hf: { duration: number; seek: (time: number) => void };
     __hfWaitForSeekCompletion: () => Promise<void>;
+    __reproReuseKey: (seconds: number) => Promise<string | null>;
     __reproLayout: () => unknown;
     __reproValidate: () => void;
   };
@@ -636,6 +637,28 @@ function sceneRuntime(
   };
   root.__hf = { duration: mapping.length / scene.output.fps, seek };
   root.__hfWaitForSeekCompletion = () => pending;
+  // Only held source intervals qualify. Include all composition and canvas state;
+  // cue transitions, pointer effects and layout changes must still get screenshots.
+  root.__reproReuseKey = async (seconds) => {
+    const ms = seconds * 1000;
+    if (
+      !scene.segments.some(
+        (s) =>
+          s.rate === 0 &&
+          ms >= s.outStartMs &&
+          ms < s.outStartMs + s.outDurationMs,
+      )
+    )
+      return null;
+    seek(seconds);
+    await pending;
+    return (
+      required(document.querySelector('main')).outerHTML +
+      Array.from(document.querySelectorAll('canvas'), (canvas) =>
+        canvas.toDataURL(),
+      ).join('|')
+    );
+  };
   seek(0);
 }
 
@@ -1310,13 +1333,38 @@ export async function captureComposition<
       join(input.outDir, 'layout.json'),
       JSON.stringify(layout, null, 2),
     );
+    let previousKey: string | null = null,
+      reusedFrames = 0;
+    const reuseBoundaries = new Set<number>();
+    let reusing = false;
+    const framePath = (index: number) =>
+      join(
+        input.outDir,
+        'frames',
+        `frame_${String(index).padStart(6, '0')}.png`,
+      );
     for (let i = 0; i < count; i++) {
       input.signal?.throwIfAborted();
-      await captureFrame(session, i, i / 30);
+      const key = (await session.page.evaluate(
+        `window.__reproReuseKey?.(${i / 30}) ?? null`,
+      )) as string | null;
+      const reuse = key !== null && key === previousKey && i > 0;
+      if (reuse) {
+        await copyFile(framePath(i - 1), framePath(i));
+        reusedFrames++;
+        if (!reusing) reuseBoundaries.add(i);
+      } else {
+        if (reusing) reuseBoundaries.add(i - 1);
+        await captureFrame(session, i, i / 30);
+      }
+      previousKey = key;
+      reusing = reuse;
       await session.page.evaluate('window.__reproValidate?.()');
     }
+    if (reusing) reuseBoundaries.add(count - 1);
     let seekSeed = 20260928;
     const seeks = [
+      ...reuseBoundaries,
       count - 1,
       0,
       Math.floor(count / 2),
@@ -1365,6 +1413,7 @@ export async function captureComposition<
       },
       browser: await session.browser.version(),
       frameCount: count,
+      reusedFrames,
       durationMs: duration,
       renderMs: performance.now() - started,
       perf: getCapturePerfSummary(session),

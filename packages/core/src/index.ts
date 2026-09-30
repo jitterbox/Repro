@@ -6,10 +6,11 @@ export * from './schema.js';
 export * from './stages.js';
 export * from './store.js';
 
-export const REPRO_CORE_VERSION = '0.3.0' as const;
+export const REPRO_CORE_VERSION = '0.3.1' as const;
 export * from './media.js';
 export * from './implementation.js';
 export * from './lock.js';
+export * from './telemetry.js';
 export * from './mask-regions.js';
 
 export { enumerateFonts, type FontManifestEntry } from './fonts.js';

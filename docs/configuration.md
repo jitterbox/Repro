@@ -144,6 +144,7 @@ These treatment settings also appear in `repro defaults` and the generated schem
   "schemaVersion": "1.0.0",
   "layout": {
     "overlayPanels": "as-needed",
+    "overlayCornerOrder": ["bottom-right", "bottom-left", "top-left", "top-right"],
     "retireSteps": true,
     "minStepVisibleMs": 5000,
     "useHeaderSpace": true,
@@ -155,7 +156,7 @@ These treatment settings also appear in `repro defaults` and the generated schem
 
 The renderer measures complete cards after fonts load and plans placement over output time. It first packs the gutter from the outer top inset, using the previously empty space beside the title. Thin persistent panels may use unused header lanes when their measured size fits outside the title. Under pressure, it retires the oldest eligible numbered groups, moving the remaining panels up. A step's marker and attached panel appear and retire together; retirement requires at least `minStepVisibleMs` at full opacity plus entry/exit transitions. This minimum governs removal under crowding; it does not extend a deliberately short sequence past its declared end. Set `retireSteps: false` to retain the original full-sequence behavior.
 
-If these measures are insufficient, `overlayPanels: "as-needed"` allows persistent data/version cards inside the captured viewport. It tries aligned corners and stacks with the same card spacing. `"never"` keeps them outside the footage. Both modes prefer the gutter; neither automatically increases output height, removes required evidence panels or truncates text. If no safe placement exists, rendering fails with the affected time and panel IDs so the agent can split the beat or reduce simultaneous treatments.
+If these measures are insufficient, `overlayPanels: "as-needed"` allows persistent data/version cards inside the captured viewport. It prefers bottom-right, then bottom-left, then top-left and top-right, stacking upward from bottom corners or downward from top corners with the same card spacing. Set `overlayCornerOrder` to a different ordering of all four corners to customize that preference. A corner is skipped if it covers protected evidence or existing connector clearance; overflow cards never force earlier leaders into detours. `"never"` keeps them outside the footage. Both modes prefer the gutter; neither automatically increases output height, removes required evidence panels or truncates text. If no safe placement exists, rendering fails with the affected time and panel IDs so the agent can split the beat or reduce simultaneous treatments.
 
 Placement protects measured targets, reference edges, magnifier source regions, markers, cursor paths, titles, connectors and other cards, including entry/exit frames. Add known critical application areas to `protectedRegions` as `{ "x": 0, "y": 0, "width": 120, "height": 60 }` rectangles in captured viewport CSS pixels. Protection depends on recorded geometry and explicit regions; Repro cannot infer the importance of arbitrary unmeasured pixels. Leaders are rerouted around neighboring panels before leaving avoidable gaps. Layout changes happen at cue boundaries without animating a card across the footage, and random seeking reconstructs the same placement. `layout.json` records placements by beat and retirement times.
 

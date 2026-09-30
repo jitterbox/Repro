@@ -1,6 +1,6 @@
 {
   "name": "@jitterbox/repro-cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "bin": {
     "repro": "./dist/bin.js"
@@ -28,7 +28,8 @@
     "commander": "^13.1.0",
     "zod": "4.4.3",
     "@jitterbox/repro-pipeline": "workspace:*",
-    "@jitterbox/repro-contracts": "workspace:*"
+    "@jitterbox/repro-contracts": "workspace:*",
+    "@jitterbox/repro-core": "workspace:*"
   },
   "engines": {
     "node": ">=22"

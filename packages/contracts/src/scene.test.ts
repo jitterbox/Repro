@@ -143,3 +143,28 @@ it('defaults nested preferences and rejects unsafe CSS and unreadable settings',
       parseTreatmentPlan({ schemaVersion: '1.0.0', ...override }),
     ).toThrow();
 });
+
+it('defaults bottom corner preference and requires a complete unique corner order', () => {
+  expect(
+    parseTreatmentPlan({ schemaVersion: '1.0.0' }).layout.overlayCornerOrder,
+  ).toEqual(['bottom-right', 'bottom-left', 'top-left', 'top-right']);
+  const corners = ['bottom-left', 'bottom-right', 'top-right', 'top-left'];
+  expect(
+    parseTreatmentPlan({
+      schemaVersion: '1.0.0',
+      layout: { overlayCornerOrder: corners },
+    }).layout.overlayCornerOrder,
+  ).toEqual(corners);
+  for (const overlayCornerOrder of [
+    [],
+    ['bottom-left'],
+    ['bottom-left', 'bottom-left', 'top-right', 'top-left'],
+    ['bottom-left', 'bottom-right', 'top-right', 'center'],
+  ])
+    expect(() =>
+      parseTreatmentPlan({
+        schemaVersion: '1.0.0',
+        layout: { overlayCornerOrder },
+      }),
+    ).toThrow();
+});

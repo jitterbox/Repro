@@ -1,3 +1,4 @@
+import { operationMetadata } from '@jitterbox/repro-core';
 import { artifactSlug, artifactBaseName } from '@jitterbox/repro-core';
 import { ReproConfigSchema } from '@jitterbox/repro-contracts/config';
 import { buildDevToolsReport } from './devtools-export.js';
@@ -21,6 +22,7 @@ import { withRunLocks } from './run-locks.js';
 
 async function presentation(directory: string, draft = false) {
   const run = await verifyRun(directory);
+  operationMetadata({ runId: run.id });
   if (
     run.pipelineOutcome !== 'passed' ||
     !['bug-reproduced', 'fix-verified', 'passed'].includes(run.scenarioOutcome)
@@ -71,6 +73,9 @@ async function presentation(directory: string, draft = false) {
     };
   }
   assertCurrentPrivacyPresentation(spec, plan);
+  const frameMap = run.artifacts.find(
+    (ref) => ref.kind === 'presentation-frame-map',
+  );
   const assets: EvidenceAssetInput[] = run.artifacts.flatMap((a) => {
     const kind =
       a.kind === 'presentation-video'
@@ -85,6 +90,9 @@ async function presentation(directory: string, draft = false) {
           {
             kind,
             path: join(directory, a.path),
+            ...(kind === 'mp4' && frameMap
+              ? { auditFrameMapPath: join(directory, frameMap.path) }
+              : {}),
             ...(kind === 'png'
               ? {
                   title: basename(a.path).startsWith('diagnostic-')

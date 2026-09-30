@@ -19,10 +19,23 @@ export type Capability = z.infer<typeof capabilitySchema>;
 const entries: [string, string, string, string, string[], string[], string][] =
   [
     [
+      'audit',
+      'Inspect privacy audit findings',
+      'repro audit RUN --json',
+      'Audit encoded presentation pixels with strict OCR. Preserve private findings, review images, output times and source mappings on failure. Returns safe summary metadata and diagnostic paths without exposing matched text. Reuses exact-frame OCR work with matching engine, model and policy.',
+      ['Verified rendered run'],
+      [
+        'Private audit report',
+        'Frame-linked review images',
+        'Safe timing and coverage summary',
+      ],
+      'A failed or incomplete audit blocks export. Reports stay local; inspect their images rather than recreating the audit with ad-hoc tools.',
+    ],
+    [
       'workflow-report',
       'Inspect workflow command timings',
       'repro workflow-report workflow.jsonl',
-      'Summarize private CLI command timing logs enabled by --workflow-log or REPRO_WORKFLOW_LOG. Reports capture invocation counts, failures and incomplete entries; full agent auditing requires the native harness transcript.',
+      'Summarize private CLI command timing logs enabled by --workflow-log or REPRO_WORKFLOW_LOG. Reports capture invocation counts, failures, incomplete entries, CLI version, safe diagnosis paths, run identities and phase/cache metrics when available; full agent auditing requires the native harness transcript.',
       ['Workflow JSONL path'],
       ['Timing summary and coverage limitations'],
       'A command log does not include browser exploration, prompts, tool arguments, or reasons for recapture.',
@@ -203,7 +216,7 @@ const entries: [string, string, string, string, string[], string[], string][] =
       'frame',
       'Inspect an evidence frame',
       'repro frame run --checkpoint result',
-      'Select a checkpoint PNG or recording frame with actual timing and uncertainty. For brief states, declare a transient checkpoint.frame with a segment, event kind/match/occurrence, offsetMs and maxOffsetMs; wrap the triggering interval in repro.segment and inspect the selected PNG after the run. No new screenshot or stability wait is inserted. Crops retain the context and report requested CSS bounds, actual pixel bounds, pixel scale and the resulting CSS transform; fractional edges round outward.',
+      'Select a checkpoint PNG or recording frame with actual timing and uncertainty. Use --presentation --time-ms N to inspect an encoded presentation frame in output time, including source-frame provenance. For brief states, declare a transient checkpoint.frame with a segment, event kind/match/occurrence, offsetMs and maxOffsetMs; wrap the triggering interval in repro.segment and inspect the selected PNG after the run. No new screenshot or stability wait is inserted. Crops retain the context and report requested CSS bounds, actual pixel bounds, pixel scale and the resulting CSS transform; fractional edges round outward.',
       ['run directory', 'checkpoint or timestamp'],
       [
         'context image',

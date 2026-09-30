@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1
+
+- Preserve private OCR failure reports with detector geometry, review frames, output timing and source provenance; expose `repro audit` and presentation-frame inspection through CLI and MCP.
+- Use word geometry to distinguish separated table cells from spaced or wrapped private text. Scan both OCR layouts in bounded batches and retain exact-frame results across failed exports and retries.
+- Reuse unchanged held compositions while preserving transitions, canvas state, all-frame layout validation and repeatable seeking.
+- Prefer lower viewport corners for overflow evidence panels, with configurable corner order and protection for existing callout connectors.
+- Record safe command versions, run identities, phase timings and cache metrics. Return actionable lock-contention errors and update agent skills and public references.
+
+Strict privacy checks and final-quality scene acceptance gates remain enforced.
+
 ## 0.3.0
 
 - Use the polished scene compositor exclusively; remove renderer selection, raw-event `annotate`, and `render-compare`. Render comparisons with `render AFTER --baseline BEFORE`.

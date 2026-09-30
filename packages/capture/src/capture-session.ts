@@ -109,7 +109,7 @@ interface ExperimentalActionScreencast {
   readonly showChapter?: (title: string) => Promise<void> | void;
 }
 
-const REPRO_CAPTURE_STAGE_VERSION = '0.3.0';
+const REPRO_CAPTURE_STAGE_VERSION = '0.3.1';
 
 export class CaptureSession {
   readonly #clock: MonotonicClockBridge;

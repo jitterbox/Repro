@@ -10,6 +10,7 @@ const eventSchema = z.discriminatedUnion('event', [
     id: z.string(),
     command: z.string(),
     at: z.iso.datetime(),
+    cliVersion: z.string().optional(),
   }),
   z.object({
     schemaVersion: z.literal('1.0.0'),
@@ -18,10 +19,20 @@ const eventSchema = z.discriminatedUnion('event', [
     at: z.iso.datetime(),
     durationMs: z.number().nonnegative(),
     status: z.enum(['passed', 'failed']),
+    errorCode: z.string().optional(),
+    reportPath: z.string().optional(),
+    runId: z.string().optional(),
+    presentationId: z.string().optional(),
+    phases: z.record(z.string(), z.number().nonnegative()).optional(),
+    metrics: z.record(z.string(), z.number().nonnegative()).optional(),
   }),
 ]);
-/** Command names and timing only: never argv, URLs, output, environment or errors. */
-export async function startWorkflowCommand(file: string, command: string) {
+/** Allowlisted timings and identities only: never argv, URLs, output, environment or raw errors. */
+export async function startWorkflowCommand(
+  file: string,
+  command: string,
+  cliVersion?: string,
+) {
   await mkdir(dirname(file), { recursive: true });
   const id = randomUUID(),
     started = performance.now();
@@ -36,9 +47,24 @@ export async function startWorkflowCommand(file: string, command: string) {
       }) + '\n',
       { mode: 0o600 },
     );
-  await write({ event: 'started', command });
-  return async (status: 'passed' | 'failed') =>
+  await write({
+    event: 'started',
+    command,
+    ...(cliVersion ? { cliVersion } : {}),
+  });
+  return async (
+    status: 'passed' | 'failed',
+    details: {
+      errorCode?: string;
+      reportPath?: string;
+      runId?: string;
+      presentationId?: string;
+      phases?: Record<string, number>;
+      metrics?: Record<string, number>;
+    } = {},
+  ) =>
     write({
+      ...details,
       event: 'finished',
       status,
       durationMs: performance.now() - started,
@@ -61,6 +87,13 @@ export async function workflowReport(file: string) {
       startedAt: e.at,
       status: end?.status ?? 'incomplete',
       durationMs: end?.durationMs ?? null,
+      cliVersion: e.cliVersion ?? null,
+      errorCode: end?.errorCode ?? null,
+      reportPath: end?.reportPath ?? null,
+      runId: end?.runId ?? null,
+      presentationId: end?.presentationId ?? null,
+      phases: end?.phases ?? {},
+      metrics: end?.metrics ?? {},
     };
   });
   const byCommand = [...new Set(commands.map((c) => c.command))].map(

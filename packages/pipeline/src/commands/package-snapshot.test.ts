@@ -98,3 +98,40 @@ it('rejects private manifest captions before publishing any package', async () =
     await rm(root, { recursive: true, force: true });
   }
 });
+
+it('retains private failure diagnostics after temporary export staging is removed', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'repro-failed-audit-'));
+  try {
+    const viewer = join(root, 'viewer'),
+      out = join(root, 'bundle');
+    await mkdir(viewer);
+    const source = join(root, 'proof.png');
+    await writeFile(source, 'synthetic media');
+    audit.mockImplementation(
+      async ({ diagnosticsDir }: { diagnosticsDir: string }) => {
+        expect(diagnosticsDir).toBe(`${out}.audit`);
+        await mkdir(diagnosticsDir, { recursive: true });
+        await writeFile(
+          join(diagnosticsDir, 'report.json'),
+          '{"passed":false}',
+        );
+        throw new Error('Strict audit blocked export');
+      },
+    );
+    await expect(
+      packageCommand({
+        viewerDir: viewer,
+        outDir: out,
+        assets: [{ kind: 'png', path: source }],
+      }),
+    ).rejects.toThrow('Strict audit blocked');
+    expect(
+      JSON.parse(await readFile(`${out}.audit/report.json`, 'utf8')),
+    ).toEqual({ passed: false });
+    await expect(
+      readFile(join(out, 'evidence-manifest.json')),
+    ).rejects.toThrow();
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
