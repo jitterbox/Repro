@@ -1,0 +1,128 @@
+name: Browser/media acceptance
+on:
+  workflow_call:
+    inputs:
+      suite:
+        required: true
+        type: string
+permissions:
+  contents: read
+env:
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.3'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - run: pnpm install --frozen-lockfile
+      - name: Install the lockfile-pinned browser and media dependencies
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg tesseract-ocr fonts-liberation
+      - run: pnpm build
+      - name: Dependency provenance
+        run: |
+          mkdir -p .repro/ci
+          node packages/cli/dist/bin.js doctor > .repro/ci/doctor.json
+          dpkg-query -W ffmpeg tesseract-ocr fonts-liberation > .repro/ci/system-versions.txt
+      - name: Source sanitization, scene audio, and captions
+        if: inputs.suite == 'proof'
+        run: node node_modules/vitest/vitest.mjs run packages/render/src/media.test.ts packages/compositor/src/scene-audio.test.ts packages/pipeline/src/scene-captions.test.ts
+      - name: Public CLI before/after proof with real pixels and strict OCR
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/public-workflow.mjs
+      - name: Shorter scene rerenders cannot include stale frames
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/scene-regressions.mjs
+      - name: Source-referenced discovery to actual before/after proof
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/discovery.mjs
+      - name: Strategy and balanced visual-overlay review matrix
+        if: inputs.suite == 'matrix'
+        run: |
+          node scripts/e2e/strategy-matrix.mjs
+          node scripts/e2e/overlay-matrix.mjs
+          node scripts/e2e/voiceover-matrix.mjs
+          node scripts/e2e/verify-review-matrix.mjs
+      - name: Record annotation-only timing with captured-pixel verification
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/annotation-benchmark.mjs
+      - name: Replay accepted fresh-agent scenarios without an LLM
+        if: inputs.suite == 'fixtures'
+        run: node scripts/e2e/fresh-agent/replay.mjs
+      - name: Verified export reuse and missing OCR rejection
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/export-cache.mjs
+      - name: Audited Jira and ADO delivery against loopback protocol fixtures
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/delivery.mjs
+      - name: Real browser timing, stationary intervals, and recording ends
+        if: inputs.suite == 'proof'
+        run: |
+          node scripts/e2e/capture-timing.mjs
+          REPRO_TIMING_TRACE=1 REPRO_TIMING_OUT=.repro/timing-trace-acceptance node scripts/e2e/capture-timing.mjs
+      - name: Fractional crops and high-DPI checkpoint holds
+        if: inputs.suite == 'proof'
+        run: |
+          node scripts/e2e/hidpi.mjs
+          REPRO_HIDPI_PRIVATE=1 REPRO_HIDPI_OUT=.repro/hidpi-private node scripts/e2e/hidpi.mjs
+      - name: Interaction absence, scrolling and frame-boundary controls
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/interaction-diagnostics.mjs
+      - name: Untouched and moving privacy fields with strict negative control
+        if: inputs.suite == 'proof'
+        run: |
+          node scripts/e2e/moving-privacy.mjs
+          node scripts/e2e/har-privacy.mjs
+      - name: Ordinary checks, proof labels and caught assertion failures
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/checkpoint-checks.mjs
+      - name: Uneven before/after synchronization with decoded-frame negative control
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/synchronization.mjs
+      - name: Browser diagnostics and event-linked transient frames
+        if: inputs.suite == 'proof'
+        run: |
+          node scripts/e2e/observations.mjs
+          node scripts/e2e/watch-server.mjs
+          node scripts/e2e/browser-diagnostics.mjs
+          node scripts/e2e/transient.mjs
+          node scripts/e2e/recipes.mjs
+      - name: Local review timing, uncertainty and original playback
+        if: inputs.suite == 'proof'
+        run: node scripts/e2e/review.mjs
+      - name: Compositor and fixture coverage
+        if: inputs.suite == 'fixtures'
+        run: |
+          pnpm --filter @jitterbox/repro-compositor test
+          pnpm test:e2e-fixture
+          node scripts/e2e/scene-fixture-review.mjs
+      - name: Clean project installation and public scenario
+        if: inputs.suite == 'fixtures'
+        run: pnpm test:clean-install
+      - name: Agent mock evaluation (no model or API keys)
+        if: inputs.suite == 'fixtures'
+        run: pnpm --filter @jitterbox/repro-agent-e2e test
+      - name: Builds and tests leave tracked sources unchanged
+        run: git diff --exit-code
+      - name: Stage evidence without linked dependencies
+        if: always()
+        run: node scripts/stage-ci-artifacts.mjs
+      - name: Preserve acceptance and failure artifacts
+        if: always()
+        timeout-minutes: 5
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence-${{ inputs.suite }}-${{ github.run_id }}
+          include-hidden-files: true
+          compression-level: 0
+          path: .repro/ci-artifacts/
+          retention-days: 7
