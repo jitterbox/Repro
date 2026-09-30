@@ -4,6 +4,7 @@
 
 - Preserve private OCR failure reports with detector geometry, review frames, output timing and source provenance; expose `repro audit` and presentation-frame inspection through CLI and MCP.
 - Use word geometry to distinguish separated table cells from spaced or wrapped private text. Scan both OCR layouts in bounded batches and retain exact-frame results across failed exports and retries.
+- Hold the last real comparison frame with an explicit label for generated tails shorter than one output sample; missing required semantic frames still fail.
 - Reuse unchanged held compositions while preserving transitions, canvas state, all-frame layout validation and repeatable seeking.
 - Prefer lower viewport corners for overflow evidence panels, with configurable corner order and protection for existing callout connectors.
 - Record safe command versions, run identities, phase timings and cache metrics. Return actionable lock-contention errors and update agent skills and public references.

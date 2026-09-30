@@ -62,8 +62,18 @@ export function comparisonFrameMap(a: ComparisonBeat[], b: ComparisonBeat[]) {
         const firstFrame = Math.ceil((s.startMs * 30) / 1000 - 1e-9);
         const lastFrame =
           Math.ceil(((s.startMs + s.durationMs) * 30) / 1000 - 1e-9) - 1;
-        if (lastFrame < firstFrame)
+        if (lastFrame < firstFrame) {
+          // The generated recording tail is incidental: it can end between two
+          // output samples. Hold the last real frame and expose why it is held.
+          // Required semantic beats still fail rather than manufacturing evidence.
+          if (s.id === 'tail' && firstFrame > 0 && beats.indexOf(beat) > 0)
+            return {
+              outputFrame: firstFrame - 1,
+              held: true,
+              heldReason: 'tail-below-frame-resolution',
+            };
           throw new Error(`Comparison beat has no output frame: ${s.id}`);
+        }
         return {
           outputFrame: Math.max(
             firstFrame,
@@ -121,7 +131,7 @@ export async function renderSceneComparisonInProcess(
   const mapping=${json(frames)},labels=${json([input.a.label, input.b.label])},mode=${json(input.mode)};
   const panes=['a','b'].map(id=>document.getElementById(id));let pending=Promise.resolve();
   Promise.all(panes.map(p=>new Promise(resolve=>p.addEventListener('load',async()=>{await p.contentDocument.fonts.ready;p.contentWindow.__reproLayout();resolve();},{once:true})))).then(()=>{
-    window.__hf={duration:mapping.length/30,seek(time){const f=mapping[Math.min(mapping.length-1,Math.max(0,Math.round(time*30)))];pending=Promise.all(panes.map(async(p,i)=>{const cursor=i?f.b:f.a;document.getElementById(i?'lb':'la').textContent=labels[i]+' · '+(mode==='verified'?'Controlled comparison':'Observational playback')+(cursor.held?' · Held at checkpoint':'');p.contentWindow.__hf.seek(cursor.outputFrame/30);await p.contentWindow.__hfWaitForSeekCompletion();})).then(()=>{const left=panes[0].contentDocument,right=panes[1].contentDocument;for(const group of right.querySelectorAll('[data-kind=data-panel],[data-kind=marker],[data-kind=step],[data-kind=callout],[data-kind=alignment],[data-kind=highlight],[data-kind=title]')){const card=group.querySelector('.card');const peerGroup=Array.from(left.querySelectorAll('[data-cue]')).find(g=>g.dataset.cue===group.dataset.cue);const peer=peerGroup?.querySelector('.card');if(!card||!peer)continue;const text=c=>Array.from(c.children).filter(n=>!n.classList.contains('eyebrow')).map(n=>n.textContent).join(' ');const common=Number(peerGroup.style.opacity)>0 && text(card)===text(peer) && group.dataset.comparisonKey===peerGroup.dataset.comparisonKey;for(const c of [card,peer]){const label=c.querySelector('.eyebrow');if(label && group.dataset.kind!=='title')label.textContent=common?'SHARED · BOTH VIEWS':'DIFFERENCE · '+(c===card?labels[1]:labels[0]);}card.style.visibility=common?'hidden':'visible';for(const leader of group.querySelectorAll('.leader'))leader.style.visibility=common?'hidden':'visible';card.setAttribute('aria-label',common?'Common observations shown on left':'Different observation in this view');}});}};
+    window.__hf={duration:mapping.length/30,seek(time){const f=mapping[Math.min(mapping.length-1,Math.max(0,Math.round(time*30)))];pending=Promise.all(panes.map(async(p,i)=>{const cursor=i?f.b:f.a;document.getElementById(i?'lb':'la').textContent=labels[i]+' · '+(mode==='verified'?'Controlled comparison':'Observational playback')+(cursor.heldReason==='tail-below-frame-resolution'?' · Held · tail below output frame resolution':cursor.held?' · Held at checkpoint':'');p.contentWindow.__hf.seek(cursor.outputFrame/30);await p.contentWindow.__hfWaitForSeekCompletion();})).then(()=>{const left=panes[0].contentDocument,right=panes[1].contentDocument;for(const group of right.querySelectorAll('[data-kind=data-panel],[data-kind=marker],[data-kind=step],[data-kind=callout],[data-kind=alignment],[data-kind=highlight],[data-kind=title]')){const card=group.querySelector('.card');const peerGroup=Array.from(left.querySelectorAll('[data-cue]')).find(g=>g.dataset.cue===group.dataset.cue);const peer=peerGroup?.querySelector('.card');if(!card||!peer)continue;const text=c=>Array.from(c.children).filter(n=>!n.classList.contains('eyebrow')).map(n=>n.textContent).join(' ');const common=Number(peerGroup.style.opacity)>0 && text(card)===text(peer) && group.dataset.comparisonKey===peerGroup.dataset.comparisonKey;for(const c of [card,peer]){const label=c.querySelector('.eyebrow');if(label && group.dataset.kind!=='title')label.textContent=common?'SHARED · BOTH VIEWS':'DIFFERENCE · '+(c===card?labels[1]:labels[0]);}card.style.visibility=common?'hidden':'visible';for(const leader of group.querySelectorAll('.leader'))leader.style.visibility=common?'hidden':'visible';card.setAttribute('aria-label',common?'Common observations shown on left':'Different observation in this view');}});}};
     window.__hfWaitForSeekCompletion=()=>pending;
     window.__reproValidate=()=>panes.forEach(p=>p.contentWindow.__reproValidate());window.__hf.seek(0);
   });</script>`;

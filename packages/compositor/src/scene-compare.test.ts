@@ -69,3 +69,27 @@ it('keeps an exact 2x/4x crop within the captured viewport without stretching pi
     expect(crop.y + crop.height).toBeLessThanOrEqual(720);
   }
 });
+
+it('holds the last real frame when a generated tail lies between output samples', () => {
+  const a = [
+    { id: 'action', startMs: 0, durationMs: 105 },
+    { id: 'tail', startMs: 105, durationMs: 1 },
+  ];
+  const b = [
+    { id: 'action', startMs: 0, durationMs: 100 },
+    { id: 'tail', startMs: 100, durationMs: 50 },
+  ];
+  const frames = comparisonFrameMap(a, b);
+  expect(frames.at(-1)?.a).toEqual({
+    outputFrame: 3,
+    held: true,
+    heldReason: 'tail-below-frame-resolution',
+  });
+  expect(frames.at(-1)?.b).toEqual({ outputFrame: 3, held: false });
+  expect(() =>
+    comparisonFrameMap(
+      [{ id: 'tail', startMs: 1, durationMs: 1 }],
+      [{ id: 'tail', startMs: 1, durationMs: 1 }],
+    ),
+  ).toThrow('no output frame');
+});
