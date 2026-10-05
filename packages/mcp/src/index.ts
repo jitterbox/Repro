@@ -50,7 +50,7 @@ const json = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 });
 export function createReproMcpServer() {
-  const server = new McpServer({ name: 'repro', version: '0.3.1' });
+  const server = new McpServer({ name: 'repro', version: '0.3.2' });
   server.registerTool(
     'workflow-report',
     {

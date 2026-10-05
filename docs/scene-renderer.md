@@ -1,4 +1,4 @@
-> Release 0.3.1: [installation](installation.md), [configurable presentation](configuration.md), and [complete CLI/MCP/schema references](README.md) are now available. Windows x64 and Linux x64 use a platform-aware pinned headless-shell resolver. See CI results for actual platform validation; this does not promote the renderer.
+> Release 0.3.2: [installation](installation.md), [configurable presentation](configuration.md), and [complete CLI/MCP/schema references](README.md) are now available. Windows x64 and Linux x64 use a platform-aware pinned headless-shell resolver. See CI results for actual platform validation; this does not promote the renderer.
 
 # Scene renderer and application-defect corpus
 

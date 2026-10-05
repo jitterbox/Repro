@@ -55,7 +55,7 @@ export * from './commands/package.js';
 export * from './commands/quality.js';
 export * from './commands/validate-config.js';
 
-export const REPRO_CLI_VERSION = '0.3.1' as const;
+export const REPRO_CLI_VERSION = '0.3.2' as const;
 
 type Writer = (text: string) => void;
 

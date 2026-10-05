@@ -29,7 +29,7 @@ install them without GitHub access using `npx skills@latest add ./node_modules/@
 From an evidence project with Node 22+:
 
 ```sh
-npm install --save-dev @jitterbox/repro-cli@0.3.1 @jitterbox/repro-playwright@0.3.1
+npm install --save-dev @jitterbox/repro-cli@0.3.2 @jitterbox/repro-playwright@0.3.2
 npx repro setup --system
 npx repro doctor
 npx repro init DASH2R-949 --description "Mobile metric overflow"
@@ -37,7 +37,7 @@ npx repro init DASH2R-949 --description "Mobile metric overflow"
 
 The same commands work in **Windows PowerShell and Linux**. System setup uses WinGet on Windows and apt on Ubuntu/Debian; it can require elevation. Other Linux distributions use their package manager for native dependencies. The initial support baseline is x64. [OS requirements, offline packages and troubleshooting →](docs/installation.md#native-dependencies-and-supported-hosts)
 
-Optional: install `@jitterbox/repro-mcp@0.3.1` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
+Optional: install `@jitterbox/repro-mcp@0.3.2` to expose tools/resources through a local stdio MCP server. [MCP setup →](docs/installation.md#mcp)
 
 ## Record a website—with or without its source
 

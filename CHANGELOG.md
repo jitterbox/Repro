@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2
+
+- Mask each measured privacy control on its own, and only while it is observed, so separate fields no longer share one box.
+- Leave password fields and other already-concealed inputs unmasked unless `redaction.maskConcealedInputs` is set.
+- Blur selector masks by the shorter side of the region instead of painting an opaque fill. Export still rejects older privacy treatments. The existing OCR audit remains a plaintext leak check.
+
+Strict privacy checks and final-quality scene acceptance gates remain enforced.
+
 ## 0.3.1
 
 - Preserve private OCR failure reports with detector geometry, review frames, output timing and source provenance; expose `repro audit` and presentation-frame inspection through CLI and MCP.

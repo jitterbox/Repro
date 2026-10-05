@@ -39,7 +39,7 @@ await save(
     commands.join('\n'),
 );
 const server = createReproMcpServer();
-const client = new Client({ name: 'repro-docs', version: '0.3.1' });
+const client = new Client({ name: 'repro-docs', version: '0.3.2' });
 const [a, b] = InMemoryTransport.createLinkedPair();
 try {
   await server.connect(a);

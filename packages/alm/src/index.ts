@@ -10,7 +10,7 @@ export * from './naming.js';
 export * from './outbox.js';
 export * from './retention.js';
 
-export const REPRO_ALM_VERSION = '0.3.1' as const;
+export const REPRO_ALM_VERSION = '0.3.2' as const;
 
 export type AlmSystem = 'ado' | 'jira';
 export type AlmUploadStatus = 'uploaded' | 'prepared';

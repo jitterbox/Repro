@@ -1,4 +1,4 @@
-> For Repro 0.3.1 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
+> For Repro 0.3.2 installation, portable skills, editable visual/timing/encoding defaults, and the exhaustive generated CLI/MCP/schema reference, start at the [documentation index](README.md). Runtime interfaces there take precedence over historical examples.
 
 # Repro — AI agent usage guide
 

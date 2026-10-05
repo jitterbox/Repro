@@ -20,7 +20,7 @@ designs.
 | [`../apps/shoplite/`](../apps/shoplite/) | Fixture app (demo content, not product chrome) |
 | [`../packages/viewer/`](../packages/viewer/) | Packaged evidence viewer (product UI) |
 
-**Design status:** Repro 0.3.1 uses one polished scene compositor with bundled
+**Design status:** Repro 0.3.2 uses one polished scene compositor with bundled
 typography, coordinated layout, source-timed motion, and adaptive evidence panels.
 See [scene presentation](scene-renderer.md) and the [configuration reference](configuration.md)
 for shipped behavior and defaults. This brief also contains design proposals;

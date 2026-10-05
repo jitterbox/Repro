@@ -135,4 +135,4 @@ export interface ValidationResult {
   errors?: string[];
 }
 
-export const REPRO_CONTRACTS_VERSION = '0.3.1' as const;
+export const REPRO_CONTRACTS_VERSION = '0.3.2' as const;
