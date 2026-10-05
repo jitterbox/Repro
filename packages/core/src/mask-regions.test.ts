@@ -255,7 +255,5 @@ it('shows a timed mask only on its page and interval', () => {
   expect(privacyMaskVisible(mask, 15, 'page-1')).toBe(true);
   expect(privacyMaskVisible(mask, 20, 'page-1')).toBe(false);
   expect(privacyMaskVisible(mask, 15, 'page-2')).toBe(false);
-  expect(privacyMaskVisible({ x: 0, y: 0, width: 1, height: 1 }, null)).toBe(
-    true,
-  );
+  expect(privacyMaskVisible({}, null)).toBe(true);
 });
