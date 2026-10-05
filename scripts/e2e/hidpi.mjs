@@ -124,7 +124,8 @@ assert.ok(
   pixels.data[index + 2] > pixels.data[index] + 40,
   'High-DPI checkpoint outline is misaligned in the normalized video',
 );
-// Input-relative opaque masks must also cover full-resolution, fractional edges.
+// Input-relative privacy blur must flatten full-resolution, fractional edges.
+let privateRgb;
 if (privateTarget) {
   const mapping = JSON.parse(
     await readFile(asset('presentation-frame-map'), 'utf8'),
@@ -143,6 +144,16 @@ if (privateTarget) {
   const bounds = run.observations.find(
     (o) => o.kind === 'bounds' && o.target === 'target',
   ).bounds;
+  const cx = Math.min(
+    still.width - 1,
+    Math.max(0, Math.round((bounds.x + bounds.width / 2) * 2)),
+  );
+  const cy = Math.min(
+    still.height - 1,
+    Math.max(0, Math.round((bounds.y + bounds.height / 2) * 2)),
+  );
+  const center = (cy * still.width + cx) * 4;
+  privateRgb = [0, 1, 2].map((channel) => still.data[center + channel]);
   for (
     let y = Math.floor(bounds.y * 2);
     y < Math.ceil((bounds.y + bounds.height) * 2);
@@ -155,17 +166,23 @@ if (privateTarget) {
     ) {
       const offset = (y * still.width + x) * 4;
       assert.ok(
-        [0, 1, 2].every((channel) => still.data[offset + channel] === 0),
-        `Exposed high-DPI mask pixel at ${x},${y}`,
+        [0, 1, 2].every(
+          (channel) =>
+            Math.abs(still.data[offset + channel] - privateRgb[channel]) < 24,
+        ),
+        `Readable high-DPI mask pixel at ${x},${y}`,
       );
     }
   }
 }
-// Video retains the intended source position; private interiors are opaque.
+// Video retains the intended source position; private interiors are blurred.
 const button = ((110 + origin.y) * pixels.width + 100 + origin.x) * 4;
 assert.ok(
   privateTarget
-    ? [0, 1, 2].every((channel) => pixels.data[button + channel] < 5)
+    ? [0, 1, 2].every(
+        (channel) =>
+          Math.abs(pixels.data[button + channel] - privateRgb[channel]) < 48,
+      )
     : pixels.data[button] > 200 &&
         Math.abs(pixels.data[button] - pixels.data[button + 2]) < 10,
 );

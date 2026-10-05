@@ -23,7 +23,11 @@ import {
   sanitizeSourceImage,
   PRIVACY_RENDER_METHOD,
 } from '@jitterbox/repro-render';
-import { motionMaskEnvelopes } from '@jitterbox/repro-core';
+import {
+  maskSamplesFromEvents,
+  motionMaskEnvelopes,
+  privacyMaskVisible,
+} from '@jitterbox/repro-core';
 import { redactText } from '@jitterbox/repro-core/redactor';
 import {
   verifyRun,
@@ -144,26 +148,9 @@ export async function renderSceneEvidence(
     if (frame) selected.add(frame.source.id);
   }
   const masks = motionMaskEnvelopes(
-    events
-      .filter((e) =>
-        ['probe.redaction.mask', 'redaction.mask'].includes(e.kind),
-      )
-      .flatMap((e) => {
-        const p = e.payload;
-        return ['x', 'y', 'width', 'height'].every(
-          (k) => typeof p[k] === 'number',
-        )
-          ? [
-              {
-                group: `${e.pageId}/${String(p.selector)}`,
-                x: Number(p.x),
-                y: Number(p.y),
-                width: Number(p.width),
-                height: Number(p.height),
-              },
-            ]
-          : [];
-      }),
+    maskSamplesFromEvents(events, {
+      maskConcealedInputs: config.redaction?.maskConcealedInputs === true,
+    }),
   );
   if (
     spec.privacy.selectors.some(
@@ -171,7 +158,10 @@ export async function renderSceneEvidence(
         !events.some(
           (e) =>
             ['probe.redaction.mask', 'redaction.mask'].includes(e.kind) &&
-            e.payload.selector === selector,
+            e.payload.selector === selector &&
+            ['x', 'y', 'width', 'height'].every(
+              (key) => typeof e.payload[key] === 'number',
+            ),
         ),
     )
   )
@@ -195,7 +185,12 @@ export async function renderSceneEvidence(
         : a;
     }),
     chapters: [],
-    redactionRects: masks,
+    redactionRects: masks.map((mask) => ({
+      x: mask.x,
+      y: mask.y,
+      width: mask.width,
+      height: mask.height,
+    })),
     segments: [],
     timeline: reviewMetadata.timeline,
     metadata: {
@@ -209,7 +204,11 @@ export async function renderSceneEvidence(
   const sanitized: SceneSourceFrame[] = [];
   const sanitizedByHash = new Map<string, { path: string; sha256: string }>();
   for (const frame of source.filter((f) => selected.has(f.id))) {
-    const cached = sanitizedByHash.get(frame.sha256);
+    const activeMasks = masks.filter((mask) =>
+      privacyMaskVisible(mask, frame.timeMs, frame.pageId),
+    );
+    const cacheKey = `${frame.sha256}:${JSON.stringify(activeMasks)}`;
+    const cached = sanitizedByHash.get(cacheKey);
     if (cached) {
       sanitized.push({ ...frame, ...cached, originalSha256: frame.sha256 });
       continue;
@@ -222,13 +221,13 @@ export async function renderSceneEvidence(
     await sanitizeSourceImage({
       image: await containedArtifact(directory, frame.path),
       viewport: config.viewport,
-      masks,
+      masks: activeMasks,
       output: path,
     });
     const artifact = await artifactRef(directory, path, 'sanitized-source');
     const named = join(outputDir, 'assets', `${artifact.sha256}.png`);
     await copyFile(path, named);
-    sanitizedByHash.set(frame.sha256, { path: named, sha256: artifact.sha256 });
+    sanitizedByHash.set(cacheKey, { path: named, sha256: artifact.sha256 });
     sanitized.push({
       ...frame,
       path: named,

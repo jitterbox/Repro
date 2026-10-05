@@ -36,7 +36,12 @@ export async function fileCommand(options: FileCommandOptions) {
   await enforceOcrAudit({
     path: options.evidence,
     requireAudit: true,
-    redaction: { masks: [], ...config?.redaction, strict: true },
+    redaction: {
+      masks: [],
+      maskConcealedInputs: false,
+      ...config?.redaction,
+      strict: true,
+    },
   });
 
   const evidenceName = basename(options.evidence);

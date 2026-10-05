@@ -216,4 +216,4 @@ These limitations are explicit; missing observations are never manufactured.
 
 See [adaptive panel placement](configuration.md#adaptive-panel-placement) for gutter/header reuse, timed step retirement and protected corner overlays. [Workflow audits](workflow-audit.md) combine command timing logs with native harness transcripts to explain capture and rendering costs. Presentation changes reuse existing source footage.
 
-Recorded active-page cuts split scene playback at the observed source timestamps. Original source selection, slow-play rates, and checkpoint page identities remain intact. Opaque privacy masks are also applied above source-surface decorations, and annotation panels avoid these regions.
+Recorded active-page cuts split scene playback at the observed source timestamps. Original source selection, slow-play rates, and checkpoint page identities remain intact. Privacy blur is baked into sanitized source frames, and annotation panels avoid these regions.

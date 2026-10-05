@@ -170,7 +170,7 @@ export const bugStrategies: readonly Strategy[] = [
     capture:
       'Define strict selectors/patterns before capture. Keep raw traces, HAR and diagnostics local; test masks while content moves.',
     focus:
-      'The behavior under test with opaque masks; use a synthetic canary only in an authorized fixture.',
+      'The behavior under test with privacy blur; use a synthetic canary only in an authorized fixture.',
     verify:
       'Inspect actual masked pixels and require current full-frame OCR audit before export.',
     avoid:

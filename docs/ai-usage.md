@@ -748,12 +748,18 @@ Use distinct meaningful steps when each state needs its own video hold.
 
 Selector redaction is measured without interacting with private fields and follows
 movement, scrolling and separate popup pages. Public presentation consumes the
-captured `probe.redaction.mask` events. Current rendering masks the union of
-measured positions, which can obscure unrelated pixels at other times; inspect
-the actual exported frames. Privacy masks use opaque fills with fractional edges
-rounded outward; older selector-protected presentations must be rerendered before
-export. Pixelation is insufficient for a privacy guarantee: a retained negative
-case left text readable despite a passing OCR audit. Raw captures and checkpoint images remain private.
+captured `probe.redaction.mask` events. One selector can match several controls.
+Each control is masked on its own, and only while it is observed, so a later
+screen does not keep an earlier control's box. Continuous motion of one control
+still uses one envelope so positions between samples stay covered.
+Password inputs and other controls that already hide their value are not
+blurred unless `redaction.maskConcealedInputs` is true (default false).
+Each mask is cropped and blurred by its shorter side, the smallest strength
+that removed readable glyphs. Pixelation is not a privacy option: a retained
+negative case left text readable despite a passing OCR audit. Export OCR stays
+a plaintext leak check and is not a second unreadability certificate. Older
+selector-protected presentations must be rerendered before export. Raw captures
+and checkpoint images remain private.
 `pnpm test:moving-privacy` verifies changed text pixels in all four states and
 requires strict OCR to reject an intentionally unmasked capture.
 

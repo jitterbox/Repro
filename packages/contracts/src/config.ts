@@ -232,6 +232,12 @@ export const ReproConfigSchema = z
       .object({
         strict: z.boolean().optional(),
         masks: z.array(z.string().min(1)).default([]),
+        maskConcealedInputs: z
+          .boolean()
+          .default(false)
+          .describe(
+            'Blur password fields and other inputs that already hide their value. Off by default. Each opted-in field is blurred on its own, only while it is on screen.',
+          ),
       })
       .strict()
       .optional(),

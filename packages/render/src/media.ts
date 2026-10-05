@@ -1,7 +1,7 @@
 import { runProcess } from '@jitterbox/repro-core';
 import { copyFile } from 'node:fs/promises';
 import { extname } from 'node:path';
-import { buildOpaqueRedactionFilter } from './redaction-filters.js';
+import { buildPrivacyBlurFilter } from './redaction-filters.js';
 
 export async function probeMediaDurationMs(
   path: string,
@@ -24,19 +24,24 @@ export async function probeMediaDurationMs(
   }
 }
 
-/** Opaque source masking only. All presentation pixels belong to the compositor. */
+/** Blur measured privacy regions in the source image. */
 export async function sanitizeSourceImage(input: {
   image: string;
   output: string;
   viewport: { width: number; height: number };
   masks: readonly { x: number; y: number; width: number; height: number }[];
 }): Promise<void> {
-  const filter = buildOpaqueRedactionFilter(
-    input.masks,
-    '[0:v]',
-    '[sanitized]',
-    input.viewport,
-  );
+  const image =
+    input.masks.length === 0
+      ? input.viewport
+      : await probeImageSize(input.image);
+  const filter = buildPrivacyBlurFilter({
+    rects: input.masks,
+    sourceLabel: '[0:v]',
+    outputLabel: '[sanitized]',
+    viewport: input.viewport,
+    image,
+  });
   if (
     input.masks.length === 0 &&
     extname(input.image).toLowerCase() === '.png' &&
@@ -61,4 +66,26 @@ export async function sanitizeSourceImage(input: {
     '1',
     input.output,
   ]);
+}
+
+async function probeImageSize(
+  image: string,
+): Promise<{ width: number; height: number }> {
+  const output = await runProcess('ffprobe', [
+    '-v',
+    'error',
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=width,height',
+    '-of',
+    'csv=p=0:s=x',
+    image,
+  ]);
+  const parts = output.trim().split('x');
+  const width = Number(parts[0]);
+  const height = Number(parts[1]);
+  if (![width, height].every((value) => Number.isFinite(value) && value > 0))
+    throw new Error('Redaction requires a finite positive image');
+  return { width, height };
 }
