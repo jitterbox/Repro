@@ -561,6 +561,7 @@ describe('ShopLite feature-coverage videos', () => {
       redaction: {
         strict: true,
         masks: ['[data-testid="input-email"]', '[data-testid="input-ssn"]'],
+        maskConcealedInputs: false,
       },
       metadata: { bugId: 'PKG-001', specTitle: 'package-quality' },
     };
