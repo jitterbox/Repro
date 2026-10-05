@@ -650,6 +650,7 @@ export const test = base.extend<{ repro: EvidenceRecorder }>({
         spec.privacy.selectors.length > 0 ||
         config.features.redaction;
       config.redaction = {
+        maskConcealedInputs: config.redaction?.maskConcealedInputs ?? false,
         strict: spec.privacy.strict,
         masks: [
           ...new Set([

@@ -1138,32 +1138,6 @@ function sceneMarkup(scene: ScenePlan) {
           pointerEvents: 'none',
         },
       }),
-      // Privacy owns the final source-surface layer, including cursor/leader pixels.
-      // Source assets are already sanitized; this also prevents decorative ink
-      // from making an opaque privacy region appear partially uncovered.
-      ...scene.privacyMasks.map((mask, index) =>
-        e('div', {
-          key: `privacy-${index}`,
-          style: {
-            position: 'absolute',
-            zIndex: 100,
-            pointerEvents: 'none',
-            background: '#000',
-            left: scene.sourceOrigin.x + Math.max(0, Math.floor(mask.x)),
-            top: scene.sourceOrigin.y + Math.max(0, Math.floor(mask.y)),
-            width: Math.max(
-              0,
-              Math.min(scene.viewport.width, Math.ceil(mask.x + mask.width)) -
-                Math.max(0, Math.floor(mask.x)),
-            ),
-            height: Math.max(
-              0,
-              Math.min(scene.viewport.height, Math.ceil(mask.y + mask.height)) -
-                Math.max(0, Math.floor(mask.y)),
-            ),
-          },
-        }),
-      ),
       e('div', { id: 'speed' }),
       e('div', { id: 'clock' }),
     ),

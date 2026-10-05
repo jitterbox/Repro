@@ -29,7 +29,7 @@ schemas so new features cannot disappear from the review requirements.
   actual browser recordings. Their coordinates and metric values do **not**
   establish a real application diagnosis. Tests check simultaneous plate bounds,
   actual active-frame text, decoding, and outcome visibility at the end.
-- Scene compositor tests check adaptive placement and protected regions; every rendered fixture checks all output frames and randomized seeking. High-DPI acceptance checks source transforms and opaque masks at 2× scale.
+- Scene compositor tests check adaptive placement and protected regions; every rendered fixture checks all output frames and randomized seeking. High-DPI acceptance checks source transforms and privacy blur at 2× scale.
 - **VO-01:** public CLI caption generation and audio-stream inspection.
   **VO-02** records audible narration as unsupported: the CLI currently does not
   synthesize/mux it. Captions do not imply synthesized speech.

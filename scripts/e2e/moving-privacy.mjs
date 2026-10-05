@@ -104,12 +104,13 @@ for (const checkpoint of ['untouched', 'moved', 'scrolled', 'popup']) {
   for (let y = Math.ceil(box.y + 12); y < box.y + box.height - 12; y++) {
     for (let x = Math.ceil(box.x + 12); x < box.x + box.width - 12; x++) {
       const index = (y * raw.width + x) * 4;
-      assert.ok(
-        [0, 1, 2].every(
-          (channel) => protectedImage.data[index + channel] === 0,
-        ),
-        `Residual private pixels at ${checkpoint}: ${x},${y}`,
-      );
+      if ([0, 1, 2].some((channel) => raw.data[index + channel] < 48))
+        assert.ok(
+          [0, 1, 2].every(
+            (channel) => protectedImage.data[index + channel] > 96,
+          ),
+          `Private text remained readable at ${checkpoint}: ${x},${y}`,
+        );
       if (
         [0, 1, 2].some(
           (channel) =>
@@ -153,7 +154,7 @@ assert.ok(presentation);
 const plan = JSON.parse(
   await readFile(join(directory, presentation.path), 'utf8'),
 );
-assert.equal(plan.metadata.redactionMethod, 'opaque-v2');
+assert.equal(plan.metadata.redactionMethod, 'blur-v1');
 assert.ok(
   plan.redactionRects.length <= 2,
   'Selector motion should have bounded region count',
@@ -193,8 +194,12 @@ assert.equal(
   movingPixels.stdout.length,
   (lastFrame - firstFrame + 1) * frameBytes,
 );
-for (const channel of movingPixels.stdout)
-  assert.ok(channel <= 3, 'Residual private pixels during continuous motion');
+let dark = 0;
+for (const channel of movingPixels.stdout) if (channel < 32) dark++;
+assert.ok(
+  dark / movingPixels.stdout.length < 0.002,
+  'Residual private strokes during continuous motion',
+);
 const continuousMotion = {
   samples: motion.length,
   frames: lastFrame - firstFrame + 1,

@@ -79,12 +79,13 @@ chained `crop`/`boxblur`/`overlay` stages?
 **Superseded decision.** The benchmark originally selected one mask video plus
 `maskedmerge` and pixelation. The moving-field canary corpus later demonstrated
 readable residual text in that output despite an OCR pass; pixelation cannot be
-treated as irreversible redaction. Production now uses opaque `drawbox` fills
-with outward rounding and input-resolution scaling. Actual pixel tests cover
-untouched, moved, scrolled and popup fields, with an unmasked export rejection.
-The benchmark remains historical performance evidence, not privacy acceptance.
-Optimizing large numbers of opaque regions remains work to do without weakening
-full pixel replacement.
+treated as irreversible redaction. Production now crops each region and applies
+a gaussian blur whose sigma is the shorter side of the mask, so the kernel
+stays inside the region. Glyphs remained readable below that size. OCR stays a
+plaintext leak check, not proof that a blur is unreadable. Actual pixel tests
+cover untouched, moved, scrolled and popup fields, with an unmasked export
+rejection. The benchmark remains historical performance evidence, not privacy
+acceptance.
 
 ## 4. rrweb overhead + overlay exclusion
 
@@ -139,7 +140,7 @@ page CSP/Trusted Types.
 
 1. Probe/DOM overlays for burned-in viz; CDP geometry as data.
 2. JPEG SOF dimension assertion is mandatory.
-3. Privacy redaction replaces measured regions with opaque pixels; OCR is an additional gate, not proof that pixelated text is unreadable.
+3. Privacy redaction blurs measured regions by their shorter side; OCR is an additional leak gate, not proof that a weaker blur is unreadable.
 4. rrweb must block `[data-repro-overlay]`.
 5. BT.709 limited-range encode path is explicit, not assumed.
 6. Multi-page = multi-timeline + deterministic cuts.

@@ -1,5 +1,5 @@
 import {
-  buildOpaqueRedactionFilter,
+  buildPrivacyBlurFilter,
   expandScrollBand,
 } from './redaction-filters.js';
 import { rrwebInvertedSafeDefaults } from './redaction/source-mask.js';
@@ -51,12 +51,12 @@ export function composeRedactionFilter(
   }
 
   return {
-    filter: buildOpaqueRedactionFilter(
+    filter: buildPrivacyBlurFilter({
       rects,
-      input.inputLabel,
-      input.outputLabel,
-      input.plan.viewport,
-    ),
+      sourceLabel: input.inputLabel,
+      outputLabel: input.outputLabel,
+      viewport: input.plan.viewport,
+    }),
     hasRedactions: true,
     rrwebMask,
   };

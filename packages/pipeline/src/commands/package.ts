@@ -219,7 +219,7 @@ async function copyEvidenceAssets(
       await enforceOcrAudit({
         onProgress: auditProgress(),
         path: destination,
-        redaction: { masks: [], strict: true },
+        redaction: { masks: [], maskConcealedInputs: false, strict: true },
         requireAudit: true,
         patterns,
         diagnosticsDir,

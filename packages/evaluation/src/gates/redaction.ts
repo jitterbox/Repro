@@ -33,7 +33,7 @@ export async function checkRedaction(
   try {
     await enforceOcrAudit({
       path: input.videoPath,
-      redaction: { strict: true, masks: [] },
+      redaction: { strict: true, masks: [], maskConcealedInputs: false },
       requireAudit: true,
     });
     return {

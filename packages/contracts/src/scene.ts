@@ -8,6 +8,11 @@ export const sceneRectSchema = z.strictObject({
   width: z.number().positive(),
   height: z.number().positive(),
 });
+export const privacyMaskSchema = sceneRectSchema.extend({
+  startMs: z.number().nonnegative().optional(),
+  endMs: z.number().nonnegative().optional(),
+  pageId: z.string().min(1).optional(),
+});
 export const treatmentSchema = z.strictObject({
   id,
   kind: z.enum([
@@ -240,7 +245,7 @@ export const scenePlanSchema = z.strictObject({
   outputScale: z.union([z.literal(1), z.literal(2)]).default(1),
   actionAudio: z.boolean().default(false),
   cursorGlow: z.boolean().default(true),
-  privacyMasks: z.array(sceneRectSchema).default([]),
+  privacyMasks: z.array(privacyMaskSchema).default([]),
   cursorSamples: z
     .array(
       z.strictObject({

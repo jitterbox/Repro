@@ -60,7 +60,7 @@ export async function deliverEvidence(input: {
       await writeFile(media, bytes, { flag: 'wx' });
       await enforceOcrAudit({
         path: media,
-        redaction: { masks: [], strict: true },
+        redaction: { masks: [], maskConcealedInputs: false, strict: true },
         requireAudit: true,
         ...(input.privacyPatterns ? { patterns: input.privacyPatterns } : {}),
       });

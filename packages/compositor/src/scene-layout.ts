@@ -206,7 +206,16 @@ export function planPanelLayout(
       .filter((r) => r.startMs < endMs && r.endMs > startMs)
       .map((r) => inflate(r, pad));
     const permanent = [...layout.protectedRegions, ...scene.privacyMasks].map(
-      (r) => inflate({ ...r, x: origin.x + r.x, y: origin.y + r.y }, pad),
+      (r) =>
+        inflate(
+          {
+            x: origin.x + r.x,
+            y: origin.y + r.y,
+            width: r.width,
+            height: r.height,
+          },
+          pad,
+        ),
     );
     protectedRects.push(...permanent);
     const place = (allowOverlay: boolean): PanelPlacement[] | null => {

@@ -7,6 +7,26 @@ import { promisify } from 'node:util';
 import { resolveMediaCommand } from '@jitterbox/repro-core';
 import { sanitizeSourceImage } from './media.js';
 
+function paint(pixels: Buffer, x: number, y: number, value: number): void {
+  pixels.fill(value, (y * 20 + x) * 3, (y * 20 + x) * 3 + 3);
+}
+
+function expectPrivacySample(
+  stdout: Buffer,
+  pixels: Buffer,
+  x: number,
+  y: number,
+): void {
+  const offset = (y * 20 + x) * 3;
+  const sample = [...stdout.subarray(offset, offset + 3)];
+  const masked = x >= 4 && x < 10 && y >= 6 && y < 12;
+  if (masked) {
+    expect(sample.every((channel) => channel > 200)).toBe(true);
+    return;
+  }
+  expect(sample).toEqual([...pixels.subarray(offset, offset + 3)]);
+}
+
 it('preserves unmasked PNG bytes without starting an encoder, and still validates the viewport', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'repro-source-copy-'));
   const image = join(dir, 'source.png'),
@@ -37,17 +57,19 @@ it('preserves unmasked PNG bytes without starting an encoder, and still validate
   }
 });
 
-it('masks fractional high-DPI source bounds opaquely without altering other pixels', async () => {
+it('blurs fractional high-DPI bounds and leaves other pixels unchanged', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'repro-source-mask-'));
   try {
     const source = join(dir, 'source.ppm'),
       output = join(dir, 'sanitized.png');
+    const pixels = Buffer.alloc(20 * 20 * 3, 255);
+    paint(pixels, 0, 0, 0);
+    paint(pixels, 3, 8, 0);
+    paint(pixels, 6, 8, 0);
+    paint(pixels, 7, 8, 0);
     await writeFile(
       source,
-      Buffer.concat([
-        Buffer.from('P6\n20 20\n255\n'),
-        Buffer.alloc(20 * 20 * 3, 255),
-      ]),
+      Buffer.concat([Buffer.from('P6\n20 20\n255\n'), pixels]),
     );
     await sanitizeSourceImage({
       image: source,
@@ -61,12 +83,7 @@ it('masks fractional high-DPI source bounds opaquely without altering other pixe
       { encoding: 'buffer' },
     );
     for (let y = 0; y < 20; y++)
-      for (let x = 0; x < 20; x++) {
-        const masked = x >= 4 && x < 10 && y >= 6 && y < 12;
-        expect([
-          ...stdout.subarray((y * 20 + x) * 3, (y * 20 + x) * 3 + 3),
-        ]).toEqual(Array(3).fill(masked ? 0 : 255));
-      }
+      for (let x = 0; x < 20; x++) expectPrivacySample(stdout, pixels, x, y);
     await expect(
       sanitizeSourceImage({
         image: source,

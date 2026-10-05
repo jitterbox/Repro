@@ -56,6 +56,11 @@
         "masks": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
+        },
+        "maskConcealedInputs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Blur password fields and other inputs that already hide their value. Off by default. Each opted-in field is blurred on its own, only while it is on screen."
         }
       },
       "additionalProperties": false

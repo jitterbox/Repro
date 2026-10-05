@@ -46,7 +46,7 @@ describe('redaction canaries', () => {
       await expect(
         enforceOcrAudit({
           path: join(dir, 'rendered.mp4'),
-          redaction: { masks: [], strict: true },
+          redaction: { masks: [], maskConcealedInputs: false, strict: true },
         }),
       ).rejects.toThrow(GateError);
     } finally {

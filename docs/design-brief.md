@@ -141,7 +141,7 @@ Every flag that can be on should have a **named visual component** with states
 | `pauses` | `PAUSED` badge + hold frame | Centered or corner; high contrast |
 | `slowmo` | Speed badge `0.25×` | Corner chip during slowed segment |
 | `zoom` | ROI magnifier PiP | Framed inset; keep context |
-| `redaction` | Opaque black box | Pre-overlay; outward-rounded measured bounds; never label secrets |
+| `redaction` | Regional blur | Pre-overlay; shorter-side gaussian blur inside measured bounds; never label secrets |
 | `vitalsHud` | Compact HUD chip | Corner; CLS/LCP/INP values |
 | `freezeDetect` | Freeze banner | Distinct from PAUSED |
 | `a11yOverlay` | Violation outline + rule id | Severity-coded |
@@ -399,7 +399,7 @@ Reference tokens already in fixture CSS: `--accent: #2457d6`, `--text: #1a1a1a`,
 | Blink layout | Never default; warn in UI copy |
 | Color alone | Pair ADD/REMOVE/CHANGE with icons or labels |
 | Viewer focus | Visible 3px focus rings |
-| Redaction | Opaque fill before labels; no “SSN: ***” that confirms value; pixelation is not a privacy guarantee |
+| Redaction | Shorter-side blur before labels; no “SSN: ***” that confirms value; pixelation is not a privacy guarantee |
 | Captions | VTT for voiceover; chapters.vtt for jump-to |
 | Seizure / vestibular | Prefer onion over blink; limited ripple frequency |
 

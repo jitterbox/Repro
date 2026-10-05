@@ -1,5 +1,9 @@
 import { overlayTheme } from '@jitterbox/repro-contracts';
-import { motionMaskEnvelopes } from '@jitterbox/repro-core';
+import {
+  hasPrivacyMaskEvent,
+  maskSamplesFromEvents,
+  motionMaskEnvelopes,
+} from '@jitterbox/repro-core';
 import type { MaskSample } from '@jitterbox/repro-core';
 
 import { measureTextWidth, measureOverlayTextWidth } from './text.js';
@@ -110,19 +114,25 @@ export function emitFeatureAnnotations(
     if (flags.vitalsHud === true) {
       annotations.push(...vitalsAnnotations(event));
     }
-
-    if (flags.redaction === true) {
-      const selector = objectPayload(event).selector;
-      measuredMasks.push(
-        ...redactionRectsFrom(event).map((rect) => ({
-          ...rect,
-          group: `${event.pageId}/${typeof selector === 'string' ? selector : event.id}`,
-        })),
-      );
-    }
   }
 
-  redactionRects.push(...motionMaskEnvelopes(measuredMasks));
+  if (flags.redaction === true) {
+    measuredMasks.push(
+      ...maskSamplesFromEvents(input.events, {
+        maskConcealedInputs:
+          input.config.redaction?.maskConcealedInputs === true,
+      }),
+    );
+  }
+
+  redactionRects.push(
+    ...motionMaskEnvelopes(measuredMasks).map((region) => ({
+      x: region.x,
+      y: region.y,
+      width: region.width,
+      height: region.height,
+    })),
+  );
   if (flags.cursor === true) {
     annotations.push(...aggregateCursorPath(cursorMoves));
   }
@@ -131,7 +141,11 @@ export function emitFeatureAnnotations(
   annotations.push(...annotationHintsFromConfig(input));
   annotations.push(...outcomePairAnnotations(input));
 
-  if (flags.redaction === true && redactionRects.length === 0) {
+  if (
+    flags.redaction === true &&
+    redactionRects.length === 0 &&
+    !hasPrivacyMaskEvent(input.events)
+  ) {
     redactionRects.push(...redactionRectsFromMasks(input));
   }
 
@@ -868,15 +882,6 @@ function vitalsAnnotations(event: EventRecord): readonly AnnotationBox[] {
       },
     ),
   ];
-}
-
-function redactionRectsFrom(event: EventRecord): readonly Rect[] {
-  if (!matches(event, ['redaction', 'mask'])) {
-    return [];
-  }
-
-  const rect = rectFromPayload(event);
-  return rect === null ? [] : [rect];
 }
 
 /** Derive mask boxes from interactions on config.redaction.masks selectors. */

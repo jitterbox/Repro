@@ -125,7 +125,7 @@ async function presentation(directory: string, draft = false) {
   };
 }
 
-/** Old pixelated or omitted selector masks must be rerendered, even after OCR passes. */
+/** Older privacy treatments must be rerendered, even after OCR passes. */
 export function assertCurrentPrivacyPresentation(
   spec: Pick<ReturnType<typeof validateEvidence>, 'privacy'>,
   plan: Pick<ReproPlan, 'metadata' | 'redactionRects'>,
@@ -135,7 +135,8 @@ export function assertCurrentPrivacyPresentation(
     plan.metadata.redactionMethod !== PRIVACY_RENDER_METHOD
   )
     throw new Error(
-      'Rerender selector-protected evidence with opaque masks before export',
+      'Rerender selector-protected evidence with the current ' +
+        'privacy blur before export',
     );
 }
 

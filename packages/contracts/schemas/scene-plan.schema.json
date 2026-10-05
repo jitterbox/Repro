@@ -367,6 +367,18 @@
           "height": {
             "type": "number",
             "exclusiveMinimum": 0
+          },
+          "startMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pageId": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
